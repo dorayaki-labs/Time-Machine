@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import { validateForm } from '@/lib/contributionForms.js';
 import { getEntry } from '@/lib/catalog.js';
@@ -97,7 +98,7 @@ export default function ContributionForm({ category }) {
           <h3>Submitted — thank you!</h3>
           <p>Your contribution is number <strong className="mono">#{result.number}</strong>. It is now
             pending review by a checker. You can follow its status any time in{' '}
-            <a href="/account">My contributions</a>.</p>
+            <Link to="/account">My contributions</Link>.</p>
           <div className="btn-row">
             <button type="button" className="btn btn--ghost" onClick={again}>Submit another</button>
           </div>

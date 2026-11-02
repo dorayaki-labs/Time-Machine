@@ -19,9 +19,12 @@ import './styles/responsive.css';
 import './styles/backend.css';
 import App from './App.jsx';
 
+// The router must know the deploy prefix — import.meta.env.BASE_URL is
+// "/time-machine/" on GitHub Pages project sites. Without it, every URL
+// (including the site root) falls through to the 404 page.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/+$/, '') || '/'}>
       <App />
     </BrowserRouter>
   </StrictMode>,

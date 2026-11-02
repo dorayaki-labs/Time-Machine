@@ -1,18 +1,22 @@
-# Supabase CLI project configuration (free local development + deploy).
-# Docs: https://supabase.com/docs/guides/cli/config
+# Supabase CLI project configuration
 project_id = "time-machine"
 
 [functions.contribute]
 verify_jwt = true
+entrypoint = "./functions/contribute/index.js"
 
 [functions.review]
 verify_jwt = true
+entrypoint = "./functions/review/index.js"
 
 [functions.direct-edit]
 verify_jwt = true
+entrypoint = "./functions/direct-edit/index.js"
 
 [functions.manage-role]
 verify_jwt = true
+entrypoint = "./functions/manage-role/index.js"
 
 [functions.reconcile-sync]
 verify_jwt = true
+entrypoint = "./functions/reconcile-sync/index.js"
