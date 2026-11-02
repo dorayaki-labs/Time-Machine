@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1979-0032",
+  "type": "episode",
+  "seriesId": "anime-1979",
+  "number": 32,
+  "title": {
+    "en": "Episode 32",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1979-05-08",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 3,
+  "id": "movie-0002",
+  "type": "movie",
+  "seriesId": "movies",
+  "number": 2,
+  "title": {
+    "en": "Movie 2",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1981-03-14",
+    "precision": "day",
+    "region": "JP"
+  },
+  "durationMinutes": null,
+  "director": null,
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

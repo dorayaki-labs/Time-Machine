@@ -1,0 +1,29 @@
+{
+  "name": "time-machine",
+  "version": "0.6.0",
+  "description": "Time Machine — a community-driven archive of the Doraemon franchise.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "validate": "node scripts/validate-catalog.js",
+    "build:surge": "npm run build && node scripts/make-spa-fallback.mjs",
+    "test:edge-logic": "node scripts/test-edge-logic.mjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5",
+    "video.js": "^8.23.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.5"
+  }
+}

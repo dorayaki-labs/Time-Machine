@@ -1,0 +1,18 @@
+# Supabase CLI project configuration (free local development + deploy).
+# Docs: https://supabase.com/docs/guides/cli/config
+project_id = "time-machine"
+
+[functions.contribute]
+verify_jwt = true
+
+[functions.review]
+verify_jwt = true
+
+[functions.direct-edit]
+verify_jwt = true
+
+[functions.manage-role]
+verify_jwt = true
+
+[functions.reconcile-sync]
+verify_jwt = true

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-2005-0053",
+  "type": "episode",
+  "seriesId": "anime-2005",
+  "number": 53,
+  "title": {
+    "en": "Episode 53",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2005-11-11",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

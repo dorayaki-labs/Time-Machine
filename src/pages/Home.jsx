@@ -1,0 +1,121 @@
+import { Link } from 'react-router-dom';
+import PageContainer from '@/components/PageContainer.jsx';
+import CharacterCard from '@/components/CharacterCard.jsx';
+import GadgetCard from '@/components/GadgetCard.jsx';
+import Icon from '@/components/Icon.jsx';
+import useDocumentTitle from '@/hooks/useDocumentTitle.js';
+import { getCharacters, getGadgets, getRecentlyAdded, getSeries, SERIES_IDS } from '@/lib/catalog.js';
+import { getArchiveStats } from '@/lib/statistics.js';
+import { DOOR_ART } from '@/config.js';
+
+function RecentList() {
+  const recent = getRecentlyAdded(10);
+  return (
+    <ul className="recent-list">
+      {recent.map((e) => (
+        <li key={e.id}>
+          <Link to={e.url} className="recent-row">
+            <span className={`recent-row__type mono${e.kind === 'movie' ? ' recent-row__type--movie' : ''}`}>
+              {e.kind === 'movie' ? 'Film' : 'Ep'}
+            </span>
+            <span className="recent-row__num mono">{e.kind === 'movie' ? `No.${e.number}` : `#${e.number}`}</span>
+            <span className="recent-row__title">{e.title.en || <span lang="ja">{e.title.ja}</span>}</span>
+            <span className="recent-row__catalogue">{getSeries(e.seriesId).label}</span>
+            <span className="recent-row__date">{e.release?.date ?? ''}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default function Home() {
+  useDocumentTitle();
+  const stats = getArchiveStats();
+  const characters = getCharacters().slice(0, 4);
+  const gadgets = getGadgets().slice(0, 4);
+
+  return (
+    <>
+      <section className="hero">
+        <PageContainer className="hero__inner">
+          <div className="hero__copy">
+            <p className="eyebrow">The Doraemon community archive</p>
+            <h1 className="hero__slogan">By the community, for the community.</h1>
+            <p className="hero__lead">
+              Every documented episode, movie, character, and gadget of Doraemon, in one free and open archive.
+              {' '}{stats.episodes + stats.movies} entries and counting.
+            </p>
+            <div className="btn-row">
+              <Link to="/anime/1979" className="btn btn--primary">Browse the archive <Icon name="arrowRight" size={16} /></Link>
+              <Link to="/about" className="btn btn--ghost">About the project</Link>
+            </div>
+          </div>
+          <div className="hero__art" aria-hidden="true">
+            <img src={DOOR_ART} alt="" width="380" height="611" loading="eager" decoding="async" />
+          </div>
+        </PageContainer>
+      </section>
+
+      <PageContainer className="home-section" as="section" id="archives">
+        <header className="section-head">
+          <h2>The catalogues</h2>
+          <p>Each catalogue is stored separately, so one can grow without disturbing the others.</p>
+        </header>
+        <ul className="catalogue-index">
+          {SERIES_IDS.map((id) => {
+            const series = getSeries(id);
+            return (
+              <li key={id}>
+                <Link to={series.basePath} className="catalogue-row">
+                  <span className="catalogue-row__label">{series.label}</span>
+                  <span className="catalogue-row__desc">{series.description.split('. ')[0]}.</span>
+                  <span className="catalogue-row__count mono">{series.entries.length}</span>
+                  <Icon name="arrowRight" size={18} className="catalogue-row__arrow" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </PageContainer>
+
+      <PageContainer className="home-section" as="section">
+        <header className="section-head section-head--row">
+          <div>
+            <h2>Recently added</h2>
+            <p>Newest and latest records, mixed across the catalogues.</p>
+          </div>
+          <Link to="/contribute" className="btn btn--ghost btn--sm">Add an entry</Link>
+        </header>
+        <RecentList />
+      </PageContainer>
+
+      <PageContainer className="home-section" as="section">
+        <header className="section-head"><h2>Explore the archive</h2></header>
+        <div className="explore-grid">
+          <div className="explore-block">
+            <div className="explore-block__head"><h3>Characters</h3><Link to="/characters" className="text-link">Browse all {stats.characters}</Link></div>
+            <div className="grid grid--compact">{characters.map((c) => <CharacterCard key={c.id} character={c} compact />)}</div>
+          </div>
+          <div className="explore-block">
+            <div className="explore-block__head"><h3>Gadgets</h3><Link to="/gadgets" className="text-link">Browse all {stats.gadgets}</Link></div>
+            <div className="grid grid--compact">{gadgets.map((g) => <GadgetCard key={g.id} gadget={g} compact />)}</div>
+          </div>
+        </div>
+      </PageContainer>
+
+      <PageContainer className="home-section" as="section">
+        <div className="contribute-strip">
+          <div>
+            <h2>Help fill the gaps</h2>
+            <p>Episode synopses, verified English titles, images with alt text, and legal viewing sources are the archive's biggest needs right now.</p>
+          </div>
+          <div className="btn-row">
+            <Link to="/contribute" className="btn btn--primary">Contribute</Link>
+            <Link to="/historical/1973" className="btn btn--ghost">See the lost 1973 series</Link>
+          </div>
+        </div>
+      </PageContainer>
+    </>
+  );
+}

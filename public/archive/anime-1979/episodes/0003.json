@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1979-0003",
+  "type": "episode",
+  "seriesId": "anime-1979",
+  "number": 3,
+  "title": {
+    "en": "Episode 3",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1979-04-04",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

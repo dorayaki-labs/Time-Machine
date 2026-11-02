@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 3,
+  "id": "movie-0004",
+  "type": "movie",
+  "seriesId": "movies",
+  "number": 4,
+  "title": {
+    "en": "Movie 4",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1983-03-12",
+    "precision": "day",
+    "region": "JP"
+  },
+  "durationMinutes": null,
+  "director": null,
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

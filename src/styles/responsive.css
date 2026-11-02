@@ -1,0 +1,52 @@
+/* Laptop and below */
+@media (max-width: 1060px) {
+  .primary-nav { display: none; }
+  .menu-btn { display: inline-grid; }
+  .search-btn__kbd { display: none; }
+  .search-btn { width: 38px; padding-inline: 0; justify-content: center; }
+  .about-section { grid-template-columns: 1fr; gap: var(--s-3); }
+}
+
+/* Tablet and below */
+@media (max-width: 860px) {
+  .hero { padding-top: var(--s-6); }
+  .hero__inner { grid-template-columns: 1fr; gap: var(--s-4); }
+  .hero__art { order: -1; }
+  .hero__art img { width: min(210px, 55vw); }
+  .hero__lead { font-size: 1rem; }
+  .explore-grid { grid-template-columns: 1fr; }
+  .detail-columns, .detail-columns--after-film { grid-template-columns: 1fr; }
+  .detail-columns__media .media { max-width: 460px; }
+  .film-record { grid-template-columns: 150px 1fr; gap: var(--s-4); }
+  .profile { grid-template-columns: 130px 1fr; gap: var(--s-4); }
+  .contribute-form__grid { grid-template-columns: 1fr; }
+  .contribute-quick { grid-template-columns: 1fr; }
+  .source-picker { grid-template-columns: 1fr; }
+  .site-footer__inner { grid-template-columns: 1fr 1fr; }
+  .site-footer__brand { grid-column: 1 / -1; }
+}
+
+/* Phone */
+@media (max-width: 600px) {
+  :root { --s-8: 56px; --s-7: 40px; }
+  .container { width: min(var(--max), 100% - 2 * var(--s-4)); }
+  .brand img { height: 34px; }
+  .catalogue-row { grid-template-columns: 1fr auto 22px; grid-template-areas: 'label count arrow' 'desc desc desc'; row-gap: 6px; }
+  .quick-card { padding: var(--s-3); }
+  .catalogue-row__label { grid-area: label; }
+  .catalogue-row__desc { grid-area: desc; }
+  .catalogue-row__count { grid-area: count; }
+  .catalogue-row__arrow { grid-area: arrow; }
+  .recent-row { grid-template-columns: 40px 1fr auto; }
+  .recent-row__type, .recent-row__catalogue { display: none; }
+  .stat-row { gap: var(--s-4); }
+  .film-record, .profile { grid-template-columns: 1fr; }
+  .film-record__poster, .profile__portrait { max-width: 240px; }
+  .prev-next { grid-template-columns: 1fr; }
+  .contribute-strip { padding: var(--s-4); }
+  .lightbox { padding: var(--s-4); }
+  .lightbox__nav--prev { left: var(--s-2); }
+  .lightbox__nav--next { right: var(--s-2); }
+  .source-item { flex-direction: column; align-items: flex-start; }
+  .site-footer__inner { grid-template-columns: 1fr; gap: var(--s-5); }
+}

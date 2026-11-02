@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1973-0012",
+  "type": "episode",
+  "seriesId": "anime-1973",
+  "number": 12,
+  "title": {
+    "en": "Episode 12",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1973-05-06",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "preservation": null,
+  "updatedAt": "2026-11-02"
+}

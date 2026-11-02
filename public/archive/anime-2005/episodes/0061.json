@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-2005-0061",
+  "type": "episode",
+  "seriesId": "anime-2005",
+  "number": 61,
+  "title": {
+    "en": "Episode 61",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2005-12-09",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

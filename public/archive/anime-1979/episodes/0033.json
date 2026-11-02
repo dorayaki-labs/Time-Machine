@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1979-0033",
+  "type": "episode",
+  "seriesId": "anime-1979",
+  "number": 33,
+  "title": {
+    "en": "Episode 33",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1979-05-09",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

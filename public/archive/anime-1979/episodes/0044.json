@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1979-0044",
+  "type": "episode",
+  "seriesId": "anime-1979",
+  "number": 44,
+  "title": {
+    "en": "Episode 44",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1979-05-22",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

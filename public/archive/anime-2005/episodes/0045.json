@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-2005-0045",
+  "type": "episode",
+  "seriesId": "anime-2005",
+  "number": 45,
+  "title": {
+    "en": "Episode 45",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2005-09-23",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

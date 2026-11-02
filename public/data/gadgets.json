@@ -1,0 +1,202 @@
+[
+  {
+    "id": "gadget-anywhere-door",
+    "name": {
+      "en": "Gadget 1",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-bamboo-copter",
+    "name": {
+      "en": "Gadget 2",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-time-machine",
+    "name": {
+      "en": "Gadget 3",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-time-cloth",
+    "name": {
+      "en": "Gadget 4",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-memory-bread",
+    "name": {
+      "en": "Gadget 5",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-translation-konjac",
+    "name": {
+      "en": "Gadget 6",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-small-light",
+    "name": {
+      "en": "Gadget 7",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-big-light",
+    "name": {
+      "en": "Gadget 8",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-gourmet-tablecloth",
+    "name": {
+      "en": "Gadget 9",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  },
+  {
+    "id": "gadget-if-phone-box",
+    "name": {
+      "en": "Gadget 10",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "howItWorks": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": [],
+    "voiceActors": []
+  }
+]

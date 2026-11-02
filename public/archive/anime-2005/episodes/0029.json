@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-2005-0029",
+  "type": "episode",
+  "seriesId": "anime-2005",
+  "number": 29,
+  "title": {
+    "en": "Episode 29",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2005-07-29",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

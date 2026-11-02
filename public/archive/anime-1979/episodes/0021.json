@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1979-0021",
+  "type": "episode",
+  "seriesId": "anime-1979",
+  "number": 21,
+  "title": {
+    "en": "Episode 21",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1979-04-25",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

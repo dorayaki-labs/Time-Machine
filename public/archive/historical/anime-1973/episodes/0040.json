@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1973-0040",
+  "type": "episode",
+  "seriesId": "anime-1973",
+  "number": 40,
+  "title": {
+    "en": "Episode 40",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "1973-08-19",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "preservation": null,
+  "updatedAt": "2026-11-02"
+}

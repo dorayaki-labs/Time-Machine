@@ -1,0 +1,115 @@
+/* Self-hosted Japanese font. The file ships with the site in public/fonts, so
+   kanji always render — no network font service, no reliance on system fonts,
+   works offline in every browser. One variable file covers weights 100–900. */
+@font-face {
+  font-family: 'Noto Sans JP';
+  src: url('/fonts/NotoSansJP-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* Paper surfaces */
+  --bg: #f4f1ea;
+  --bg-2: #ece8de;
+  --surface: #faf8f2;
+  --surface-2: #f1ede3;
+  --surface-3: #e7e2d5;
+  --border: #d9d3c4;
+  --border-strong: #c2bba8;
+
+  /* Ink text */
+  --text: #26231d;
+  --text-2: #5c574c;
+  --text-3: #8d8779;
+
+  /* Archival blue accent */
+  --accent: #2b5d8f;
+  --accent-hover: #1f4a75;
+  --accent-soft: rgba(43, 93, 143, 0.09);
+  --accent-line: rgba(43, 93, 143, 0.35);
+  --on-accent: #f7f5ef;
+
+  /* Status colours */
+  --ok: #2e7d4f;
+  --info: #2b5d8f;
+  --warn: #8a6217;
+  --bad: #a34141;
+  --review: #6b5ea8;
+  --neutral: #8d8779;
+
+  /* Type. Noto Sans JP sits in the base stack too: any kanji outside a
+     lang="ja" element (card titles, search hits) still finds its glyphs. */
+  --font: 'Space Grotesk', 'Noto Sans JP', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ja: 'Noto Sans JP', 'Space Grotesk', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+
+  /* Spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 72px;
+
+  --shadow-soft: 0 10px 34px rgba(38, 35, 29, 0.1);
+  --shadow-card: 0 5px 18px rgba(38, 35, 29, 0.07);
+  --max: 1200px;
+  --header-gap: 14px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --scrollbar-thumb: #c2bba8;
+  --scrollbar-thumb-hover: #a89f8a;
+  --scrollbar-track: transparent;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Ink slate surfaces */
+  --bg: #151a22;
+  --bg-2: #10141b;
+  --surface: #1c222d;
+  --surface-2: #232a37;
+  --surface-3: #2b3342;
+  --border: #303949;
+  --border-strong: #465264;
+
+  /* Warm off-white text */
+  --text: #ecebe5;
+  --text-2: #b3b1a6;
+  --text-3: #83817a;
+
+  /* The archival blue, lifted for contrast on dark */
+  --accent: #8fb8e3;
+  --accent-hover: #aecdec;
+  --accent-soft: rgba(143, 184, 227, 0.13);
+  --accent-line: rgba(143, 184, 227, 0.4);
+  --on-accent: #101823;
+
+  /* Status colours */
+  --ok: #86c9a4;
+  --info: #8fb8e3;
+  --warn: #d9b676;
+  --bad: #d98f8f;
+  --review: #ab9fe3;
+  --neutral: #83817a;
+
+  --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 5px 18px rgba(0, 0, 0, 0.32);
+
+  --scrollbar-thumb: #3a4456;
+  --scrollbar-thumb-hover: #4d5a70;
+  --scrollbar-track: transparent;
+}

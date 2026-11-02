@@ -1,0 +1,242 @@
+[
+  {
+    "id": "char-doraemon",
+    "name": {
+      "en": "Character 1",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "main",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-nobita",
+    "name": {
+      "en": "Character 2",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "main",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-shizuka",
+    "name": {
+      "en": "Character 3",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "main",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-gian",
+    "name": {
+      "en": "Character 4",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "classmate",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-suneo",
+    "name": {
+      "en": "Character 5",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "classmate",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-dekisugi",
+    "name": {
+      "en": "Character 6",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "classmate",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-jaiko",
+    "name": {
+      "en": "Character 7",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "family",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-dorami",
+    "name": {
+      "en": "Character 8",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "future",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-sewashi",
+    "name": {
+      "en": "Character 9",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "future",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-tamako",
+    "name": {
+      "en": "Character 10",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "family",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-nobisuke",
+    "name": {
+      "en": "Character 11",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "family",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  },
+  {
+    "id": "char-sensei",
+    "name": {
+      "en": "Character 12",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "category": "classmate",
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "voiceActors": [],
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "references": []
+  }
+]

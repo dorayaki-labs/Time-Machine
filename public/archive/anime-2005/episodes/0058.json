@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-2005-0058",
+  "type": "episode",
+  "seriesId": "anime-2005",
+  "number": 58,
+  "title": {
+    "en": "Episode 58",
+    "ja": null
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2005-12-02",
+    "precision": "day",
+    "region": "JP"
+  },
+  "summary": null,
+  "image": {
+    "url": null,
+    "alt": null
+  },
+  "screenshots": [],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [],
+  "references": [],
+  "updatedAt": "2026-11-02"
+}

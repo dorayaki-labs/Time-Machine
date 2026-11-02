@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Time Machine is a free, community-driven archive documenting the history of Doraemon: episodes, movies, characters, and gadgets." />
+    <meta name="theme-color" content="#f4f1ea" />
+    <link rel="icon" type="image/png" href="/assets/logo/tm-mark-128.png" />
+    <title>Time Machine</title>
+
+    <script>
+      // SPA routing fallback (GitHub Pages). The generated 404.html redirects
+      // /deep/path to /?/deep/path; this snippet restores the real URL in the
+      // address bar and history before the app mounts. Harmless everywhere
+      // else: it only acts when the ?/ marker is present.
+      (function () {
+        var m = location.search.match(/^\?\/(.*)/);
+        if (!m) return;
+        var base = document.baseURI.replace(/[^/]*$/, '');
+        var target = new URL(decodeURIComponent(m[1]), base);
+        history.replaceState(null, '', target.pathname + target.search + target.hash);
+      })();
+    </script>
+    <link rel="preload" href="%BASE_URL%fonts/NotoSansJP-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <script>
+      // Apply the saved theme (or the OS setting) before first paint to avoid a flash.
+      (function () {
+        try {
+          var stored = localStorage.getItem('tm-theme');
+          var dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#151a22' : '#f4f1ea');
+        } catch (e) { /* private mode: light theme is the default */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

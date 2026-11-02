@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 3,
+  "id": "anime-1973",
+  "type": "series",
+  "title": "Anime (1973)",
+  "description": "The historical 1973 television series catalogue. Episode records document titles, broadcast dates, and viewing sources as they are contributed.",
+  "entries": [
+    {
+      "id": "anime-1973-0001",
+      "number": 1,
+      "path": "episodes/0001.json"
+    },
+    {
+      "id": "anime-1973-0002",
+      "number": 2,
+      "path": "episodes/0002.json"
+    },
+    {
+      "id": "anime-1973-0003",
+      "number": 3,
+      "path": "episodes/0003.json"
+    },
+    {
+      "id": "anime-1973-0004",
+      "number": 4,
+      "path": "episodes/0004.json"
+    },
+    {
+      "id": "anime-1973-0005",
+      "number": 5,
+      "path": "episodes/0005.json"
+    },
+    {
+      "id": "anime-1973-0006",
+      "number": 6,
+      "path": "episodes/0006.json"
+    },
+    {
+      "id": "anime-1973-0007",
+      "number": 7,
+      "path": "episodes/0007.json"
+    },
+    {
+      "id": "anime-1973-0008",
+      "number": 8,
+      "path": "episodes/0008.json"
+    },
+    {
+      "id": "anime-1973-0009",
+      "number": 9,
+      "path": "episodes/0009.json"
+    },
+    {
+      "id": "anime-1973-0010",
+      "number": 10,
+      "path": "episodes/0010.json"
+    },
+    {
+      "id": "anime-1973-0011",
+      "number": 11,
+      "path": "episodes/0011.json"
+    },
+    {
+      "id": "anime-1973-0012",
+      "number": 12,
+      "path": "episodes/0012.json"
+    },
+    {
+      "id": "anime-1973-0013",
+      "number": 13,
+      "path": "episodes/0013.json"
+    },
+    {
+      "id": "anime-1973-0014",
+      "number": 14,
+      "path": "episodes/0014.json"
+    },
+    {
+      "id": "anime-1973-0015",
+      "number": 15,
+      "path": "episodes/0015.json"
+    },
+    {
+      "id": "anime-1973-0016",
+      "number": 16,
+      "path": "episodes/0016.json"
+    },
+    {
+      "id": "anime-1973-0017",
+      "number": 17,
+      "path": "episodes/0017.json"
+    },
+    {
+      "id": "anime-1973-0018",
+      "number": 18,
+      "path": "episodes/0018.json"
+    },
+    {
+      "id": "anime-1973-0019",
+      "number": 19,
+      "path": "episodes/0019.json"
+    },
+    {
+      "id": "anime-1973-0020",
+      "number": 20,
+      "path": "episodes/0020.json"
+    },
+    {
+      "id": "anime-1973-0021",
+      "number": 21,
+      "path": "episodes/0021.json"
+    },
+    {
+      "id": "anime-1973-0022",
+      "number": 22,
+      "path": "episodes/0022.json"
+    },
+    {
+      "id": "anime-1973-0023",
+      "number": 23,
+      "path": "episodes/0023.json"
+    },
+    {
+      "id": "anime-1973-0024",
+      "number": 24,
+      "path": "episodes/0024.json"
+    },
+    {
+      "id": "anime-1973-0025",
+      "number": 25,
+      "path": "episodes/0025.json"
+    },
+    {
+      "id": "anime-1973-0026",
+      "number": 26,
+      "path": "episodes/0026.json"
+    },
+    {
+      "id": "anime-1973-0027",
+      "number": 27,
+      "path": "episodes/0027.json"
+    },
+    {
+      "id": "anime-1973-0028",
+      "number": 28,
+      "path": "episodes/0028.json"
+    },
+    {
+      "id": "anime-1973-0029",
+      "number": 29,
+      "path": "episodes/0029.json"
+    },
+    {
+      "id": "anime-1973-0030",
+      "number": 30,
+      "path": "episodes/0030.json"
+    },
+    {
+      "id": "anime-1973-0031",
+      "number": 31,
+      "path": "episodes/0031.json"
+    },
+    {
+      "id": "anime-1973-0032",
+      "number": 32,
+      "path": "episodes/0032.json"
+    },
+    {
+      "id": "anime-1973-0033",
+      "number": 33,
+      "path": "episodes/0033.json"
+    },
+    {
+      "id": "anime-1973-0034",
+      "number": 34,
+      "path": "episodes/0034.json"
+    },
+    {
+      "id": "anime-1973-0035",
+      "number": 35,
+      "path": "episodes/0035.json"
+    },
+    {
+      "id": "anime-1973-0036",
+      "number": 36,
+      "path": "episodes/0036.json"
+    },
+    {
+      "id": "anime-1973-0037",
+      "number": 37,
+      "path": "episodes/0037.json"
+    },
+    {
+      "id": "anime-1973-0038",
+      "number": 38,
+      "path": "episodes/0038.json"
+    },
+    {
+      "id": "anime-1973-0039",
+      "number": 39,
+      "path": "episodes/0039.json"
+    },
+    {
+      "id": "anime-1973-0040",
+      "number": 40,
+      "path": "episodes/0040.json"
+    },
+    {
+      "id": "anime-1973-0041",
+      "number": 41,
+      "path": "episodes/0041.json"
+    },
+    {
+      "id": "anime-1973-0042",
+      "number": 42,
+      "path": "episodes/0042.json"
+    },
+    {
+      "id": "anime-1973-0043",
+      "number": 43,
+      "path": "episodes/0043.json"
+    },
+    {
+      "id": "anime-1973-0044",
+      "number": 44,
+      "path": "episodes/0044.json"
+    },
+    {
+      "id": "anime-1973-0045",
+      "number": 45,
+      "path": "episodes/0045.json"
+    },
+    {
+      "id": "anime-1973-0046",
+      "number": 46,
+      "path": "episodes/0046.json"
+    },
+    {
+      "id": "anime-1973-0047",
+      "number": 47,
+      "path": "episodes/0047.json"
+    },
+    {
+      "id": "anime-1973-0048",
+      "number": 48,
+      "path": "episodes/0048.json"
+    },
+    {
+      "id": "anime-1973-0049",
+      "number": 49,
+      "path": "episodes/0049.json"
+    },
+    {
+      "id": "anime-1973-0050",
+      "number": 50,
+      "path": "episodes/0050.json"
+    },
+    {
+      "id": "anime-1973-0051",
+      "number": 51,
+      "path": "episodes/0051.json"
+    },
+    {
+      "id": "anime-1973-0052",
+      "number": 52,
+      "path": "episodes/0052.json"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "characterCategories": [
+    {
+      "id": "main",
+      "label": "Main characters"
+    },
+    {
+      "id": "classmate",
+      "label": "Classmates"
+    },
+    {
+      "id": "family",
+      "label": "Family"
+    },
+    {
+      "id": "future",
+      "label": "From the future"
+    }
+  ],
+  "metadataStatuses": [
+    {
+      "id": "complete",
+      "label": "Complete"
+    },
+    {
+      "id": "partial",
+      "label": "Partially documented"
+    },
+    {
+      "id": "metadata-incomplete",
+      "label": "Metadata incomplete"
+    }
+  ],
+  "sourceStatuses": [
+    {
+      "id": "available",
+      "label": "Available"
+    },
+    {
+      "id": "unverified",
+      "label": "Unverified"
+    },
+    {
+      "id": "no-source",
+      "label": "No source submitted"
+    }
+  ],
+  "sourceTypes": [
+    {
+      "id": "direct",
+      "label": "Direct video"
+    },
+    {
+      "id": "embed",
+      "label": "Embed"
+    }
+  ]
+}

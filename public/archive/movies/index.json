@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 3,
+  "id": "movies",
+  "type": "series",
+  "description": "The theatrical films catalogue, numbered in release order. Records document titles, dates, and viewing sources as they are contributed.",
+  "entries": [
+    {
+      "id": "movie-0001",
+      "number": 1,
+      "path": "0001.json"
+    },
+    {
+      "id": "movie-0002",
+      "number": 2,
+      "path": "0002.json"
+    },
+    {
+      "id": "movie-0003",
+      "number": 3,
+      "path": "0003.json"
+    },
+    {
+      "id": "movie-0004",
+      "number": 4,
+      "path": "0004.json"
+    },
+    {
+      "id": "movie-0005",
+      "number": 5,
+      "path": "0005.json"
+    },
+    {
+      "id": "movie-0006",
+      "number": 6,
+      "path": "0006.json"
+    }
+  ],
+  "title": "Movies"
+}
