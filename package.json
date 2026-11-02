@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/fix-asset-paths.mjs && node scripts/make-spa-fallback.mjs",
     "preview": "vite preview",
     "validate": "node scripts/validate-catalog.js",
-    "build:surge": "npm run build && node scripts/make-spa-fallback.mjs",
+    "build:surge": "VITE_BASE_PATH=/ vite build && node scripts/make-spa-fallback.mjs",
     "test:edge-logic": "node scripts/test-edge-logic.mjs"
   },
   "license": "MIT",
