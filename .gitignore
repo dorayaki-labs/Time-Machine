@@ -5,6 +5,7 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.production
 .vite/
 # Local handbook for data editors — kept out of git on purpose
 EDITORS_GUIDE.md

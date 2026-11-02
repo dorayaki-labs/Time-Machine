@@ -1,0 +1,102 @@
+diff --git a/.env.production b/.env.production
+new file mode 100644
+index 0000000..c064310
+--- /dev/null
++++ b/.env.production
+@@ -0,0 +1,5 @@
++# The GitHub Pages site lives at karrizzmaa.github.io/time-machine/ — bake the
++# prefix into every production build so asset URLs are correct even when CI
++# does not set VITE_BASE_PATH. An environment variable always wins over this
++# file (the Surge mirror builds with VITE_BASE_PATH=/).
++VITE_BASE_PATH=/time-machine/
+diff --git a/.gitignore b/.gitignore
+index cda32b4..0a39f53
+--- a/.gitignore
++++ b/.gitignore
+@@ -5,6 +5,7 @@ dist/
+ .env
+ .env.*
+ !.env.example
++!.env.production
+ .vite/
+ # Local handbook for data editors — kept out of git on purpose
+ EDITORS_GUIDE.md
+diff --git a/deploy-surge.sh b/deploy-surge.sh
+index e2254a5..0d18c3a
+--- a/deploy-surge.sh
++++ b/deploy-surge.sh
+@@ -1,11 +1,13 @@
+ #!/usr/bin/env bash
+ # Deploy helper for Surge (free static hosting, no custom domain needed).
+ #
+-#   npm run build && ./deploy-surge.sh your-subdomain.surge.sh
++#   ./deploy-surge.sh your-subdomain.surge.sh
+ #
+-# Surge reads dist/200.html as the SPA fallback automatically. Before the
+-# first deploy run: npm i -g surge && surge login
++# Surge hosts at the domain root, so this builds with VITE_BASE_PATH=/ (it
++# overrides .env.production). Surge reads dist/200.html as the SPA fallback
++# automatically. Before the first deploy run: npm i -g surge && surge login
+ set -euo pipefail
+ target="${1:?Usage: ./deploy-surge.sh your-subdomain.surge.sh}"
+ command -v surge >/dev/null || npm i -g surge
++VITE_BASE_PATH=/ npm run build
+ surge dist "$target" --domain "$target"
+diff --git a/vite.config.js b/vite.config.js
+index a8db786..bed7dbc
+--- a/vite.config.js
++++ b/vite.config.js
+@@ -1,10 +1,10 @@
+-import { defineConfig } from 'vite';
++import { defineConfig, loadEnv } from 'vite';
+ import react from '@vitejs/plugin-react';
+ import { fileURLToPath } from 'node:url';
+ 
+ // Rewrites %BASE_URL% in index.html so font/icon references follow the
+ // configured base path on both hosting targets.
+-function baseUrlPlugin() {
++function baseUrlPlugin(basePath) {
+   return {
+     name: 'tm-base-url',
+     transformIndexHtml: {
+@@ -16,22 +16,25 @@ function baseUrlPlugin() {
+ 
+ const r = (p) => fileURLToPath(new URL(p, import.meta.url));
+ 
+-// GitHub Pages serves project sites under /<repo>/ — set VITE_BASE_PATH when
+-// building for it (the Pages workflow does this automatically). Surge and
+-// local development use the default "/".
+-const basePath = process.env.VITE_BASE_PATH || '/';
++// GitHub Pages serves project sites under /<repo>/ — the build must know that
++// prefix or every asset URL lands at the domain root. Resolution order: real
++// environment variable (CI) → .env.production file (so any build gets the
++// right base even when CI vars are missing) → "/" for dev and root hosting.
++export default defineConfig(({ mode }) => {
++  const fileEnv = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), '');
++  const basePath = process.env.VITE_BASE_PATH || fileEnv.VITE_BASE_PATH || '/';
+ 
+-export default defineConfig({
+-  base: basePath,
+-  plugins: [react(), baseUrlPlugin()],
++  return {
++    base: basePath,
++    plugins: [react(), baseUrlPlugin(basePath)],
+ 
+-  resolve: {
+-    alias: {
+-      '@': r('./src'),
++    resolve: {
++      alias: {
++        '@': r('./src'),
++      },
++    },
++    build: {
++      chunkSizeWarningLimit: 900,
+     },
+-  },
+-  build: {
+-    chunkSizeWarningLimit: 900,
+-  },
++  };
+ });
+-
