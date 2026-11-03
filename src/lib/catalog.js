@@ -177,14 +177,6 @@ export async function loadRecord(entryOrId) {
  */
 export const getRawEntry = (id) => state.rawEntries.get(id) ?? null;
 
-/**
- * The RAW record file behind an entry id, exactly as stored in the repository
- * (no roster merge, no derived fields). This is what editing and committing
- * must round-trip through. Null when the id is unknown or its file failed to
- * load.
- */
-export const getRawEntry = (id) => state.rawEntries.get(id) ?? null;
-
 /** Previous and next documented entry in the same catalogue. Gaps in numbering are fine. */
 export function getNeighbors(entry) {
   const list = [...getEntries(entry.seriesId)].sort((a, b) => a.number - b.number);
