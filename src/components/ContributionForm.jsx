@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
-import { validateForm } from '@/lib/contributionForms.js';
+import { validateForm, normalizeUrl } from '@/lib/contributionForms.js';
 import { getEntry } from '@/lib/catalog.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { submitContribution } from '@/lib/staffApi.js';
@@ -53,16 +53,23 @@ export default function ContributionForm({ category }) {
     }
     // Signed in with a configured backend: submit for real. The server
     // re-validates everything, applies rate limits, and returns a number.
+    // Bare domains (example.com/page) are coerced to https:// before sending.
     if (user && backendConfigured) {
+      const normalized = { ...values };
+      for (const f of fields) {
+        if ((f.validate === 'url' || f.validate === 'urlList') && typeof normalized[f.name] === 'string') {
+          normalized[f.name] = normalized[f.name].split(/\r?\n/).map(normalizeUrl).join('\n');
+        }
+      }
       setStatus('submitting');
       setSubmitError(null);
       try {
         const res = await submitContribution({
           type: category.id,
-          title: suggestionTitle(category, values),
-          entryId: typeof values.entryId === 'string' && values.entryId.trim() ? values.entryId.trim() : null,
-          payload: values,
-          honeypot: values.company ?? null,
+          title: suggestionTitle(category, normalized),
+          entryId: typeof normalized.entryId === 'string' && normalized.entryId.trim() ? normalized.entryId.trim() : null,
+          payload: normalized,
+          honeypot: normalized.company ?? null,
         });
         setResult({ number: res.number, submitted: true });
         setStatus('done');

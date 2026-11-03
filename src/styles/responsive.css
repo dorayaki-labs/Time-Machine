@@ -1,5 +1,6 @@
-/* Laptop and below */
-@media (max-width: 1060px) {
+/* Small laptop and below: the full desktop nav no longer fits, so it moves
+   into the burger menu instead of wrapping inside the header. */
+@media (max-width: 1280px) {
   .primary-nav { display: none; }
   .menu-btn { display: inline-grid; }
   .search-btn__kbd { display: none; }

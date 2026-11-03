@@ -1,0 +1,268 @@
+diff --git a/src/components/AccountMenu.jsx b/src/components/AccountMenu.jsx
+index b1af1d4..dc28790
+--- a/src/components/AccountMenu.jsx
++++ b/src/components/AccountMenu.jsx
+@@ -56,7 +56,7 @@ export default function AccountMenu() {
+         <div className="account-menu__panel" role="menu" aria-label="Account">
+           <div className="account-menu__who">
+             <strong>{name}</strong>
+-            <span className="account-menu__role account-menu__role--{role}">{role}</span>
++            <span className={`account-menu__role account-menu__role--${role}`}>{role}</span>
+           </div>
+           <ul className="account-menu__links">
+             <li><Link role="menuitem" to="/account" onClick={() => setOpen(false)}><Icon name="user" size={15} /> My contributions</Link></li>
+diff --git a/src/components/ContributionForm.jsx b/src/components/ContributionForm.jsx
+index d8117e4..2c2ae2e
+--- a/src/components/ContributionForm.jsx
++++ b/src/components/ContributionForm.jsx
+@@ -1,7 +1,7 @@
+ import { useId, useState } from 'react';
+ import { Link } from 'react-router-dom';
+ import Icon from './Icon.jsx';
+-import { validateForm } from '@/lib/contributionForms.js';
++import { validateForm, normalizeUrl } from '@/lib/contributionForms.js';
+ import { getEntry } from '@/lib/catalog.js';
+ import { useAuth } from '@/hooks/useAuth.jsx';
+ import { submitContribution } from '@/lib/staffApi.js';
+@@ -53,16 +53,23 @@ export default function ContributionForm({ category }) {
+     }
+     // Signed in with a configured backend: submit for real. The server
+     // re-validates everything, applies rate limits, and returns a number.
++    // Bare domains (example.com/page) are coerced to https:// before sending.
+     if (user && backendConfigured) {
++      const normalized = { ...values };
++      for (const f of fields) {
++        if ((f.validate === 'url' || f.validate === 'urlList') && typeof normalized[f.name] === 'string') {
++          normalized[f.name] = normalized[f.name].split(/\r?\n/).map(normalizeUrl).join('\n');
++        }
++      }
+       setStatus('submitting');
+       setSubmitError(null);
+       try {
+         const res = await submitContribution({
+           type: category.id,
+-          title: suggestionTitle(category, values),
+-          entryId: typeof values.entryId === 'string' && values.entryId.trim() ? values.entryId.trim() : null,
+-          payload: values,
+-          honeypot: values.company ?? null,
++          title: suggestionTitle(category, normalized),
++          entryId: typeof normalized.entryId === 'string' && normalized.entryId.trim() ? normalized.entryId.trim() : null,
++          payload: normalized,
++          honeypot: normalized.company ?? null,
+         });
+         setResult({ number: res.number, submitted: true });
+         setStatus('done');
+diff --git a/src/components/Footer.jsx b/src/components/Footer.jsx
+index a5afbb1..f2186d0
+--- a/src/components/Footer.jsx
++++ b/src/components/Footer.jsx
+@@ -29,6 +29,8 @@ export default function Footer() {
+             <li><Link to="/about">About</Link></li>
+             <li><Link to="/contribute">Contribute</Link></li>
+             <li><Link to="/search">Search</Link></li>
++            <li><Link to="/stats">Statistics</Link></li>
++            <li><Link to="/log">Contribution log</Link></li>
+           </ul>
+         </nav>
+       </div>
+diff --git a/src/components/Header.jsx b/src/components/Header.jsx
+index b78a4d6..0022540
+--- a/src/components/Header.jsx
++++ b/src/components/Header.jsx
+@@ -29,8 +29,11 @@ export default function Header() {
+         </Link>
+ 
+         <nav className="primary-nav" aria-label="Primary">
++          {/* Statistics and the contribution log stay out of the desktop bar
++              (they are in the account menu and the footer): eleven items do
++              not fit on one row without pushing into the buttons. */}
+           <ul>
+-            {NAV_ITEMS.map((item) => (
++            {NAV_ITEMS.filter((item) => item.to !== '/stats' && item.to !== '/log').map((item) => (
+               <li key={item.to}>
+                 <NavLink to={item.to} end={item.end} className={({ isActive }) => `primary-nav__link${isActive ? ' is-active' : ''}`}>
+                   {item.label}
+diff --git a/src/lib/backend.js b/src/lib/backend.js
+index e58088a..f6a5ceb
+--- a/src/lib/backend.js
++++ b/src/lib/backend.js
+@@ -21,9 +21,21 @@ export async function callFunction(name, body) {
+   const { data: { session } } = await supabase.auth.getSession();
+   const headers = { 'Content-Type': 'application/json' };
+   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+-  const res = await fetch(`${url}/functions/v1/${name}`, {
+-    method: 'POST', headers, body: JSON.stringify(body ?? {}),
+-  });
++  let res;
++  try {
++    res = await fetch(`${url}/functions/v1/${name}`, {
++      method: 'POST', headers, body: JSON.stringify(body ?? {}),
++    });
++  } catch {
++    // A rejected fetch here is almost always a blocked CORS preflight (the
++    // backend's ALLOWED_ORIGINS secret missing this exact site address), not
++    // a user-facing network problem.
++    throw new Error(
++      'Could not reach the submission service. If the site address changed '
++      + 'recently, the backend ALLOWED_ORIGINS secret must include it exactly — '
++      + 'see DEPLOYMENT.md, step D8.',
++    );
++  }
+   let parsed = null;
+   try { parsed = await res.json(); } catch { /* non-JSON error */ }
+   if (!res.ok) {
+diff --git a/src/lib/contributionForms.js b/src/lib/contributionForms.js
+index ea6fc8a..89e55af
+--- a/src/lib/contributionForms.js
++++ b/src/lib/contributionForms.js
+@@ -4,7 +4,7 @@ import { getLanguages } from './catalog.js';
+ import { parseDate } from './dates.js';
+ 
+ const langOptions = () => getLanguages().map((l) => ({ value: l.code, label: `${l.name} (${l.native})` }));
+-const urlList = (label = 'Reference URLs') => ({ name: 'references', label, type: 'textarea', rows: 3, validate: 'urlList', help: 'One link per line. Use http or https.' });
++const urlList = (label = 'Reference URLs') => ({ name: 'references', label, type: 'textarea', rows: 3, validate: 'urlList', help: 'One link per line, e.g. https://example.com/page — leave empty if you have none.' });
+ 
+ export const CONTRIBUTION_CATEGORIES = [
+   {
+@@ -84,7 +84,7 @@ export const CONTRIBUTION_CATEGORIES = [
+     fields: () => [
+       { name: 'entryId', label: 'Entry ID (if for one entry)', type: 'text', placeholder: 'e.g. movie-0002', validate: 'entryId' },
+       { name: 'title', label: 'Reference title', type: 'text', required: true, placeholder: 'e.g. Episode list — Japanese Wikipedia' },
+-      { name: 'url', label: 'Reference URL', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book' },
++      { name: 'url', label: 'Reference URL (web sources only)', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book', help: 'For a book, magazine or other offline source, leave this empty and name the source in "What does it verify?" below.' },
+       { name: 'type', label: 'Reference type', type: 'select', required: true, options: [
+         { value: 'episode list', label: 'Episode list' }, { value: 'article', label: 'Article' },
+         { value: 'book', label: 'Book or print' }, { value: 'note', label: 'Note' }] },
+@@ -131,6 +131,16 @@ export const CONTRIBUTION_CATEGORIES = [
+ 
+ const isUrl = (v) => { try { const u = new URL(v); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; } };
+ 
++/** Accepts bare domains (example.com/page) by adding the https:// scheme;
++ *  leaves full URLs, empty lines and <iframe> snippets untouched. */
++export const normalizeUrl = (line) => {
++  const s = String(line ?? '').trim();
++  if (!s || /^(https?:\/\/|<)/i.test(s)) return s;
++  return /^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(s) ? `https://${s}` : s;
++};
++
++const urlLines = (v) => String(v ?? '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
++
+ /** Returns an object of { fieldName: message } for every problem found. */
+ export function validateForm(fields, values, { entryExists } = {}) {
+   const errors = {};
+@@ -141,9 +151,9 @@ export function validateForm(fields, values, { entryExists } = {}) {
+     if (v === undefined || v === null || v === '') continue;
+     if (f.type === 'number' && (!Number.isInteger(Number(v)) || Number(v) < (f.min ?? 0))) errors[f.name] = `${f.label} must be a whole number of ${f.min ?? 0} or more.`;
+     if (f.validate === 'date' && !parseDate(v)) errors[f.name] = 'Use the format YYYY, YYYY-MM or YYYY-MM-DD (for example 2005-04-15).';
+-    if (f.validate === 'url' && !isUrl(v)) errors[f.name] = 'Enter a full web address starting with http:// or https://.';
++    if (f.validate === 'url' && !isUrl(normalizeUrl(v))) errors[f.name] = 'Enter a full web address starting with http:// or https://. For offline sources such as a book, leave this empty and name the source in the notes instead.';
+     if (f.validate === 'urlList') {
+-      const bad = v.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).filter((s) => !isUrl(s));
++      const bad = urlLines(v).filter((s) => !isUrl(normalizeUrl(s)));
+       if (bad.length) errors[f.name] = `These do not look like web addresses: ${bad.slice(0, 2).join(', ')}${bad.length > 2 ? '…' : ''}`;
+     }
+     if (f.validate === 'entryId') {
+diff --git a/src/lib/stats.js b/src/lib/stats.js
+index 2d0c19d..b2e1e3b
+--- a/src/lib/stats.js
++++ b/src/lib/stats.js
+@@ -40,9 +40,12 @@ export async function fetchMyContributions() {
+ /** Staff: all submissions with contributor info, filtered and paged. */
+ export async function fetchSubmissions({ status = 'all', type = 'all', search = '', limit = 50 } = {}) {
+   if (!backendConfigured || !supabase) return null;
++  // Embedding profiles twice in one query breaks on some PostgREST versions
++  // ("table name ... specified more than once"), so the people are fetched in
++  // a second query and stitched in here.
+   let query = supabase
+     .from('contributions')
+-    .select('*, profiles!contributions_contributor_id_fkey(display_name, avatar_url, role), profiles!contributions_reviewer_id_fkey(display_name)')
++    .select('*')
+     .order('created_at', { ascending: false })
+     .limit(limit);
+   if (status !== 'all') query = query.eq('status', status);
+@@ -50,7 +53,16 @@ export async function fetchSubmissions({ status = 'all', type = 'all', search =
+   if (search.trim()) query = query.or(`title.ilike.%${search.trim()}%,entry_id.ilike.%${search.trim()}%`);
+   const { data, error } = await query;
+   if (error) throw new Error(error.message);
+-  return data ?? [];
++  const rows = data ?? [];
++  const ids = [...new Set(rows.flatMap((r) => [r.contributor_id, r.reviewer_id].filter(Boolean)))];
++  if (!ids.length) return rows;
++  const { data: people, error: peopleError } = await supabase
++    .from('profiles')
++    .select('id, display_name, avatar_url, role')
++    .in('id', ids);
++  if (peopleError) throw new Error(peopleError.message);
++  const byId = new Map((people ?? []).map((p) => [p.id, p]));
++  return rows.map((r) => ({ ...r, profiles: byId.get(r.contributor_id) ?? null }));
+ }
+ 
+ /** Staff: audit events, newest first. */
+diff --git a/src/pages/Staff.jsx b/src/pages/Staff.jsx
+index e198db1..5e58a39
+--- a/src/pages/Staff.jsx
++++ b/src/pages/Staff.jsx
+@@ -14,7 +14,7 @@ import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
+ import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
+ import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
+ import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
+-import { getEntry, getCharacter, getGadget, getSeries, getAllEntries } from '@/lib/catalog.js';
++import { getEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries } from '@/lib/catalog.js';
+ import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
+ 
+ const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
+diff --git a/src/styles/backend.css b/src/styles/backend.css
+index 03a3b27..eb2a4ae
+--- a/src/styles/backend.css
++++ b/src/styles/backend.css
+@@ -3,7 +3,7 @@
+    visual language. */
+ 
+ .account-menu { position: relative; margin-inline-end: 0.35rem; }
+-.account-menu__signin { padding: 0.42rem 0.9rem; font-size: 0.92rem; }
++.account-menu__signin { padding: 0.42rem 0.9rem; font-size: 0.92rem; white-space: nowrap; }
+ .account-menu__trigger {
+   display: inline-flex; align-items: center; justify-content: center;
+   width: 38px; height: 38px; border-radius: 50%;
+diff --git a/src/styles/navigation.css b/src/styles/navigation.css
+index c1734a3..8dc1d0d
+--- a/src/styles/navigation.css
++++ b/src/styles/navigation.css
+@@ -8,11 +8,11 @@
+ .brand { display: inline-flex; align-items: center; flex-shrink: 0; }
+ .brand img { height: 40px; width: auto; }
+ 
+-.primary-nav { margin-inline: auto; }
+-.primary-nav ul { display: flex; align-items: center; gap: var(--s-1); flex-wrap: wrap; }
++.primary-nav { margin-inline: auto; min-width: 0; }
++.primary-nav ul { display: flex; align-items: center; gap: var(--s-1); flex-wrap: nowrap; }
+ .primary-nav__link {
+-  position: relative; display: inline-block; padding: 7px 11px; border-radius: var(--r-sm);
+-  color: var(--text-2); font-size: 0.92rem; font-weight: 500;
++  position: relative; display: inline-block; padding: 7px 8px; border-radius: var(--r-sm);
++  color: var(--text-2); font-size: 0.9rem; font-weight: 500; white-space: nowrap;
+   transition: color 0.15s, background 0.15s;
+ }
+ .primary-nav__link:hover { color: var(--text); background: var(--surface-2); }
+@@ -22,7 +22,7 @@
+   background: var(--accent); border-radius: 2px;
+ }
+ 
+-.header-actions { display: flex; align-items: center; gap: var(--s-2); margin-left: auto; }
++.header-actions { display: flex; align-items: center; gap: var(--s-2); margin-left: auto; flex-shrink: 0; }
+ .search-btn { position: relative; width: auto; padding-inline: 10px; gap: 8px; color: var(--text-2); }
+ .search-btn:hover { color: var(--text); }
+ .search-btn__kbd {
+diff --git a/src/styles/responsive.css b/src/styles/responsive.css
+index ea1a4b9..d66f5df
+--- a/src/styles/responsive.css
++++ b/src/styles/responsive.css
+@@ -1,5 +1,6 @@
+-/* Laptop and below */
+-@media (max-width: 1060px) {
++/* Small laptop and below: the full desktop nav no longer fits, so it moves
++   into the burger menu instead of wrapping inside the header. */
++@media (max-width: 1280px) {
+   .primary-nav { display: none; }
+   .menu-btn { display: inline-grid; }
+   .search-btn__kbd { display: none; }

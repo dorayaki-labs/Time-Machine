@@ -4,7 +4,7 @@ import { getLanguages } from './catalog.js';
 import { parseDate } from './dates.js';
 
 const langOptions = () => getLanguages().map((l) => ({ value: l.code, label: `${l.name} (${l.native})` }));
-const urlList = (label = 'Reference URLs') => ({ name: 'references', label, type: 'textarea', rows: 3, validate: 'urlList', help: 'One link per line. Use http or https.' });
+const urlList = (label = 'Reference URLs') => ({ name: 'references', label, type: 'textarea', rows: 3, validate: 'urlList', help: 'One link per line, e.g. https://example.com/page — leave empty if you have none.' });
 
 export const CONTRIBUTION_CATEGORIES = [
   {
@@ -84,7 +84,7 @@ export const CONTRIBUTION_CATEGORIES = [
     fields: () => [
       { name: 'entryId', label: 'Entry ID (if for one entry)', type: 'text', placeholder: 'e.g. movie-0002', validate: 'entryId' },
       { name: 'title', label: 'Reference title', type: 'text', required: true, placeholder: 'e.g. Episode list — Japanese Wikipedia' },
-      { name: 'url', label: 'Reference URL', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book' },
+      { name: 'url', label: 'Reference URL (web sources only)', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book', help: 'For a book, magazine or other offline source, leave this empty and name the source in "What does it verify?" below.' },
       { name: 'type', label: 'Reference type', type: 'select', required: true, options: [
         { value: 'episode list', label: 'Episode list' }, { value: 'article', label: 'Article' },
         { value: 'book', label: 'Book or print' }, { value: 'note', label: 'Note' }] },
@@ -131,6 +131,16 @@ export const CONTRIBUTION_CATEGORIES = [
 
 const isUrl = (v) => { try { const u = new URL(v); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; } };
 
+/** Accepts bare domains (example.com/page) by adding the https:// scheme;
+ *  leaves full URLs, empty lines and <iframe> snippets untouched. */
+export const normalizeUrl = (line) => {
+  const s = String(line ?? '').trim();
+  if (!s || /^(https?:\/\/|<)/i.test(s)) return s;
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(s) ? `https://${s}` : s;
+};
+
+const urlLines = (v) => String(v ?? '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+
 /** Returns an object of { fieldName: message } for every problem found. */
 export function validateForm(fields, values, { entryExists } = {}) {
   const errors = {};
@@ -141,9 +151,9 @@ export function validateForm(fields, values, { entryExists } = {}) {
     if (v === undefined || v === null || v === '') continue;
     if (f.type === 'number' && (!Number.isInteger(Number(v)) || Number(v) < (f.min ?? 0))) errors[f.name] = `${f.label} must be a whole number of ${f.min ?? 0} or more.`;
     if (f.validate === 'date' && !parseDate(v)) errors[f.name] = 'Use the format YYYY, YYYY-MM or YYYY-MM-DD (for example 2005-04-15).';
-    if (f.validate === 'url' && !isUrl(v)) errors[f.name] = 'Enter a full web address starting with http:// or https://.';
+    if (f.validate === 'url' && !isUrl(normalizeUrl(v))) errors[f.name] = 'Enter a full web address starting with http:// or https://. For offline sources such as a book, leave this empty and name the source in the notes instead.';
     if (f.validate === 'urlList') {
-      const bad = v.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).filter((s) => !isUrl(s));
+      const bad = urlLines(v).filter((s) => !isUrl(normalizeUrl(s)));
       if (bad.length) errors[f.name] = `These do not look like web addresses: ${bad.slice(0, 2).join(', ')}${bad.length > 2 ? '…' : ''}`;
     }
     if (f.validate === 'entryId') {

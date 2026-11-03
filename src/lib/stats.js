@@ -40,9 +40,12 @@ export async function fetchMyContributions() {
 /** Staff: all submissions with contributor info, filtered and paged. */
 export async function fetchSubmissions({ status = 'all', type = 'all', search = '', limit = 50 } = {}) {
   if (!backendConfigured || !supabase) return null;
+  // Embedding profiles twice in one query breaks on some PostgREST versions
+  // ("table name ... specified more than once"), so the people are fetched in
+  // a second query and stitched in here.
   let query = supabase
     .from('contributions')
-    .select('*, profiles!contributions_contributor_id_fkey(display_name, avatar_url, role), profiles!contributions_reviewer_id_fkey(display_name)')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (status !== 'all') query = query.eq('status', status);
@@ -50,7 +53,16 @@ export async function fetchSubmissions({ status = 'all', type = 'all', search = 
   if (search.trim()) query = query.or(`title.ilike.%${search.trim()}%,entry_id.ilike.%${search.trim()}%`);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const rows = data ?? [];
+  const ids = [...new Set(rows.flatMap((r) => [r.contributor_id, r.reviewer_id].filter(Boolean)))];
+  if (!ids.length) return rows;
+  const { data: people, error: peopleError } = await supabase
+    .from('profiles')
+    .select('id, display_name, avatar_url, role')
+    .in('id', ids);
+  if (peopleError) throw new Error(peopleError.message);
+  const byId = new Map((people ?? []).map((p) => [p.id, p]));
+  return rows.map((r) => ({ ...r, profiles: byId.get(r.contributor_id) ?? null }));
 }
 
 /** Staff: audit events, newest first. */

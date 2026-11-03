@@ -21,9 +21,21 @@ export async function callFunction(name, body) {
   const { data: { session } } = await supabase.auth.getSession();
   const headers = { 'Content-Type': 'application/json' };
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-  const res = await fetch(`${url}/functions/v1/${name}`, {
-    method: 'POST', headers, body: JSON.stringify(body ?? {}),
-  });
+  let res;
+  try {
+    res = await fetch(`${url}/functions/v1/${name}`, {
+      method: 'POST', headers, body: JSON.stringify(body ?? {}),
+    });
+  } catch {
+    // A rejected fetch here is almost always a blocked CORS preflight (the
+    // backend's ALLOWED_ORIGINS secret missing this exact site address), not
+    // a user-facing network problem.
+    throw new Error(
+      'Could not reach the submission service. If the site address changed '
+      + 'recently, the backend ALLOWED_ORIGINS secret must include it exactly — '
+      + 'see DEPLOYMENT.md, step D8.',
+    );
+  }
   let parsed = null;
   try { parsed = await res.json(); } catch { /* non-JSON error */ }
   if (!res.ok) {

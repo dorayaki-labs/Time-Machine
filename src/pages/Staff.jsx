@@ -14,7 +14,7 @@ import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
 import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
 import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
 import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
-import { getEntry, getCharacter, getGadget, getSeries, getAllEntries } from '@/lib/catalog.js';
+import { getEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries } from '@/lib/catalog.js';
 import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');

@@ -56,7 +56,7 @@ export default function AccountMenu() {
         <div className="account-menu__panel" role="menu" aria-label="Account">
           <div className="account-menu__who">
             <strong>{name}</strong>
-            <span className="account-menu__role account-menu__role--{role}">{role}</span>
+            <span className={`account-menu__role account-menu__role--${role}`}>{role}</span>
           </div>
           <ul className="account-menu__links">
             <li><Link role="menuitem" to="/account" onClick={() => setOpen(false)}><Icon name="user" size={15} /> My contributions</Link></li>

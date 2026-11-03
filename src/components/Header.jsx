@@ -29,8 +29,11 @@ export default function Header() {
         </Link>
 
         <nav className="primary-nav" aria-label="Primary">
+          {/* Statistics and the contribution log stay out of the desktop bar
+              (they are in the account menu and the footer): eleven items do
+              not fit on one row without pushing into the buttons. */}
           <ul>
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.filter((item) => item.to !== '/stats' && item.to !== '/log').map((item) => (
               <li key={item.to}>
                 <NavLink to={item.to} end={item.end} className={({ isActive }) => `primary-nav__link${isActive ? ' is-active' : ''}`}>
                   {item.label}
