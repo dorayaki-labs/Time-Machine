@@ -2,20 +2,25 @@
   {
     "id": "char-doraemon",
     "name": {
-      "en": "Character 1",
-      "ja": null
+      "en": "Doraemon",
+      "ja": "ドラえもん "
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Doraemon",
+      "The Blue Robot Cat",
+      "Gadget Cat",
+      "Future Cat"
+    ],
+    "description": "A robotic cat from the 22nd century sent back in time to help Nobita Nobi using futuristic gadgets from his four-dimensional pocket.",
     "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/kD3hHRfw/image.png",
+      "alt": "Doraemon "
     },
     "voiceActors": [],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Doraemon first appeared as a character in the Doraemon manga series (1969), published in Japan by Shogakukan."
     },
     "references": []
   },
