@@ -6,6 +6,7 @@ import MediaImage from '@/components/MediaImage.jsx';
 import SourceList from '@/components/SourceList.jsx';
 import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+import EntryActions from '@/components/EntryActions.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, ReferencesSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
 import NotFound from './NotFound.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
@@ -47,6 +48,8 @@ export default function EpisodeDetails({ seriesId }) {
           {record.preservation ? <StatusIndicator kind="preservation" value={record.preservation} /> : null}
         </div>
       </header>
+
+      <EntryActions entry={entry} />
 
       <div className="detail-columns">
         <div className="detail-columns__media">

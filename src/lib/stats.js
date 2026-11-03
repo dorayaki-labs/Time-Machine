@@ -13,13 +13,29 @@ export async function fetchPublicStats() {
   return data;
 }
 
-/** Accepted contributions, newest first — the public log. */
-export async function fetchPublicLog({ limit = 50 } = {}) {
+/** Every contribution event, newest first — the public activity feed. One
+    row per submission with its current status; payloads and review reasons
+    never leave the database. */
+export async function fetchPublicLog({ limit = 60 } = {}) {
   if (!backendConfigured || !supabase) return null;
   const { data, error } = await supabase
     .from('public_log')
-    .select('number, title, type, entry_id, entry_series, contributor_name, accepted_at')
-    .order('accepted_at', { ascending: false })
+    .select(`number, title, type, entry_id, entry_series, status,
+             submitted_at, reviewed_at, contributor_name, contributor_username,
+             contributor_avatar, reviewer_name, reviewer_avatar`)
+    .order('submitted_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+/** Direct archive edits and deletions (public metadata only). */
+export async function fetchPublicEdits({ limit = 60 } = {}) {
+  if (!backendConfigured || !supabase) return null;
+  const { data, error } = await supabase
+    .from('public_edits')
+    .select('id, action, entity_type, entity_id, commit_sha, created_at, editor_name, editor_username, editor_avatar')
+    .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw new Error(error.message);
   return data ?? [];

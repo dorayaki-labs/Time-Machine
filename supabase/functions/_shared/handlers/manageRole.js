@@ -10,7 +10,7 @@
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { checkRoleAction, isOwner } from '../rbac.js';
-import { enqueue, flushOutbox } from '../discord.js';
+import { notify, flushOutbox } from '../discord.js';
 
 export async function handleManageRole(req, { db, authApi, env, webhookUrl }) {
   const pre = preflight(req, env);
@@ -54,7 +54,7 @@ export async function handleManageRole(req, { db, authApi, env, webhookUrl }) {
     entity_type: 'role', entity_id: role,
     review_notes: typeof reason === 'string' ? reason.slice(0, 2000) : null,
   });
-  await enqueue(db, `role.${target.id}.${action}.${role}.${Date.now()}`, 'role', {
+  await notify(db, webhookUrl, `role.${target.id}.${action}.${role}.${Date.now()}`, 'role', {
     target: target.display_name, role, action: action === 'grant' ? 'granted' : 'revoked',
     actor: actor.display_name,
   });

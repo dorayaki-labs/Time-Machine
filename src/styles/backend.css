@@ -95,3 +95,5 @@
   .submission__fields .row { grid-template-columns: 1fr; gap: 0.15rem; }
   .account-menu__panel { right: -40px; }
 }
+
+.submission__who { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }

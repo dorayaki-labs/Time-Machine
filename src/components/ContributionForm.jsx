@@ -26,16 +26,40 @@ function Field({ field, value, error, onChange, formId }) {
   );
 }
 
-export default function ContributionForm({ category }) {
+export default function ContributionForm({ category, initialValues = null }) {
   const formId = useId();
   const fields = category.fields();
-  const { user, backendConfigured, signIn } = useAuth();
-  const [values, setValues] = useState({});
+  const { user, ready, backendConfigured, signIn } = useAuth();
+  const [values, setValues] = useState(initialValues ?? {});
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle'); // idle | submitting | done
   const [result, setResult] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [copied, setCopied] = useState(false);
+
+  // The backend rejects unauthenticated submissions, so the UI shows the
+  // login prompt instead of a form that could only fail. Auth state loads
+  // asynchronously — wait for it so a signed-in user never sees a flash of
+  // the prompt.
+  if (backendConfigured && ready && !user) {
+    return (
+      <div className="submission-result submission-result--gate" role="note">
+        <span className="submission-result__icon"><Icon name="user" size={24} /></span>
+        <h3>Sign in to contribute</h3>
+        <p>Contributions are tied to a Discord account so the community can credit you, follow up
+          on your submission, and keep the archive accountable. Browsing never needs an account —
+          contributing always does.</p>
+        <div className="btn-row">
+          <button type="button" className="btn btn--primary" onClick={signIn}>
+            <Icon name="user" size={16} /> Sign in with Discord
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (backendConfigured && !ready) {
+    return <p className="muted small">Checking your session…</p>;
+  }
 
   const onChange = (name, value) => {
     setValues((v) => ({ ...v, [name]: value }));

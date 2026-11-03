@@ -65,6 +65,10 @@ export function makeDb(admin) {
     // ---- notification outbox ------------------------------------------------
     insert: (table, row) => admin.from(table).insert(row),
 
+    outboxByKey: (eventKey) =>
+      admin.from('notification_outbox').select('*').eq('event_key', eventKey).maybeSingle()
+        .then((r) => r.data),
+
     staleOutbox: (limit) =>
       admin.from('notification_outbox').select('*')
         .eq('status', 'pending')

@@ -113,3 +113,190 @@
   --scrollbar-thumb-hover: #4d5a70;
   --scrollbar-track: transparent;
 }
+
+/* ---------------------------------------------------------------------------
+   Five custom themes. Each block is a full design system: surfaces, ink,
+   accent, status colours, shadows and scrollbars — not just a background
+   swap. Keep ids in sync with THEMES in src/hooks/useTheme.js and the
+   inline script in index.html.
+   --------------------------------------------------------------------------- */
+
+:root[data-theme='midnight'] {
+  color-scheme: dark;
+
+  --bg: #0d1220;
+  --bg-2: #090d17;
+  --surface: #141b2d;
+  --surface-2: #1a2338;
+  --surface-3: #212c46;
+  --border: #263352;
+  --border-strong: #384873;
+
+  --text: #e3e9f5;
+  --text-2: #a4b1c9;
+  --text-3: #6d7c99;
+
+  --accent: #7aa5e8;
+  --accent-hover: #97bdf0;
+  --accent-soft: rgba(122, 165, 232, 0.14);
+  --accent-line: rgba(122, 165, 232, 0.4);
+  --on-accent: #0c1526;
+
+  --ok: #7fd0a0;
+  --info: #7aa5e8;
+  --warn: #e0c07e;
+  --bad: #e29a9a;
+  --review: #b3a6ef;
+  --neutral: #6d7c99;
+
+  --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 5px 18px rgba(0, 0, 0, 0.38);
+
+  --scrollbar-thumb: #2c3a5e;
+  --scrollbar-thumb-hover: #3c4d7a;
+  --scrollbar-track: transparent;
+}
+
+:root[data-theme='sakura'] {
+  color-scheme: light;
+
+  --bg: #faf3f4;
+  --bg-2: #f4e9ec;
+  --surface: #fdf9fa;
+  --surface-2: #f7ecef;
+  --surface-3: #f0dfe4;
+  --border: #e3ccd4;
+  --border-strong: #cfafb9;
+
+  --text: #3a2a30;
+  --text-2: #7a5f68;
+  --text-3: #a98f98;
+
+  --accent: #c25574;
+  --accent-hover: #a84463;
+  --accent-soft: rgba(194, 85, 116, 0.09);
+  --accent-line: rgba(194, 85, 116, 0.35);
+  --on-accent: #fdf7f9;
+
+  --ok: #3f8757;
+  --info: #b04a68;
+  --warn: #9a6b1d;
+  --bad: #b23f3f;
+  --review: #8a5fa8;
+  --neutral: #a98f98;
+
+  --shadow-soft: 0 10px 34px rgba(58, 42, 48, 0.1);
+  --shadow-card: 0 5px 18px rgba(58, 42, 48, 0.07);
+
+  --scrollbar-thumb: #cfafb9;
+  --scrollbar-thumb-hover: #b8929e;
+  --scrollbar-track: transparent;
+}
+
+:root[data-theme='ocean'] {
+  color-scheme: dark;
+
+  --bg: #071824;
+  --bg-2: #041018;
+  --surface: #0c2231;
+  --surface-2: #102c3e;
+  --surface-3: #15374c;
+  --border: #1a4258;
+  --border-strong: #265a75;
+
+  --text: #e0eef4;
+  --text-2: #9db8c6;
+  --text-3: #64879a;
+
+  --accent: #4cc9d9;
+  --accent-hover: #7ad9e5;
+  --accent-soft: rgba(76, 201, 217, 0.13);
+  --accent-line: rgba(76, 201, 217, 0.4);
+  --on-accent: #04222a;
+
+  --ok: #63c79a;
+  --info: #4cc9d9;
+  --warn: #d9c06c;
+  --bad: #e08f8f;
+  --review: #9a8ce0;
+  --neutral: #64879a;
+
+  --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 5px 18px rgba(0, 0, 0, 0.36);
+
+  --scrollbar-thumb: #1f4f68;
+  --scrollbar-thumb-hover: #2b6a88;
+  --scrollbar-track: transparent;
+}
+
+:root[data-theme='forest'] {
+  color-scheme: dark;
+
+  --bg: #10160f;
+  --bg-2: #0b100a;
+  --surface: #18211a;
+  --surface-2: #1f2a21;
+  --surface-3: #263327;
+  --border: #2c3a2e;
+  --border-strong: #40543f;
+
+  --text: #e6ece2;
+  --text-2: #adbcaa;
+  --text-3: #7d8a77;
+
+  --accent: #93c78e;
+  --accent-hover: #aed8aa;
+  --accent-soft: rgba(147, 199, 142, 0.12);
+  --accent-line: rgba(147, 199, 142, 0.38);
+  --on-accent: #12200f;
+
+  --ok: #93c78e;
+  --info: #86b9d9;
+  --warn: #d4bb77;
+  --bad: #dd9090;
+  --review: #a99ad9;
+  --neutral: #7d8a77;
+
+  --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 5px 18px rgba(0, 0, 0, 0.32);
+
+  --scrollbar-thumb: #33452f;
+  --scrollbar-thumb-hover: #455c40;
+  --scrollbar-track: transparent;
+}
+
+:root[data-theme='amethyst'] {
+  color-scheme: dark;
+
+  --bg: #14101d;
+  --bg-2: #0e0b15;
+  --surface: #1d1729;
+  --surface-2: #251d34;
+  --surface-3: #2d2440;
+  --border: #332a4a;
+  --border-strong: #483c66;
+
+  --text: #ece7f5;
+  --text-2: #b7aecd;
+  --text-3: #857b9c;
+
+  --accent: #b79aec;
+  --accent-hover: #c9b1f2;
+  --accent-soft: rgba(183, 154, 236, 0.13);
+  --accent-line: rgba(183, 154, 236, 0.4);
+  --on-accent: #150f24;
+
+  --ok: #8fd0a8;
+  --info: #9db4e8;
+  --warn: #d9bc7a;
+  --bad: #dd9296;
+  --review: #d9a9e0;
+  --neutral: #857b9c;
+
+  --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 5px 18px rgba(0, 0, 0, 0.36);
+
+  --scrollbar-thumb: #3c3157;
+  --scrollbar-thumb-hover: #514276;
+  --scrollbar-track: transparent;
+}

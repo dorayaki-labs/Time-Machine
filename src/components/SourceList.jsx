@@ -101,6 +101,12 @@ export default function SourceList({ sources = [], noun = 'entry' }) {
                   <button type="button" className="source-stage__stop" onClick={() => setSelected(null)}>Stop</button>
                 </p>
                 <handler.Player data={current.data} />
+                {current.type === 'embed' ? (
+                  <p className="source-stage__note muted small">
+                    An external player, shown as submitted. Some providers block being embedded —
+                    if the frame stays blank or refuses to load, open the original page instead.
+                  </p>
+                ) : null}
               </>
             ) : (
               <div className="source-stage__placeholder">

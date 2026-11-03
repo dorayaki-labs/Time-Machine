@@ -8,7 +8,7 @@ import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { FORM_SPECS, loadConfig } from '../formSpec.js';
 import { validateContributionPayload } from '../validate.js';
-import { enqueue, flushOutbox } from '../discord.js';
+import { notify, flushOutbox } from '../discord.js';
 
 export async function handleContribute(req, { db, authApi, env, webhookUrl }) {
   const pre = preflight(req, env);
@@ -85,7 +85,7 @@ export async function handleContribute(req, { db, authApi, env, webhookUrl }) {
     action: 'contribution.submitted', actor_id: profile.id, actor_display_name: profile.display_name,
     entity_id: entryId ?? null,
   });
-  await enqueue(db, `contribution.${inserted.id}.submitted`, 'submitted', {
+  await notify(db, webhookUrl, `contribution.${inserted.id}.submitted`, 'submitted', {
     number: inserted.number, title: title.trim(), type,
     contributor: profile.display_name,
     entry: entryId ?? null,

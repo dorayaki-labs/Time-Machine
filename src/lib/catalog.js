@@ -11,6 +11,89 @@ import { computeStatus } from './records.js';
 
 const BASE = import.meta.env.BASE_URL || '/';
 
+// ---- where the archive JSON is read from ------------------------------------
+//
+// The repository is the single source of truth, and JSON commits no longer
+// redeploy the site. The browser therefore reads the archive directly from
+// GitHub (raw.githubusercontent.com) instead of from the deployed site:
+//
+//   1. The current HEAD sha of the main branch is resolved once (cached in
+//      sessionStorage for 3 minutes) from the GitHub API.
+//   2. Every file is fetched from raw.githubusercontent.com with ?v=<sha>.
+//      Between commits the sha never changes, so every file is served from
+//      the browser cache with zero network requests. After a commit the sha
+//      changes, every URL changes, and no stale copy can be served — this is
+//      what makes archive edits visible without a rebuild.
+//   3. If GitHub cannot be reached, every file falls back to the copy bundled
+//      with the deployed site, so the archive keeps working offline.
+//
+// In dev the site copy is used directly (edits show up instantly, no GitHub
+// round trip). VITE_ARCHIVE_REPO / VITE_ARCHIVE_BRANCH override the defaults
+// for forks.
+const ARCHIVE_REPO = import.meta.env.VITE_ARCHIVE_REPO || 'karizzmaa/time-machine';
+const ARCHIVE_BRANCH = import.meta.env.VITE_ARCHIVE_BRANCH || 'main';
+const SHA_CACHE_KEY = 'tm-archive-head';
+const SHA_CACHE_TTL = 3 * 60_000;
+
+async function archiveHeadSha() {
+  const cached = sessionStorage.getItem(SHA_CACHE_KEY);
+  if (cached) {
+    try {
+      const { sha, ts } = JSON.parse(cached);
+      if (sha && Date.now() - ts < SHA_CACHE_TTL) return sha;
+    } catch { /* re-resolve */ }
+  }
+  const res = await fetch(`https://api.github.com/repos/${ARCHIVE_REPO}/commits/${ARCHIVE_BRANCH}`, {
+    headers: { accept: 'application/vnd.github+json' },
+  });
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+  const sha = (await res.json())?.sha;
+  if (!sha) throw new Error('GitHub API returned no sha');
+  sessionStorage.setItem(SHA_CACHE_KEY, JSON.stringify({ sha, ts: Date.now() }));
+  return sha;
+}
+
+let sourcePromise = null;
+
+function archiveSource() {
+  if (!sourcePromise) {
+    sourcePromise = (async () => {
+      if (import.meta.env.DEV) return { prefix: BASE, bust: '' };
+      try {
+        const sha = await archiveHeadSha();
+        return {
+          prefix: `https://raw.githubusercontent.com/${ARCHIVE_REPO}/${ARCHIVE_BRANCH}/public`,
+          bust: `?v=${sha}`,
+        };
+      } catch (err) {
+        console.warn('Time Machine: archive HEAD unavailable, using the deployed site copy', err);
+        return { prefix: BASE, bust: '' };
+      }
+    })();
+  }
+  return sourcePromise;
+}
+
+/** Drops the resolved archive source so the next load re-resolves HEAD. */
+export function resetArchiveSource() {
+  sourcePromise = null;
+  try { sessionStorage.removeItem(SHA_CACHE_KEY); } catch { /* private mode */ }
+}
+
+async function fetchJson(path) {
+  const { prefix, bust } = await archiveSource();
+  if (prefix !== BASE) {
+    try {
+      const res = await fetch(`${prefix}/${path}${bust}`, { headers: { accept: 'application/json' } });
+      if (res.ok) return res.json();
+      console.warn(`Time Machine: ${path} unavailable from GitHub (${res.status}), using the deployed site copy`);
+    } catch { /* fall through to the bundled copy */ }
+  }
+  const response = await fetch(`${BASE}${path}`, { headers: { accept: 'application/json' } });
+  if (!response.ok) throw new Error(`Could not load ${path} (${response.status})`);
+  return response.json();
+}
+
 export const SERIES = {
   'anime-1979': { id: 'anime-1979', kind: 'episode', label: 'Anime (1979)', short: '1979', basePath: '/anime/1979', historical: false, yearsCovered: '1979–2005' },
   'anime-2005': { id: 'anime-2005', kind: 'episode', label: 'Anime (2005)', short: '2005', basePath: '/anime/2005', historical: false, yearsCovered: '2005–Present' },
@@ -26,12 +109,6 @@ const INDEX_PATHS = {
   movies: 'archive/movies/index.json',
   'anime-1973': 'archive/historical/anime-1973/index.json',
 };
-
-async function fetchJson(path) {
-  const response = await fetch(`${BASE}${path}`, { headers: { accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Could not load ${path} (${response.status})`);
-  return response.json();
-}
 
 const state = {
   loaded: false,
@@ -149,6 +226,22 @@ export function loadCatalog() {
     });
   }
   return loadPromise;
+}
+
+/**
+ * Drops everything and reloads the catalogue from GitHub. Called after a
+ * staff edit (accept, direct edit, delete) so the live UI reflects the
+ * repository's new state without a page reload.
+ */
+export function reloadCatalog() {
+  state.loaded = false;
+  state.entries = [];
+  state.entriesById = new Map();
+  state.series = new Map();
+  state.rawEntries = new Map();
+  loadPromise = null;
+  resetArchiveSource();
+  return loadCatalog();
 }
 
 export const isCatalogReady = () => state.loaded;

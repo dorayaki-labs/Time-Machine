@@ -11,6 +11,15 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    # Archive JSON edits (episodes, movies, characters, gadgets, indexes,
+    # categories/languages) are committed straight to the repository by the
+    # backend and fetched live by the site from raw.githubusercontent.com —
+    # they do not change the built website, so they must NOT redeploy it.
+    # A commit that mixes JSON with real website files still deploys:
+    # paths-ignore only skips the run when EVERY changed file matches.
+    paths-ignore:
+      - 'public/archive/**'
+      - 'public/data/**'
   workflow_dispatch:
 
 permissions:

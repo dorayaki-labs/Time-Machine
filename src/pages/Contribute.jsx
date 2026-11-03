@@ -32,10 +32,21 @@ const STEPS = [
   ['A checker reviews it', 'A human verifies the submission against its sources. You can follow the status in “My contributions”.'],
 ];
 
+/* Detail pages deep-link here with ?entry=<id>; put it in the field the
+   selected form actually uses. */
+function prefillEntry(categoryId, entryId) {
+  const value = String(entryId ?? '').trim();
+  if (!value) return null;
+  if (categoryId === 'character') return { characterId: value };
+  if (categoryId === 'gadget') return { gadgetId: value };
+  return { entryId: value };
+}
+
 export default function Contribute() {
   useDocumentTitle('Contribute');
   const [params, setParams] = useSearchParams();
   const requested = params.get('category');
+  const entry = params.get('entry');
   const [active, setActive] = useState(null);
   const formRef = useRef(null);
 
@@ -44,6 +55,10 @@ export default function Contribute() {
   }, [requested]);
 
   const current = CONTRIBUTION_CATEGORIES.find((c) => c.id === active) ?? null;
+
+  // Deep links from detail pages (?entry=...) prefill the right id field so
+  // the contributor does not have to look it up.
+  const initialValues = current && entry ? prefillEntry(current.id, entry) : null;
 
   const choose = (id) => {
     const next = active === id ? null : id;
@@ -135,7 +150,7 @@ export default function Contribute() {
           <div className="contribute-form-wrap">
             <h3><Icon name={CATEGORY_ICONS[current.id] ?? 'archive'} size={18} /> {current.label}</h3>
             <p className="muted contribute-form-wrap__intro">{current.summary}</p>
-            <ContributionForm category={current} />
+            <ContributionForm key={`${current.id}-${entry ?? ''}`} category={current} initialValues={initialValues} />
           </div>
         ) : (
           <p className="muted">Choose the kind of contribution you want to make, and its form will open right here.</p>

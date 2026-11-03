@@ -4,17 +4,18 @@
 // convenience, not security.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/PageContainer.jsx';
 import LoadingState from '@/components/LoadingState.jsx';
 import EmptyState from '@/components/EmptyState.jsx';
 import Icon from '@/components/Icon.jsx';
+import Avatar from '@/components/Avatar.jsx';
 import StatusChip from '@/components/StatusChip.jsx';
 import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
 import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
 import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
 import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
-import { getEntry, getRawEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries } from '@/lib/catalog.js';
+import { getEntry, getRawEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries, reloadCatalog } from '@/lib/catalog.js';
 import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
@@ -148,12 +149,16 @@ function SourceRows({ sources, onChange }) {
   );
 }
 
-function ArchiveEditor({ contribution, onApplied, onCancel }) {
+function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
   // When opened from a contribution: entityId/type preset and "commit" is the
-  // accept action; otherwise it is a direct edit.
-  const [entityType, setEntityType] = useState(contribution?.entityType ?? 'episode');
-  const [entityId, setEntityId] = useState(contribution?.entityId ?? '');
-  const [mode, setMode] = useState(contribution ? 'update' : 'update');
+  // accept action; otherwise it is a direct edit. Deep links from detail
+  // pages arrive through `preset` and load their record immediately.
+  const { profile } = useAuth();
+  const canDeleteEntry = isAdmin(profile);
+  const [entityType, setEntityType] = useState(contribution?.entityType ?? preset?.entityType ?? 'episode');
+  const [entityId, setEntityId] = useState(contribution?.entityId ?? preset?.entityId ?? '');
+  const [deleting, setDeleting] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
   const [base, setBase] = useState(null);
   const [draft, setDraft] = useState(null);
   const [rawJson, setRawJson] = useState('');
@@ -164,6 +169,8 @@ function ArchiveEditor({ contribution, onApplied, onCancel }) {
 
   const loadEntity = (type, id) => {
     setError(null);
+    setDeleting(false);
+    setConfirmText('');
     const existing = findEntity(type, id);
     if (existing) {
       // Raw record file content — no derived fields to strip, so the committed
@@ -172,12 +179,13 @@ function ArchiveEditor({ contribution, onApplied, onCancel }) {
       setBase(JSON.parse(JSON.stringify(raw))); setDraft(raw); setRawJson(JSON.stringify(raw, null, 2));
     } else {
       const fresh = buildNewRecord(type, id);
-      setBase(null); setDraft(fresh); setRawJson(JSON.stringify(fresh, null, 2)); setMode('create');
+      setBase(null); setDraft(fresh); setRawJson(JSON.stringify(fresh, null, 2));
     }
   };
 
   useEffect(() => {
     if (contribution?.entityId) loadEntity(contribution.entityType, contribution.entityId);
+    else if (preset?.entityId) loadEntity(preset.entityType, preset.entityId);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setField = (path, value) => setDraft((d) => {
@@ -195,6 +203,14 @@ function ArchiveEditor({ contribution, onApplied, onCancel }) {
   const commit = async () => {
     setBusy(true); setError(null);
     try {
+      if (deleting) {
+        // Deleting an archive entry — admin/owner only, confirmed by typing
+        // the entry id. The server enforces the role again.
+        const patch = { entityType, entityId: entityId.trim(), mode: 'delete', ...(base ? { baseRecord: base } : {}) };
+        const res = await directEditArchive({ patch, reviewNotes: reviewNotes || null });
+        onApplied?.(res);
+        return;
+      }
       const record = showRaw ? JSON.parse(rawJson) : draft;
       const patch = { entityType, entityId: entityId.trim(), mode: base ? 'update' : 'create', record, ...(base ? { baseRecord: base } : {}) };
       if (contribution) {
@@ -235,58 +251,75 @@ function ArchiveEditor({ contribution, onApplied, onCancel }) {
       ) : (
         <>
           <p className="submission__meta">
-            Editing <strong className="mono">{entityType} {entityId}</strong>
-            {base ? '' : ' (new record)'}
-            <button type="button" className="btn btn--ghost" style={{ marginLeft: '0.8rem' }} onClick={() => { setDraft(null); setBase(null); }}>Choose another record</button>
+            {deleting ? 'Deleting' : 'Editing'} <strong className="mono">{entityType} {entityId}</strong>
+            {base || deleting ? '' : ' (new record)'}
+            <button type="button" className="btn btn--ghost" style={{ marginLeft: '0.8rem' }} onClick={() => { setDraft(null); setBase(null); setDeleting(false); }}>Choose another record</button>
           </p>
 
-          <div className="btn-row" style={{ margin: '0.6rem 0' }}>
-            <button type="button" className={`btn btn--ghost${showRaw ? ' is-active' : ''}`} onClick={() => { setShowRaw((v) => !v); setRawJson(JSON.stringify(draft, null, 2)); }}>
-              {showRaw ? 'Structured editor' : 'Raw JSON editor'}
-            </button>
-          </div>
-
-          {showRaw ? (
-            <div className="field">
-              <label>Raw JSON <span className="field__opt">(advanced — malformed JSON cannot be saved)</span></label>
-              <textarea rows={18} className="mono" value={rawJson} onChange={(e) => { setRawJson(e.target.value); }} spellCheck={false} />
-              <button type="button" className="btn btn--ghost" style={{ marginTop: '0.5rem' }} onClick={() => { try { setDraft(JSON.parse(rawJson)); setError(null); } catch (err) { setError(`Invalid JSON: ${err.message}`); } }}>Apply JSON to the draft</button>
+          {deleting ? (
+            <div className="notice notice--warn" style={{ maxWidth: '70ch' }}>
+              <p style={{ marginTop: 0 }}>
+                <strong>This removes {entityType} {entityId} from the archive</strong> — the record
+                file (and its index listing, if any) is deleted from the repository and the entry
+                disappears from the site. The audit log keeps a record of the deletion.
+              </p>
+              <div className="field">
+                <label>Type <span className="mono">{entityId}</span> to confirm</label>
+                <input type="text" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder={entityId} />
+              </div>
+              {base ? <p className="muted small">A snapshot of the record is kept in this editor until you close it — if the deletion was a mistake, re-create the entry from it.</p> : null}
             </div>
           ) : (
-            <div className="contribution-form__grid">
-              {(entityType === 'episode' || entityType === 'movie') ? (
-                <>
-                  <RecordField label="English title" value={draft.title?.en} onChange={(v) => setField('title.en', v ?? '')} optional={false} />
-                  <RecordField label="Japanese title" value={draft.title?.ja} onChange={(v) => setField('title.ja', v)} />
-                  <RecordField label="Release date" placeholder="YYYY, YYYY-MM or YYYY-MM-DD" value={draft.release?.date} onChange={(v) => setField('release.date', v)} />
-                  <RecordField label="Summary" multiline value={draft.summary} onChange={(v) => setField('summary', v)} />
-                  <RecordField label="Main image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
-                  <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
-                  <RecordField label="Characters (ids, comma-separated)" value={(draft.characters ?? []).join(', ')} onChange={(v) => setField('characters', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
-                  <RecordField label="Gadgets (ids, comma-separated)" value={(draft.gadgets ?? []).join(', ')} onChange={(v) => setField('gadgets', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
-                  {entityType === 'movie' ? <RecordField label="Runtime (minutes)" value={draft.durationMinutes} onChange={(v) => setField('durationMinutes', v ? Number(v) : null)} /> : null}
-                  {entityType === 'movie' ? <RecordField label="Director (English)" value={draft.director?.en} onChange={(v) => setField('director.en', v)} /> : null}
-                  <div className="span-2"><SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} /></div>
-                </>
-              ) : (
-                <>
-                  <RecordField label="English name" value={draft.name?.en} onChange={(v) => setField('name.en', v ?? '')} optional={false} />
-                  <RecordField label="Japanese name" value={draft.name?.ja} onChange={(v) => setField('name.ja', v)} />
-                  <RecordField label="Aliases (comma-separated)" value={(draft.aliases ?? []).join(', ')} onChange={(v) => setField('aliases', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
-                  {entityType === 'character' ? <RecordField label="Category" placeholder="main / supporting / …" value={draft.category} onChange={(v) => setField('category', v)} /> : null}
-                  {entityType === 'gadget' ? <RecordField label="How it works" multiline value={draft.howItWorks} onChange={(v) => setField('howItWorks', v)} /> : null}
-                  <RecordField label="Description" multiline rows={5} value={draft.description} onChange={(v) => setField('description', v)} optional={false} />
-                  <RecordField label="Image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
-                  <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
-                  <RecordField label="First appearance (entry id or note)" value={draft.firstAppearance?.note ?? draft.firstAppearance?.entryId} onChange={(v) => setField('firstAppearance', { entryId: v && /^((anime-(1979|2005|1973)-\d{4})|movie-\d{4})$/.test(v) ? v : null, note: v && !/^((anime-(1979|2005|1973)-\d{4})|movie-\d{4})$/.test(v) ? v : null })} />
-                </>
-              )}
-            </div>
-          )}
+            <>
+              <div className="btn-row" style={{ margin: '0.6rem 0' }}>
+                <button type="button" className={`btn btn--ghost${showRaw ? ' is-active' : ''}`} onClick={() => { setShowRaw((v) => !v); setRawJson(JSON.stringify(draft, null, 2)); }}>
+                  {showRaw ? 'Structured editor' : 'Raw JSON editor'}
+                </button>
+              </div>
 
-          <h4 className="section-heading" style={{ marginTop: '1.4rem' }}>Preview of changes</h4>
-          {base ? (changes.length ? <ChangesTable changes={changes} /> : <p className="muted small">No changes yet.</p>)
-            : <p className="muted small">New record — the whole entry will be created.</p>}
+              {showRaw ? (
+                <div className="field">
+                  <label>Raw JSON <span className="field__opt">(advanced — malformed JSON cannot be saved)</span></label>
+                  <textarea rows={18} className="mono" value={rawJson} onChange={(e) => { setRawJson(e.target.value); }} spellCheck={false} />
+                  <button type="button" className="btn btn--ghost" style={{ marginTop: '0.5rem' }} onClick={() => { try { setDraft(JSON.parse(rawJson)); setError(null); } catch (err) { setError(`Invalid JSON: ${err.message}`); } }}>Apply JSON to the draft</button>
+                </div>
+              ) : (
+                <div className="contribution-form__grid">
+                  {(entityType === 'episode' || entityType === 'movie') ? (
+                    <>
+                      <RecordField label="English title" value={draft.title?.en} onChange={(v) => setField('title.en', v ?? '')} optional={false} />
+                      <RecordField label="Japanese title" value={draft.title?.ja} onChange={(v) => setField('title.ja', v)} />
+                      <RecordField label="Release date" placeholder="YYYY, YYYY-MM or YYYY-MM-DD" value={draft.release?.date} onChange={(v) => setField('release.date', v)} />
+                      <RecordField label="Summary" multiline value={draft.summary} onChange={(v) => setField('summary', v)} />
+                      <RecordField label="Main image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
+                      <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
+                      <RecordField label="Characters (ids, comma-separated)" value={(draft.characters ?? []).join(', ')} onChange={(v) => setField('characters', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
+                      <RecordField label="Gadgets (ids, comma-separated)" value={(draft.gadgets ?? []).join(', ')} onChange={(v) => setField('gadgets', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
+                      {entityType === 'movie' ? <RecordField label="Runtime (minutes)" value={draft.durationMinutes} onChange={(v) => setField('durationMinutes', v ? Number(v) : null)} /> : null}
+                      {entityType === 'movie' ? <RecordField label="Director (English)" value={draft.director?.en} onChange={(v) => setField('director.en', v)} /> : null}
+                      <div className="span-2"><SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} /></div>
+                    </>
+                  ) : (
+                    <>
+                      <RecordField label="English name" value={draft.name?.en} onChange={(v) => setField('name.en', v ?? '')} optional={false} />
+                      <RecordField label="Japanese name" value={draft.name?.ja} onChange={(v) => setField('name.ja', v)} />
+                      <RecordField label="Aliases (comma-separated)" value={(draft.aliases ?? []).join(', ')} onChange={(v) => setField('aliases', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
+                      {entityType === 'character' ? <RecordField label="Category" placeholder="main / supporting / …" value={draft.category} onChange={(v) => setField('category', v)} /> : null}
+                      {entityType === 'gadget' ? <RecordField label="How it works" multiline value={draft.howItWorks} onChange={(v) => setField('howItWorks', v)} /> : null}
+                      <RecordField label="Description" multiline rows={5} value={draft.description} onChange={(v) => setField('description', v)} optional={false} />
+                      <RecordField label="Image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
+                      <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
+                      <RecordField label="First appearance (entry id or note)" value={draft.firstAppearance?.note ?? draft.firstAppearance?.entryId} onChange={(v) => setField('firstAppearance', { entryId: v && /^((anime-(1979|2005|1973)-\d{4})|movie-\d{4})$/.test(v) ? v : null, note: v && !/^((anime-(1979|2005|1973)-\d{4})|movie-\d{4})$/.test(v) ? v : null })} />
+                    </>
+                  )}
+                </div>
+              )}
+
+              <h4 className="section-heading" style={{ marginTop: '1.4rem' }}>Preview of changes</h4>
+              {base ? (changes.length ? <ChangesTable changes={changes} /> : <p className="muted small">No changes yet.</p>)
+                : <p className="muted small">New record — the whole entry will be created.</p>}
+            </>
+          )}
 
           <div className="field" style={{ marginTop: '1rem' }}>
             <label>Review note <span className="field__opt">(optional, shown in the audit log and to the contributor)</span></label>
@@ -296,9 +329,20 @@ function ArchiveEditor({ contribution, onApplied, onCancel }) {
           {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
 
           <div className="submission__actions">
-            <button type="button" className="btn btn--primary" disabled={busy || !canCommit || (base && changes.length === 0)} onClick={commit}>
-              {busy ? 'Working…' : base ? (contribution ? 'Accept & commit to the archive' : 'Commit direct edit') : 'Create the record'}
-            </button>
+            {deleting ? (
+              <button type="button" className="btn btn--danger" disabled={busy || confirmText.trim() !== entityId.trim()} onClick={commit}>
+                {busy ? 'Working…' : `Delete ${entityId} permanently`}
+              </button>
+            ) : (
+              <button type="button" className="btn btn--primary" disabled={busy || !canCommit || (base && changes.length === 0)} onClick={commit}>
+                {busy ? 'Working…' : base ? (contribution ? 'Accept & commit to the archive' : 'Commit direct edit') : 'Create the record'}
+              </button>
+            )}
+            {canDeleteEntry && base && !deleting && !contribution ? (
+              <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={() => { setDeleting(true); setConfirmText(''); }}>
+                <Icon name="trash" size={15} /> Delete this entry…
+              </button>
+            ) : null}
             <button type="button" className="btn btn--ghost" onClick={onCancel}>Cancel</button>
           </div>
         </>
@@ -333,13 +377,16 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
   return (
     <article className="submission" id={`submission-${row.number}`}>
       <div className="submission__head">
-        <div>
-          <h3 className="submission__title">#{row.number} · {row.title}</h3>
-          <p className="submission__meta">
-            {categoryLabel(row.type)} · by <strong>{row.profiles?.display_name ?? 'unknown'}</strong>
-            {row.entry_id ? <> · <span className="mono">{row.entry_id}</span>{link ? <> <Link to={link}>view entry →</Link></> : null}</> : null}
-            <br />submitted {fmtTime(row.created_at)}
-          </p>
+        <div className="submission__who">
+          <Avatar name={row.profiles?.display_name} url={row.profiles?.avatar_url} size={34} />
+          <div>
+            <h3 className="submission__title">#{row.number} · {row.title}</h3>
+            <p className="submission__meta">
+              {categoryLabel(row.type)} · by <strong>{row.profiles?.display_name ?? 'unknown'}</strong>
+              {row.entry_id ? <> · <span className="mono">{row.entry_id}</span>{link ? <> <Link to={link}>view entry →</Link></> : null}</> : null}
+              <br />submitted {fmtTime(row.created_at)}
+            </p>
+          </div>
         </div>
         <StatusChip status={row.status} />
       </div>
@@ -470,7 +517,14 @@ function QueueTab({ onRefresh }) {
       {rows === null ? <LoadingState label="Loading submissions…" /> : rows.length === 0 ? (
         <EmptyState icon="archive" title="Nothing here">No submissions match this filter.</EmptyState>
       ) : rows.map((row) => (
-        <SubmissionDetail key={row.id} row={row} canReview canDelete onRefresh={() => { load(); onRefresh?.(); }} />
+        <SubmissionDetail
+          key={row.id}
+          row={row}
+          canReview
+          canDelete
+          onAcceptApplied={() => { load(); onRefresh?.(); }}
+          onRefresh={() => { load(); onRefresh?.(); }}
+        />
       ))}
     </>
   );
@@ -513,6 +567,8 @@ function AuditTab() {
 }
 
 function AdminTab({ onRefresh }) {
+  const { profile } = useAuth();
+  const owner = isOwner(profile);
   const [discordId, setDiscordId] = useState('');
   const [role, setRole] = useState('checker');
   const [action, setAction] = useState('grant');
@@ -544,13 +600,15 @@ function AdminTab({ onRefresh }) {
       <h3 className="section-heading">Manage staff</h3>
       <p className="muted small" style={{ maxWidth: '64ch' }}>
         Enter the numeric Discord user ID (enable Developer Mode in Discord, right-click the user,
-        “Copy User ID”). Only the owner can manage administrators; admins and the owner manage checkers.
+        “Copy User ID”). {owner
+          ? 'As the owner you can manage both checkers and administrators.'
+          : 'Admins manage checkers; only the owner can manage administrators.'}
       </p>
       <div className="filter-row">
         <input type="text" placeholder="Discord user ID (numbers only)" value={discordId} onChange={(e) => setDiscordId(e.target.value)} style={{ minWidth: '240px' }} />
         <select value={role} onChange={(e) => setRole(e.target.value)} aria-label="Role">
           <option value="checker">checker</option>
-          <option value="admin">admin</option>
+          {owner ? <option value="admin">admin</option> : null}
         </select>
         <select value={action} onChange={(e) => setAction(e.target.value)} aria-label="Action">
           <option value="grant">grant</option>
@@ -585,9 +643,30 @@ function AdminTab({ onRefresh }) {
 
 export default function Staff() {
   const { user, profile, ready, backendConfigured, signIn } = useAuth();
-  const [tab, setTab] = useState('queue');
+  const [params, setParams] = useSearchParams();
+  const tabParam = params.get('tab');
+  const [tab, setTabState] = useState(
+    ['queue', 'editor', 'audit', 'admin'].includes(tabParam) ? tabParam : 'queue',
+  );
+  // Detail pages deep-link into a preloaded editor: /staff?tab=editor&entityType=…&entityId=…
+  const editorPreset = params.get('entityType') && params.get('entityId')
+    ? { entityType: params.get('entityType'), entityId: params.get('entityId') }
+    : null;
   const staff = isStaff(profile);
   const canSeeAdmin = isAdmin(profile);
+
+  const setTab = (next) => {
+    setTabState(next);
+    const nextParams = {};
+    if (next !== 'queue') nextParams.tab = next;
+    setParams(nextParams, { replace: true });
+  };
+
+  const afterArchiveChange = () => {
+    // The archive JSON changed in the repository — reload it so every page,
+    // this one included, shows the new data without a manual refresh.
+    reloadCatalog().catch(() => { /* the next full load retries */ });
+  };
 
   if (!backendConfigured) {
     return (
@@ -640,8 +719,14 @@ export default function Staff() {
         {canSeeAdmin ? <button type="button" className={tab === 'admin' ? 'is-active' : ''} onClick={() => setTab('admin')}>Admin</button> : null}
       </div>
 
-      {tab === 'queue' ? <QueueTab /> : null}
-      {tab === 'editor' ? <ArchiveEditor onCancel={() => setTab('queue')} onApplied={() => setTab('audit')} /> : null}
+      {tab === 'queue' ? <QueueTab onRefresh={afterArchiveChange} /> : null}
+      {tab === 'editor' ? (
+        <ArchiveEditor
+          preset={editorPreset}
+          onCancel={() => setTab('queue')}
+          onApplied={() => { afterArchiveChange(); setTab('audit'); }}
+        />
+      ) : null}
       {tab === 'audit' ? <AuditTab /> : null}
       {tab === 'admin' && canSeeAdmin ? <AdminTab /> : null}
     </PageContainer>

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import ThemeToggle from './ThemeToggle.jsx';
+import ThemePicker from './ThemePicker.jsx';
 import { NAV_ITEMS } from './navItems.js';
 
 export default function MobileNavigation({ open, onNavigate }) {
@@ -15,7 +15,7 @@ export default function MobileNavigation({ open, onNavigate }) {
         ))}
       </ul>
       <div className="mobile-nav__foot">
-        <ThemeToggle />
+        <ThemePicker />
       </div>
     </nav>
   );

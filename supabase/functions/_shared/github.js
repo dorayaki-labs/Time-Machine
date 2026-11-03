@@ -61,6 +61,11 @@ export async function commitFiles(env, files, message, { retries = 3 } = {}) {
 
       const tree = [];
       for (const file of files) {
+        // A deletion is expressed as a tree entry with a null sha.
+        if (file.delete) {
+          tree.push({ path: file.path, mode: '100644', type: 'blob', sha: null });
+          continue;
+        }
         const blob = await api(env, `/repos/${env.repo}/git/blobs`, {
           method: 'POST',
           body: JSON.stringify({ content: file.content, encoding: 'utf-8' }),

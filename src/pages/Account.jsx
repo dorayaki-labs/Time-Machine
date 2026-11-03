@@ -7,14 +7,55 @@ import { Link } from 'react-router-dom';
 import PageContainer from '@/components/PageContainer.jsx';
 import LoadingState from '@/components/LoadingState.jsx';
 import EmptyState from '@/components/EmptyState.jsx';
+import Avatar from '@/components/Avatar.jsx';
+import Icon from '@/components/Icon.jsx';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { fetchMyContributions, tallyStatuses, STATUS_LABELS } from '@/lib/stats.js';
+import { reviewContribution } from '@/lib/staffApi.js';
 
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—');
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
-function HistoryRow({ row }) {
+function HistoryRow({ row, onChanged }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [json, setJson] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
+  const pending = row.status === 'pending';
+
+  const startEdit = () => {
+    setJson(JSON.stringify(row.payload ?? {}, null, 2));
+    setEditing(true);
+    setMessage(null); setError(null);
+  };
+
+  const saveEdit = async () => {
+    setBusy(true); setError(null);
+    try {
+      const payloadEdited = JSON.parse(json);
+      await reviewContribution({ action: 'save-draft', contributionId: row.id, payloadEdited });
+      setMessage('Saved. Your submission keeps its place in the review queue.');
+      setEditing(false);
+      onChanged?.();
+    } catch (err) {
+      setError(err.message.startsWith('Unexpected') || err instanceof SyntaxError
+        ? `That is not valid JSON: ${err.message}` : err.message);
+    } finally { setBusy(false); }
+  };
+
+  const withdraw = async () => {
+    if (!window.confirm(`Withdraw contribution #${row.number}? It will be removed from the review queue.`)) return;
+    setBusy(true); setError(null);
+    try {
+      await reviewContribution({ action: 'delete', contributionId: row.id, reason: 'Withdrawn by the author.' });
+      setMessage('Withdrawn.');
+      onChanged?.();
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+
   return (
     <>
       <li className="log-item" style={{ cursor: 'pointer' }} onClick={() => setOpen((o) => !o)} role="button" tabIndex={0}
@@ -39,6 +80,29 @@ function HistoryRow({ row }) {
               <div className="row"><dt>Archive commit</dt><dd className="mono">{String(row.commit_sha).slice(0, 7)}</dd></div>
             ) : null}
           </dl>
+
+          {pending && !editing ? (
+            <div className="btn-row">
+              <button type="button" className="btn btn--ghost" onClick={startEdit}>
+                <Icon name="edit" size={15} /> Edit this submission
+              </button>
+              <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={withdraw}>
+                <Icon name="trash" size={15} /> Withdraw
+              </button>
+            </div>
+          ) : null}
+          {editing ? (
+            <div className="field">
+              <label>Submission answers <span className="field__opt">(JSON — same shape you submitted)</span></label>
+              <textarea rows={10} className="mono" value={json} spellCheck={false} onChange={(e) => setJson(e.target.value)} />
+              <div className="btn-row" style={{ marginTop: '0.5rem' }}>
+                <button type="button" className="btn btn--primary" disabled={busy} onClick={saveEdit}>Save changes</button>
+                <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing(false)}>Cancel</button>
+              </div>
+            </div>
+          ) : null}
+          {message ? <p className="notice" role="status">{message}</p> : null}
+          {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
         </li>
       ) : null}
     </>
@@ -49,6 +113,14 @@ export default function Account() {
   const { user, profile, ready, backendConfigured, signIn } = useAuth();
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
+
+  const load = () => {
+    if (!user) return;
+    setError(null);
+    fetchMyContributions()
+      .then((data) => setRows(data))
+      .catch((err) => setError(err.message));
+  };
 
   useEffect(() => {
     let active = true;
@@ -92,10 +164,14 @@ export default function Account() {
       <div className="page-opening">
         <p className="eyebrow">Account</p>
         <h1>My contributions</h1>
-        <p className="page-opening__lead">
-          Signed in as <strong>{name}</strong>
-          {profile?.role && profile.role !== 'member' ? <> · <span className="role-badge">{profile.role}</span></> : null}.
-          Every submission you make and its review outcome is kept here for you; nobody else can see this page.
+        <p className="page-opening__lead page-opening__lead--identity">
+          <Avatar name={profile?.display_name} url={profile?.avatar_url} size={40} />
+          <span>
+            Signed in as <strong>{name}</strong>
+            {profile?.role && profile.role !== 'member' ? <> · <span className="role-badge">{profile.role}</span></> : null}.
+            Every submission you make and its review outcome is kept here for you; nobody else can see this page.
+            {profile?.role === 'owner' ? ' As the owner you can also review your own submissions and moderate everything from the staff panel.' : ''}
+          </span>
         </p>
       </div>
 
@@ -118,7 +194,7 @@ export default function Account() {
 
       {rows !== null && rows.length > 0 ? (
         <ul className="log-list" style={{ listStyle: 'none' }}>
-          {rows.map((row) => <HistoryRow key={row.id} row={row} />)}
+          {rows.map((row) => <HistoryRow key={row.id} row={row} onChanged={load} />)}
         </ul>
       ) : null}
     </PageContainer>

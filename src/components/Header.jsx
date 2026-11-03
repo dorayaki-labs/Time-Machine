@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import MobileNavigation from './MobileNavigation.jsx';
-import ThemeToggle from './ThemeToggle.jsx';
+import ThemePicker from './ThemePicker.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import { NAV_ITEMS } from './navItems.js';
 import { useSearchOverlay } from '@/hooks/SearchContext.jsx';
@@ -45,7 +45,7 @@ export default function Header() {
 
         <div className="header-actions">
           <AccountMenu />
-          <ThemeToggle />
+          <ThemePicker />
           <button type="button" className="icon-btn search-btn" onClick={openSearch} aria-label="Search the archive" aria-keyshortcuts="Control+K /">
             <Icon name="search" size={20} />
             <kbd className="search-btn__kbd" aria-hidden="true">/</kbd>

@@ -219,3 +219,91 @@ button { font: inherit; color: inherit; }
 .collapsible summary:hover { background: var(--surface-2); border-radius: var(--r-md); }
 .collapsible[open] summary { border-bottom: 1px solid var(--border); border-radius: var(--r-md) var(--r-md) 0 0; }
 .collapsible__body { padding: var(--s-4); }
+
+/* ---------- avatars (identity everywhere) ---------- */
+.avatar {
+  display: inline-grid; place-items: center; overflow: hidden;
+  border-radius: 50%; flex-shrink: 0;
+  background: var(--accent-soft); border: 1px solid var(--accent-line);
+  color: var(--accent); font-weight: 600; line-height: 1;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar__initial { user-select: none; }
+
+/* ---------- theme picker ---------- */
+.theme-picker { position: relative; }
+.theme-picker__button { position: relative; }
+.theme-picker__swatch {
+  position: absolute; right: 4px; bottom: 4px; width: 12px; height: 12px;
+  border-radius: 50%; border: 1px solid rgba(127, 127, 127, 0.55); display: block;
+}
+.theme-picker__swatch > span {
+  position: absolute; inset: 3px 3px 3px 3px; border-radius: 50%; display: block;
+}
+.theme-picker__menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 60;
+  min-width: 172px; padding: var(--s-2); margin: 0;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r-md); box-shadow: var(--shadow-soft);
+  animation: menu-in 0.16s var(--ease) both;
+}
+@keyframes menu-in {
+  from { opacity: 0; transform: translatey(-5px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.theme-picker__option {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%;
+  padding: var(--s-2) var(--s-3); border: 0; border-radius: var(--r-sm);
+  background: transparent; color: var(--text); cursor: pointer; text-align: left;
+  font-size: 0.92rem; transition: background 0.12s;
+}
+.theme-picker__option:hover { background: var(--surface-2); }
+.theme-picker__option.is-active { color: var(--accent); font-weight: 600; }
+.theme-picker__option .theme-picker__swatch {
+  position: static; width: 18px; height: 18px; flex-shrink: 0;
+}
+.theme-picker__check { margin-left: auto; }
+
+/* ---------- entry actions on detail pages ---------- */
+.entry-actions {
+  display: flex; flex-wrap: wrap; gap: var(--s-2);
+  margin: 0 0 var(--s-5); padding-top: var(--s-3);
+}
+
+/* ---------- public activity log ---------- */
+.activity-list {
+  display: grid; gap: var(--s-2); max-width: 860px;
+}
+.activity-item {
+  display: flex; gap: var(--s-3); align-items: flex-start;
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color 0.15s, transform 0.15s var(--ease);
+}
+.activity-item:hover { border-color: var(--border-strong); transform: translatey(-1px); }
+.activity-item__body { min-width: 0; flex: 1; }
+.activity-item__line {
+  display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin: 0 0 2px;
+}
+.activity-item__title { color: var(--text-2); }
+.activity-item__meta { margin: 0; font-size: 0.85rem; color: var(--text-3); }
+.activity-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border);
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.02em;
+  background: var(--surface-2); color: var(--text-2);
+}
+.activity-chip--ok { border-color: color-mix(in srgb, var(--ok) 45%, transparent); color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.activity-chip--bad { border-color: color-mix(in srgb, var(--bad) 45%, transparent); color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.activity-chip--pending { border-color: color-mix(in srgb, var(--warn) 45%, transparent); color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.activity-chip--review { border-color: color-mix(in srgb, var(--review) 45%, transparent); color: var(--review); background: color-mix(in srgb, var(--review) 10%, transparent); }
+
+/* ---------- account identity row ---------- */
+.page-opening__lead--identity {
+  display: flex; gap: var(--s-3); align-items: flex-start;
+}
+.page-opening__lead--identity .avatar { margin-top: 2px; }
+
+/* ---------- contribution form login gate ---------- */
+.submission-result--gate { border: 1px dashed var(--border-strong); }

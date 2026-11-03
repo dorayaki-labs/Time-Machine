@@ -24,12 +24,20 @@
     <link rel="preload" href="%BASE_URL%fonts/NotoSansJP-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <script>
       // Apply the saved theme (or the OS setting) before first paint to avoid a flash.
+      // Keep this list in sync with THEMES in src/hooks/useTheme.js and the
+      // :root[data-theme] blocks in src/styles/variables.css.
       (function () {
+        var THEMES = ['light', 'dark', 'midnight', 'sakura', 'ocean', 'forest', 'amethyst'];
+        var COLORS = {
+          light: '#f4f1ea', dark: '#151a22', midnight: '#0d1220', sakura: '#faf3f4',
+          ocean: '#071824', forest: '#10160f', amethyst: '#14101d',
+        };
         try {
           var stored = localStorage.getItem('tm-theme');
-          var dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#151a22' : '#f4f1ea');
+          var theme = stored && COLORS[stored] ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.dataset.theme = theme;
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', COLORS[theme]);
         } catch (e) { /* private mode: light theme is the default */ }
       })();
     </script>

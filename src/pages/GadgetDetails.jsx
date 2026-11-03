@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import PageContainer from '@/components/PageContainer.jsx';
 import MediaImage from '@/components/MediaImage.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+import EntryActions from '@/components/EntryActions.jsx';
 import AppearanceLists from '@/components/AppearanceLists.jsx';
 import GadgetCard from '@/components/GadgetCard.jsx';
 import { ReferencesSection } from '@/components/EntrySections.jsx';
@@ -40,6 +41,8 @@ export default function GadgetDetails() {
           ]} />
         </div>
       </section>
+
+      <EntryActions entry={gadget} />
 
       <AppearanceLists appearances={appearances} filterKey="gadget" id={gadget.id} />
 

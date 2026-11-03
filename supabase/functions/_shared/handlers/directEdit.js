@@ -7,10 +7,10 @@
 
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
-import { isStaff } from '../rbac.js';
+import { isStaff, isAdmin } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
 import { summarizeChanges } from '../diff.js';
-import { enqueue, flushOutbox } from '../discord.js';
+import { notify, flushOutbox } from '../discord.js';
 
 export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, github }) {
   const pre = preflight(req, env);
@@ -30,21 +30,30 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
   if (bodyError) return json({ error: bodyError }, 400);
 
   const patch = body?.patch;
+  // Deleting an archive entry is far more destructive than editing one:
+  // only admins and the owner may do it (server-side enforced).
+  if (patch?.mode === 'delete' && !isAdmin(profile.role)) {
+    return json({ error: 'Only admins and the owner can delete archive entries.' }, 403);
+  }
   const reviewNotes = typeof body?.reviewNotes === 'string' ? body.reviewNotes.slice(0, 2000) : null;
 
   const applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
   if (applied.error) return json({ error: applied.error }, 422);
 
-  const message = `archive: direct edit (${applied.entity.type} ${applied.entity.id})\n\nEdited by ${profile.display_name}.`;
+  const isDelete = patch.mode === 'delete';
+  const message = isDelete
+    ? `archive: delete entry (${applied.entity.type} ${applied.entity.id})\n\nDeleted by ${profile.display_name}.`
+    : `archive: direct edit (${applied.entity.type} ${applied.entity.id})\n\nEdited by ${profile.display_name}.`;
   const commitSha = await github.commit(applied.files, message).catch(() => null);
   if (!commitSha) return json({ error: 'The GitHub commit failed — nothing was changed.' }, 502);
 
   await db.insertAudit({
-    action: 'archive.direct_edit', actor_id: profile.id, actor_display_name: profile.display_name,
+    action: isDelete ? 'archive.entry_deleted' : 'archive.direct_edit',
+    actor_id: profile.id, actor_display_name: profile.display_name,
     entity_type: applied.entity.type, entity_id: applied.entity.id,
     changes: applied.changes, review_notes: reviewNotes, commit_sha: commitSha,
   });
-  await enqueue(db, `direct-edit.${commitSha}`, 'direct_edit', {
+  await notify(db, webhookUrl, `direct-edit.${commitSha}`, isDelete ? 'entry_deleted' : 'direct_edit', {
     reviewer: profile.display_name,
     entry: `${applied.entity.type} ${applied.entity.id}`,
     changes: summarizeChanges(applied.changes).join('\n'),

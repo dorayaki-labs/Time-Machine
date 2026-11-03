@@ -108,7 +108,7 @@ export default function Home() {
         <div className="contribute-strip">
           <div>
             <h2>Help fill the gaps</h2>
-            <p>Episode synopses, verified English titles, images with alt text, and legal viewing sources are the archive's biggest needs right now.</p>
+            <p>Episode synopses, verified English titles, images with alt text, and community-submitted viewing sources are the archive's biggest needs right now.</p>
           </div>
           <div className="btn-row">
             <Link to="/contribute" className="btn btn--primary">Contribute</Link>

@@ -13,11 +13,21 @@ export const isAdmin = (role) => atLeast(role, 'admin');
 export const isOwner = (role) => role === 'owner';
 
 // Checkers (and above) review, accept, decline and delete contributions, and
-// may make direct archive edits — but never on their own submissions.
+// may make direct archive edits — but never on their own submissions. The
+// owner has ultimate authority and may also handle their own submissions.
 export function canReviewContribution(role, reviewerId, contribution) {
   if (!isStaff(role)) return false;
-  if (contribution && reviewerId && contribution.contributor_id === reviewerId) return false;
+  if (contribution && reviewerId && contribution.contributor_id === reviewerId && !isOwner(role)) return false;
   return true;
+}
+
+// A contribution's author may edit their own submission while it is pending
+// (any role). Staff may additionally edit other people's pending drafts
+// during review, and the owner may edit anything, always.
+export function canEditContribution(actor, contribution) {
+  if (!actor || !contribution) return false;
+  if (contribution.status !== 'pending') return false;
+  return actor.id === contribution.contributor_id || isStaff(actor.role);
 }
 
 // Admins and the owner manage checkers. Only the owner manages admins.

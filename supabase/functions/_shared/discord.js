@@ -79,6 +79,18 @@ export function buildEmbed(event, data) {
       push('Changed fields', data.changes);
       push('Commit', data.commit);
       break;
+    case 'entry_deleted':
+      title = `🗑️ Archive entry deleted`;
+      push('Editor', sanitize(data.reviewer));
+      push('Entry', data.entry);
+      push('Commit', data.commit);
+      break;
+    case 'edited':
+      title = `🛠️ Contribution #${data.number} edited`;
+      push('Name', sanitize(data.title));
+      push('Editor', sanitize(data.reviewer));
+      push('Original author', sanitize(data.contributor));
+      break;
     case 'role':
       title = `🔐 Role updated`;
       push('User', sanitize(data.target));
@@ -104,13 +116,34 @@ export function buildEmbed(event, data) {
   };
 }
 
-/** Records an event in the outbox (or ignores it if already recorded). */
-export async function enqueue(db, eventKey, event, data) {
+/**
+ * Records an event in the outbox (idempotent via event_key: one notification
+ * per event, ever) and attempts IMMEDIATE delivery. If the webhook call
+ * fails, the row stays pending and the next function invocation retries it
+ * through flushOutbox — notifications can be delayed but never lost or
+ * duplicated. Notification failure NEVER fails the business operation.
+ */
+export async function notify(db, webhookUrl, eventKey, event, data) {
   try {
     await db.insert('notification_outbox', { event_key: eventKey, event, payload: data });
   } catch (err) {
     // Unique-violation = already queued; anything else is logged, not fatal.
     console.error('outbox insert failed', eventKey, err.message);
+    return;
+  }
+  if (!webhookUrl) {
+    console.warn(`notification "${event}" queued but DISCORD_WEBHOOK_URL is not configured — set it with: supabase secrets set DISCORD_WEBHOOK_URL=...`);
+    return;
+  }
+  try {
+    const row = await db.outboxByKey(eventKey);
+    if (!row || row.status !== 'pending') return;
+    await deliverRow(webhookUrl, row);
+    await db.markOutbox(row.id, 'sent');
+  } catch (err) {
+    console.error(`webhook delivery failed for "${event}" (${eventKey}):`, err.message);
+    try { await db.markOutbox((await db.outboxByKey(eventKey))?.id, 'pending', err.message); }
+    catch (markErr) { console.error('outbox mark failed', eventKey, markErr.message); }
   }
 }
 

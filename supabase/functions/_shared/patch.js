@@ -2,8 +2,8 @@
 //
 //   { entityType: 'episode'|'movie'|'character'|'gadget',
 //     entityId:   'anime-1979-0004' | 'char-nobita' | …,
-//     mode:       'update' | 'create',
-//     record:     { …the complete new record… } }
+//     mode:       'update' | 'create' | 'delete',
+//     record:     { …the complete new record… }        — update/create only }
 //
 // The server never trusts the client's paths: it derives every path from the
 // entity type, series and number, fetches the CURRENT file from GitHub,
@@ -68,7 +68,7 @@ export async function applyArchivePatch(github, patch) {
   if (!patch || typeof patch !== 'object') return { error: 'patch must be an object.' };
   const { entityType, mode } = patch;
   if (!ENTITY_TYPES.includes(entityType)) return { error: `entityType must be one of ${ENTITY_TYPES.join(', ')}.` };
-  if (!['update', 'create'].includes(mode)) return { error: 'mode must be "update" or "create".' };
+  if (!['update', 'create', 'delete'].includes(mode)) return { error: 'mode must be "update", "create" or "delete".' };
 
   const paths = resolvePaths(entityType, patch.entityId);
   if (paths.error) return { error: paths.error };
@@ -77,6 +77,30 @@ export async function applyArchivePatch(github, patch) {
   // ---- entities stored as one record per file (episodes, movies) ----------
   if (paths.kind === 'episode' || paths.kind === 'movie') {
     const currentFile = await github.getJsonFile(paths.recordPath);
+    if (mode === 'delete') {
+      if (currentFile.missing) return { error: `${patch.entityId} does not exist in the archive.` };
+      if (patch.baseRecord !== undefined
+          && deepDiff(patch.baseRecord, currentFile.content).length > 0) {
+        return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
+      }
+      const indexFile = await github.getJsonFile(paths.indexPath);
+      if (indexFile.missing) return { error: `Index file ${paths.indexPath} not found.` };
+      const index = indexFile.content;
+      if (!(index.entries ?? []).some((e) => e.id === paths.entityId)) {
+        return { error: `${paths.entityId} is not listed in the index.` };
+      }
+      const files = [
+        { path: paths.recordPath, delete: true },
+        { path: paths.indexPath, content: serialize({ ...index, entries: index.entries.filter((e) => e.id !== paths.entityId) }) },
+      ];
+      const gone = currentFile.content;
+      return {
+        files,
+        changes: [{ field: '(entry deleted)', before: gone?.title?.en ?? gone?.title?.ja ?? paths.entityId, after: null }],
+        indexChanged: true,
+        entity: { type: entityType, id: paths.entityId, number: paths.number },
+      };
+    }
     if (mode === 'update' && currentFile.missing) {
       return { error: `${patch.entityId} does not exist in the archive — use "create" mode.` };
     }
@@ -129,6 +153,22 @@ export async function applyArchivePatch(github, patch) {
   if (arrayFile.missing) return { error: `Data file ${paths.arrayPath} not found.` };
   const list = arrayFile.content;
   const index = list.findIndex((r) => r?.id === patch.entityId);
+  if (mode === 'delete') {
+    if (index === -1) return { error: `${patch.entityId} does not exist in the archive.` };
+    if (patch.baseRecord !== undefined && deepDiff(patch.baseRecord, list[index]).length > 0) {
+      return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
+    }
+    const nextList = list.filter((_, i) => i !== index);
+    const fileValidation = validateEntityFile(nextList, entityType);
+    if (!fileValidation.ok) return { error: `The resulting file is not valid: ${fileValidation.errors.join(' ')}` };
+    const gone = list[index];
+    return {
+      files: [{ path: paths.arrayPath, content: serialize(nextList) }],
+      changes: [{ field: '(record deleted)', before: gone?.name?.en ?? gone?.name?.ja ?? patch.entityId, after: null }],
+      indexChanged: false,
+      entity: { type: entityType, id: patch.entityId, number: null },
+    };
+  }
   if (mode === 'update' && index === -1) {
     return { error: `${patch.entityId} does not exist — use "create" mode.` };
   }

@@ -12,10 +12,10 @@
 
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
-import { canReviewContribution, isStaff } from '../rbac.js';
+import { canReviewContribution, canEditContribution, isStaff } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
 import { summarizeChanges } from '../diff.js';
-import { enqueue, flushOutbox } from '../discord.js';
+import { notify, flushOutbox } from '../discord.js';
 
 async function loadContribution(db, body) {
   if (body.contributionId) return db.contributionById(body.contributionId);
@@ -41,18 +41,28 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
   if (auth.error) return json({ error: auth.error.message }, auth.error.code);
   const { profile } = auth;
 
-  if (!isStaff(profile.role)) {
-    return json({ error: 'This area is for authorised staff.' }, 403);
-  }
-
   const { body, error: bodyError } = await readJson(req);
   if (bodyError) return json({ error: bodyError }, 400);
   const { action } = body ?? {};
   const contribution = await loadContribution(db, body ?? {});
   if (!contribution) return json({ error: 'Contribution not found.' }, 404);
 
-  if (!canReviewContribution(profile.role, profile.id, contribution)) {
-    return json({ error: 'You cannot review your own submission.' }, 403);
+  // Review actions are staff-only and never on one's own submission — with
+  // two exceptions: editing a pending draft is open to its author (any role),
+  // and withdrawing one's own still-pending submission is always allowed.
+  // The owner has ultimate authority and may handle their own submissions.
+  if (action === 'save-draft') {
+    if (!canEditContribution(profile, contribution)) {
+      return json({ error: 'Only the author (while pending) or staff can edit a submission.' }, 403);
+    }
+  } else if (action === 'delete' && contribution.contributor_id === profile.id
+             && contribution.status === 'pending') {
+    // Author withdraw: falls through to the delete branch below.
+  } else {
+    if (!isStaff(profile.role)) return json({ error: 'This area is for authorised staff.' }, 403);
+    if (!canReviewContribution(profile.role, profile.id, contribution)) {
+      return json({ error: 'You cannot review your own submission.' }, 403);
+    }
   }
 
   // ---------------------------------------------------------------- accept
@@ -121,7 +131,7 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       entity_type: entity?.type ?? null, entity_id: entity?.id ?? contribution.entry_id,
       changes, review_notes: reviewNotes, commit_sha: commitSha,
     });
-    await enqueue(db, `contribution.${contribution.id}.accepted`, 'accepted', {
+    await notify(db, webhookUrl, `contribution.${contribution.id}.accepted`, 'accepted', {
       number: contribution.number, title: contribution.title,
       contributor: await displayName(db, contribution.contributor_id),
       reviewer: profile.display_name,
@@ -153,7 +163,7 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
       review_notes: reason,
     });
-    await enqueue(db, `contribution.${contribution.id}.declined`, 'declined', {
+    await notify(db, webhookUrl, `contribution.${contribution.id}.declined`, 'declined', {
       number: contribution.number, title: contribution.title,
       contributor: await displayName(db, contribution.contributor_id),
       reviewer: profile.display_name, reason,
@@ -178,7 +188,7 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
       review_notes: reason,
     });
-    await enqueue(db, `contribution.${contribution.id}.deleted`, 'deleted', {
+    await notify(db, webhookUrl, `contribution.${contribution.id}.deleted`, 'deleted', {
       number: contribution.number, title: contribution.title,
       contributor: await displayName(db, contribution.contributor_id),
       reviewer: profile.display_name, reason,
@@ -197,11 +207,19 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       proposed_patch: body.proposedPatch ?? contribution.proposed_patch ?? null,
     };
     await db.updateContribution(contribution.id, edited);
+    // The original author and the audit trail stay intact: this only records
+    // who touched the draft last and what they changed.
     await db.insertAudit({
       contribution_id: contribution.id, contribution_number: contribution.number,
       action: 'contribution.edited', actor_id: profile.id, actor_display_name: profile.display_name,
-      entity_id: contribution.entry_id,
+      target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
     });
+    await notify(db, webhookUrl, `contribution.${contribution.id}.edited.${Date.now()}`, 'edited', {
+      number: contribution.number, title: contribution.title,
+      contributor: await displayName(db, contribution.contributor_id),
+      reviewer: profile.display_name,
+    });
+    await flushOutbox(db, webhookUrl);
     return json({ ok: true });
   }
 
