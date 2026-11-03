@@ -27,11 +27,15 @@
   {
     "id": "char-nobita",
     "name": {
-      "en": "Character 2",
-      "ja": null
+      "en": "Nobita Nobi",
+      "ja": "野比 のび太"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Nobita",
+      "Noby",
+      "Nobita Nobi"
+    ],
+    "description": "A kind-hearted but lazy and clumsy schoolboy who relies on Doraemon's futuristic gadgets to overcome everyday problems.",
     "category": "main",
     "image": {
       "url": null,
