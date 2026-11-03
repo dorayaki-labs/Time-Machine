@@ -1,268 +1,245 @@
-diff --git a/src/components/AccountMenu.jsx b/src/components/AccountMenu.jsx
-index b1af1d4..dc28790
---- a/src/components/AccountMenu.jsx
-+++ b/src/components/AccountMenu.jsx
-@@ -56,7 +56,7 @@ export default function AccountMenu() {
-         <div className="account-menu__panel" role="menu" aria-label="Account">
-           <div className="account-menu__who">
-             <strong>{name}</strong>
--            <span className="account-menu__role account-menu__role--{role}">{role}</span>
-+            <span className={`account-menu__role account-menu__role--${role}`}>{role}</span>
-           </div>
-           <ul className="account-menu__links">
-             <li><Link role="menuitem" to="/account" onClick={() => setOpen(false)}><Icon name="user" size={15} /> My contributions</Link></li>
-diff --git a/src/components/ContributionForm.jsx b/src/components/ContributionForm.jsx
-index d8117e4..2c2ae2e
---- a/src/components/ContributionForm.jsx
-+++ b/src/components/ContributionForm.jsx
-@@ -1,7 +1,7 @@
- import { useId, useState } from 'react';
- import { Link } from 'react-router-dom';
- import Icon from './Icon.jsx';
--import { validateForm } from '@/lib/contributionForms.js';
-+import { validateForm, normalizeUrl } from '@/lib/contributionForms.js';
- import { getEntry } from '@/lib/catalog.js';
- import { useAuth } from '@/hooks/useAuth.jsx';
- import { submitContribution } from '@/lib/staffApi.js';
-@@ -53,16 +53,23 @@ export default function ContributionForm({ category }) {
-     }
-     // Signed in with a configured backend: submit for real. The server
-     // re-validates everything, applies rate limits, and returns a number.
-+    // Bare domains (example.com/page) are coerced to https:// before sending.
-     if (user && backendConfigured) {
-+      const normalized = { ...values };
-+      for (const f of fields) {
-+        if ((f.validate === 'url' || f.validate === 'urlList') && typeof normalized[f.name] === 'string') {
-+          normalized[f.name] = normalized[f.name].split(/\r?\n/).map(normalizeUrl).join('\n');
-+        }
-+      }
-       setStatus('submitting');
-       setSubmitError(null);
-       try {
-         const res = await submitContribution({
-           type: category.id,
--          title: suggestionTitle(category, values),
--          entryId: typeof values.entryId === 'string' && values.entryId.trim() ? values.entryId.trim() : null,
--          payload: values,
--          honeypot: values.company ?? null,
-+          title: suggestionTitle(category, normalized),
-+          entryId: typeof normalized.entryId === 'string' && normalized.entryId.trim() ? normalized.entryId.trim() : null,
-+          payload: normalized,
-+          honeypot: normalized.company ?? null,
-         });
-         setResult({ number: res.number, submitted: true });
-         setStatus('done');
-diff --git a/src/components/Footer.jsx b/src/components/Footer.jsx
-index a5afbb1..f2186d0
---- a/src/components/Footer.jsx
-+++ b/src/components/Footer.jsx
-@@ -29,6 +29,8 @@ export default function Footer() {
-             <li><Link to="/about">About</Link></li>
-             <li><Link to="/contribute">Contribute</Link></li>
-             <li><Link to="/search">Search</Link></li>
-+            <li><Link to="/stats">Statistics</Link></li>
-+            <li><Link to="/log">Contribution log</Link></li>
-           </ul>
-         </nav>
-       </div>
-diff --git a/src/components/Header.jsx b/src/components/Header.jsx
-index b78a4d6..0022540
---- a/src/components/Header.jsx
-+++ b/src/components/Header.jsx
-@@ -29,8 +29,11 @@ export default function Header() {
-         </Link>
+diff --git a/docs/DEPLOYMENT.md b/docs/DEPLOYMENT.md
+index d34eaea..c827f6a
+--- a/docs/DEPLOYMENT.md
++++ b/docs/DEPLOYMENT.md
+@@ -379,6 +379,24 @@ handler writes its outcomes to `console.log/error` and they appear here.
+   no local Deno install is needed.
+ - 401s from the browser with a signed-in user → check `ALLOWED_ORIGINS`
+   first, then JWT expiry (sign out/in).
++- Every submission/action fails as "NetworkError when attempting to fetch
++  resource" → the browser is being denied twice: the preflight AND the actual
++  response must both carry `Access-Control-Allow-Origin`. Verify the
++  preflight (must print 204, not 403):
++
++  ```bash
++  curl -s -o /dev/null -w "%{http_code}\n" -X OPTIONS \
++    "https://YOUR-PROJECT-REF.supabase.co/functions/v1/contribute" \
++    -H "Origin: https://karizzmaa.github.io" \
++    -H "Access-Control-Request-Method: POST" \
++    -H "Access-Control-Request-Headers: authorization, content-type"
++  ```
++
++  If it is 204 and the browser still fails: the functions were deployed
++  before a fix to `_shared/cors.js` — redeploy all five functions so the
++  bundled code matches (any change under `_shared/` requires a redeploy).
++- Changing a secret takes effect immediately; changing function code does
++  not — `supabase functions deploy` is always needed after code edits.
  
-         <nav className="primary-nav" aria-label="Primary">
-+          {/* Statistics and the contribution log stay out of the desktop bar
-+              (they are in the account menu and the footer): eleven items do
-+              not fit on one row without pushing into the buttons. */}
-           <ul>
--            {NAV_ITEMS.map((item) => (
-+            {NAV_ITEMS.filter((item) => item.to !== '/stats' && item.to !== '/log').map((item) => (
-               <li key={item.to}>
-                 <NavLink to={item.to} end={item.end} className={({ isActive }) => `primary-nav__link${isActive ? ' is-active' : ''}`}>
-                   {item.label}
-diff --git a/src/lib/backend.js b/src/lib/backend.js
-index e58088a..f6a5ceb
---- a/src/lib/backend.js
-+++ b/src/lib/backend.js
-@@ -21,9 +21,21 @@ export async function callFunction(name, body) {
-   const { data: { session } } = await supabase.auth.getSession();
-   const headers = { 'Content-Type': 'application/json' };
-   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
--  const res = await fetch(`${url}/functions/v1/${name}`, {
--    method: 'POST', headers, body: JSON.stringify(body ?? {}),
--  });
-+  let res;
+ ---
+ 
+diff --git a/scripts/test-edge-logic.mjs b/scripts/test-edge-logic.mjs
+index 572ab06..4116693
+--- a/scripts/test-edge-logic.mjs
++++ b/scripts/test-edge-logic.mjs
+@@ -14,6 +14,7 @@ import { FORM_SPECS } from '../supabase/functions/_shared/formSpec.js';
+ import { buildEmbed, sanitize } from '../supabase/functions/_shared/discord.js';
+ import { checkRoleAction, canReviewContribution } from '../supabase/functions/_shared/rbac.js';
+ import { applyArchivePatch, resolvePaths } from '../supabase/functions/_shared/patch.js';
++import { preflight, withCors, json } from '../supabase/functions/_shared/cors.js';
+ 
+ let passed = 0;
+ const pending = [];
+@@ -238,5 +239,54 @@ test('character update edits the array file by id', async () => {
+   assert.deepEqual(res.changes, [{ field: 'description', before: null, after: 'Protagonist.' }]);
+ });
+ 
++// CORS: the browser needs the allow-origin header on the preflight AND on the
++// actual POST response; missing either shows up in the UI as NetworkError.
++const env = { get: (k) => (k === 'ALLOWED_ORIGINS' ? 'https://karizzmaa.github.io/' : '') };
++
++test('origin matching tolerates trailing slash and case in the secret', () => {
++  const req = new Request('https://x/functions/v1/contribute', { method: 'OPTIONS', headers: { Origin: 'https://karizzmaa.github.io' } });
++  const res = preflight(req, env);
++  assert.equal(res.status, 204);
++  assert.equal(res.headers.get('Access-Control-Allow-Origin'), 'https://karizzmaa.github.io');
++  const req2 = new Request('https://x/functions/v1/contribute', { method: 'OPTIONS', headers: { Origin: 'https://KARIZZMAA.github.io' } });
++  assert.equal(preflight(req2, env).status, 204);
++  const bad = new Request('https://x/functions/v1/contribute', { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } });
++  assert.equal(preflight(bad, env).status, 403);
++});
++
++test('a "*" entry in ALLOWED_ORIGINS allows every origin', () => {
++  const star = { get: (k) => (k === 'ALLOWED_ORIGINS' ? '*' : '') };
++  const req = new Request('https://x/functions/v1/contribute', { method: 'OPTIONS', headers: { Origin: 'https://anything.example' } });
++  assert.equal(preflight(req, star).status, 204);
++});
++
++test('withCors stamps the actual POST response for allowed origins', async () => {
++  const req = new Request('https://x/functions/v1/contribute', {
++    method: 'POST', headers: { Origin: 'https://karizzmaa.github.io', 'Content-Type': 'application/json' },
++  });
++  const wrapped = await Promise.resolve(json({ ok: true, number: 7 }, 200)).then((r) => withCors(r, req, env));
++  assert.equal(wrapped.status, 200);
++  assert.equal(wrapped.headers.get('Access-Control-Allow-Origin'), 'https://karizzmaa.github.io');
++  assert.equal(wrapped.headers.get('Vary'), 'Origin');
++  assert.deepEqual(await wrapped.json(), { ok: true, number: 7 });
++
++  // A preflight-style response that already carries the header must not get it twice.
++  const pre = preflight(new Request('https://x/', { method: 'OPTIONS', headers: { Origin: 'https://karizzmaa.github.io' } }), env);
++  const rewrapped = withCors(pre, new Request('https://x/', { method: 'OPTIONS', headers: { Origin: 'https://karizzmaa.github.io' } }), env);
++  assert.equal(rewrapped.headers.get('Access-Control-Allow-Origin'), 'https://karizzmaa.github.io');
++});
++
++test('withCors leaves disallowed and same-origin responses untouched', async () => {
++  const bad = new Request('https://x/functions/v1/contribute', { method: 'POST', headers: { Origin: 'https://evil.example' } });
++  const res = json({ error: 'Origin not allowed.' }, 403);
++  const out = withCors(res, bad, env);
++  assert.equal(out.status, 403);
++  assert.equal(out.headers.get('Access-Control-Allow-Origin'), null);
++
++  const direct = new Request('https://x/functions/v1/contribute', { method: 'POST' });  // server-to-server: no Origin
++  const out2 = withCors(json({ ok: true }), direct, env);
++  assert.equal(out2.headers.get('Access-Control-Allow-Origin'), null);
++});
++
+ await run();
+ console.log(`\n${passed} test groups passed${process.exitCode ? ' (with failures above)' : ''}.`);
+diff --git a/supabase/functions/_shared/cors.js b/supabase/functions/_shared/cors.js
+index 516df1f..3009beb
+--- a/supabase/functions/_shared/cors.js
++++ b/supabase/functions/_shared/cors.js
+@@ -1,6 +1,6 @@
+ // CORS + JSON helpers. Allowed origins are supplied through the
+-// ALLOWED_ORIGINS function secret (comma-separated); requests from anywhere
+-// else are rejected before any work happens.
++// ALLOWED_ORIGINS function secret (comma-separated, "*" allows every origin);
++// requests from anywhere else are rejected before any work happens.
+ 
+ export function json(body, status = 200, extraHeaders = {}) {
+   return new Response(JSON.stringify(body), {
+@@ -14,9 +14,21 @@ export function allowedOrigins(env) {
+     .split(',').map((s) => s.trim()).filter(Boolean);
+ }
+ 
++/** Origins are compared scheme+host+port only, so a trailing slash or
++ *  uppercase host in the secret cannot silently break matching. */
++export function normalizeOrigin(origin) {
 +  try {
-+    res = await fetch(`${url}/functions/v1/${name}`, {
-+      method: 'POST', headers, body: JSON.stringify(body ?? {}),
-+    });
++    const u = new URL(String(origin));
++    return `${u.protocol}//${u.host.toLowerCase()}`;
 +  } catch {
-+    // A rejected fetch here is almost always a blocked CORS preflight (the
-+    // backend's ALLOWED_ORIGINS secret missing this exact site address), not
-+    // a user-facing network problem.
-+    throw new Error(
-+      'Could not reach the submission service. If the site address changed '
-+      + 'recently, the backend ALLOWED_ORIGINS secret must include it exactly — '
-+      + 'see DEPLOYMENT.md, step D8.',
-+    );
++    return String(origin ?? '').trim().replace(/\/+$/, '');
 +  }
-   let parsed = null;
-   try { parsed = await res.json(); } catch { /* non-JSON error */ }
-   if (!res.ok) {
-diff --git a/src/lib/contributionForms.js b/src/lib/contributionForms.js
-index ea6fc8a..89e55af
---- a/src/lib/contributionForms.js
-+++ b/src/lib/contributionForms.js
-@@ -4,7 +4,7 @@ import { getLanguages } from './catalog.js';
- import { parseDate } from './dates.js';
- 
- const langOptions = () => getLanguages().map((l) => ({ value: l.code, label: `${l.name} (${l.native})` }));
--const urlList = (label = 'Reference URLs') => ({ name: 'references', label, type: 'textarea', rows: 3, validate: 'urlList', help: 'One link per line. Use http or https.' });
-+const urlList = (label = 'Reference URLs') => ({ name: 'references', label, type: 'textarea', rows: 3, validate: 'urlList', help: 'One link per line, e.g. https://example.com/page — leave empty if you have none.' });
- 
- export const CONTRIBUTION_CATEGORIES = [
-   {
-@@ -84,7 +84,7 @@ export const CONTRIBUTION_CATEGORIES = [
-     fields: () => [
-       { name: 'entryId', label: 'Entry ID (if for one entry)', type: 'text', placeholder: 'e.g. movie-0002', validate: 'entryId' },
-       { name: 'title', label: 'Reference title', type: 'text', required: true, placeholder: 'e.g. Episode list — Japanese Wikipedia' },
--      { name: 'url', label: 'Reference URL', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book' },
-+      { name: 'url', label: 'Reference URL (web sources only)', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book', help: 'For a book, magazine or other offline source, leave this empty and name the source in "What does it verify?" below.' },
-       { name: 'type', label: 'Reference type', type: 'select', required: true, options: [
-         { value: 'episode list', label: 'Episode list' }, { value: 'article', label: 'Article' },
-         { value: 'book', label: 'Book or print' }, { value: 'note', label: 'Note' }] },
-@@ -131,6 +131,16 @@ export const CONTRIBUTION_CATEGORIES = [
- 
- const isUrl = (v) => { try { const u = new URL(v); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; } };
- 
-+/** Accepts bare domains (example.com/page) by adding the https:// scheme;
-+ *  leaves full URLs, empty lines and <iframe> snippets untouched. */
-+export const normalizeUrl = (line) => {
-+  const s = String(line ?? '').trim();
-+  if (!s || /^(https?:\/\/|<)/i.test(s)) return s;
-+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(s) ? `https://${s}` : s;
-+};
++}
 +
-+const urlLines = (v) => String(v ?? '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+ export function corsHeaders(env, origin) {
+   const list = allowedOrigins(env);
+-  return origin && list.includes(origin)
++  const ok = origin && (list.includes('*') || list.some((o) => normalizeOrigin(o) === normalizeOrigin(origin)));
++  return ok
+     ? {
+         'Access-Control-Allow-Origin': origin,
+         'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
+@@ -47,3 +59,17 @@ export function checkOrigin(req, env) {
+   }
+   return { ok: true, headers };
+ }
 +
- /** Returns an object of { fieldName: message } for every problem found. */
- export function validateForm(fields, values, { entryExists } = {}) {
-   const errors = {};
-@@ -141,9 +151,9 @@ export function validateForm(fields, values, { entryExists } = {}) {
-     if (v === undefined || v === null || v === '') continue;
-     if (f.type === 'number' && (!Number.isInteger(Number(v)) || Number(v) < (f.min ?? 0))) errors[f.name] = `${f.label} must be a whole number of ${f.min ?? 0} or more.`;
-     if (f.validate === 'date' && !parseDate(v)) errors[f.name] = 'Use the format YYYY, YYYY-MM or YYYY-MM-DD (for example 2005-04-15).';
--    if (f.validate === 'url' && !isUrl(v)) errors[f.name] = 'Enter a full web address starting with http:// or https://.';
-+    if (f.validate === 'url' && !isUrl(normalizeUrl(v))) errors[f.name] = 'Enter a full web address starting with http:// or https://. For offline sources such as a book, leave this empty and name the source in the notes instead.';
-     if (f.validate === 'urlList') {
--      const bad = v.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).filter((s) => !isUrl(s));
-+      const bad = urlLines(v).filter((s) => !isUrl(normalizeUrl(s)));
-       if (bad.length) errors[f.name] = `These do not look like web addresses: ${bad.slice(0, 2).join(', ')}${bad.length > 2 ? '…' : ''}`;
-     }
-     if (f.validate === 'entryId') {
-diff --git a/src/lib/stats.js b/src/lib/stats.js
-index 2d0c19d..b2e1e3b
---- a/src/lib/stats.js
-+++ b/src/lib/stats.js
-@@ -40,9 +40,12 @@ export async function fetchMyContributions() {
- /** Staff: all submissions with contributor info, filtered and paged. */
- export async function fetchSubmissions({ status = 'all', type = 'all', search = '', limit = 50 } = {}) {
-   if (!backendConfigured || !supabase) return null;
-+  // Embedding profiles twice in one query breaks on some PostgREST versions
-+  // ("table name ... specified more than once"), so the people are fetched in
-+  // a second query and stitched in here.
-   let query = supabase
-     .from('contributions')
--    .select('*, profiles!contributions_contributor_id_fkey(display_name, avatar_url, role), profiles!contributions_reviewer_id_fkey(display_name)')
-+    .select('*')
-     .order('created_at', { ascending: false })
-     .limit(limit);
-   if (status !== 'all') query = query.eq('status', status);
-@@ -50,7 +53,16 @@ export async function fetchSubmissions({ status = 'all', type = 'all', search =
-   if (search.trim()) query = query.or(`title.ilike.%${search.trim()}%,entry_id.ilike.%${search.trim()}%`);
-   const { data, error } = await query;
-   if (error) throw new Error(error.message);
--  return data ?? [];
-+  const rows = data ?? [];
-+  const ids = [...new Set(rows.flatMap((r) => [r.contributor_id, r.reviewer_id].filter(Boolean)))];
-+  if (!ids.length) return rows;
-+  const { data: people, error: peopleError } = await supabase
-+    .from('profiles')
-+    .select('id, display_name, avatar_url, role')
-+    .in('id', ids);
-+  if (peopleError) throw new Error(peopleError.message);
-+  const byId = new Map((people ?? []).map((p) => [p.id, p]));
-+  return rows.map((r) => ({ ...r, profiles: byId.get(r.contributor_id) ?? null }));
- }
++/** The browser demands Access-Control-Allow-Origin on the ACTUAL response,
++ *  not just on the preflight — without it every POST dies as "NetworkError"
++ *  even when the preflight passed. Wrap each handler's response with this so
++ *  every reply to an allowed origin carries the headers. */
++export function withCors(response, req, env) {
++  const origin = req.headers.get('Origin');
++  if (!origin) return response;
++  const headers = corsHeaders(env, origin);
++  if (!headers['Access-Control-Allow-Origin']) return response;  // rejected upstream
++  const out = new Headers(response.headers);
++  for (const [k, v] of Object.entries(headers)) if (!out.has(k)) out.set(k, v);
++  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: out });
++}
+diff --git a/supabase/functions/contribute/index.js b/supabase/functions/contribute/index.js
+index 3ce34d8..f9d0b5d
+--- a/supabase/functions/contribute/index.js
++++ b/supabase/functions/contribute/index.js
+@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
+ import { makeDb } from '../_shared/db.js';
+ import { makeGithub } from '../_shared/githubClient.js';
+ import { handleContribute } from '../_shared/handlers/contribute.js';
++import { withCors } from '../_shared/cors.js';
  
- /** Staff: audit events, newest first. */
-diff --git a/src/pages/Staff.jsx b/src/pages/Staff.jsx
-index e198db1..5e58a39
---- a/src/pages/Staff.jsx
-+++ b/src/pages/Staff.jsx
-@@ -14,7 +14,7 @@ import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
- import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
- import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
- import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
--import { getEntry, getCharacter, getGadget, getSeries, getAllEntries } from '@/lib/catalog.js';
-+import { getEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries } from '@/lib/catalog.js';
- import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
+ const env = { get: (k) => Deno.env.get(k) };
  
- const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
-diff --git a/src/styles/backend.css b/src/styles/backend.css
-index 03a3b27..eb2a4ae
---- a/src/styles/backend.css
-+++ b/src/styles/backend.css
-@@ -3,7 +3,7 @@
-    visual language. */
+@@ -16,5 +17,5 @@ Deno.serve((req) => {
+     env,
+     webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
+     github: makeGithub(env),
+-  });
++  }).then((res) => withCors(res, req, env));
+ });
+diff --git a/supabase/functions/direct-edit/index.js b/supabase/functions/direct-edit/index.js
+index 21fa58c..b43dce0
+--- a/supabase/functions/direct-edit/index.js
++++ b/supabase/functions/direct-edit/index.js
+@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
+ import { makeDb } from '../_shared/db.js';
+ import { makeGithub } from '../_shared/githubClient.js';
+ import { handleDirectEdit } from '../_shared/handlers/directEdit.js';
++import { withCors } from '../_shared/cors.js';
  
- .account-menu { position: relative; margin-inline-end: 0.35rem; }
--.account-menu__signin { padding: 0.42rem 0.9rem; font-size: 0.92rem; }
-+.account-menu__signin { padding: 0.42rem 0.9rem; font-size: 0.92rem; white-space: nowrap; }
- .account-menu__trigger {
-   display: inline-flex; align-items: center; justify-content: center;
-   width: 38px; height: 38px; border-radius: 50%;
-diff --git a/src/styles/navigation.css b/src/styles/navigation.css
-index c1734a3..8dc1d0d
---- a/src/styles/navigation.css
-+++ b/src/styles/navigation.css
-@@ -8,11 +8,11 @@
- .brand { display: inline-flex; align-items: center; flex-shrink: 0; }
- .brand img { height: 40px; width: auto; }
+ const env = { get: (k) => Deno.env.get(k) };
  
--.primary-nav { margin-inline: auto; }
--.primary-nav ul { display: flex; align-items: center; gap: var(--s-1); flex-wrap: wrap; }
-+.primary-nav { margin-inline: auto; min-width: 0; }
-+.primary-nav ul { display: flex; align-items: center; gap: var(--s-1); flex-wrap: nowrap; }
- .primary-nav__link {
--  position: relative; display: inline-block; padding: 7px 11px; border-radius: var(--r-sm);
--  color: var(--text-2); font-size: 0.92rem; font-weight: 500;
-+  position: relative; display: inline-block; padding: 7px 8px; border-radius: var(--r-sm);
-+  color: var(--text-2); font-size: 0.9rem; font-weight: 500; white-space: nowrap;
-   transition: color 0.15s, background 0.15s;
- }
- .primary-nav__link:hover { color: var(--text); background: var(--surface-2); }
-@@ -22,7 +22,7 @@
-   background: var(--accent); border-radius: 2px;
- }
+@@ -16,5 +17,5 @@ Deno.serve((req) => {
+     env,
+     webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
+     github: makeGithub(env),
+-  });
++  }).then((res) => withCors(res, req, env));
+ });
+diff --git a/supabase/functions/manage-role/index.js b/supabase/functions/manage-role/index.js
+index 8c0a2b8..73a378e
+--- a/supabase/functions/manage-role/index.js
++++ b/supabase/functions/manage-role/index.js
+@@ -2,6 +2,7 @@
+ import { createClient } from 'npm:@supabase/supabase-js@2';
+ import { makeDb } from '../_shared/db.js';
+ import { handleManageRole } from '../_shared/handlers/manageRole.js';
++import { withCors } from '../_shared/cors.js';
  
--.header-actions { display: flex; align-items: center; gap: var(--s-2); margin-left: auto; }
-+.header-actions { display: flex; align-items: center; gap: var(--s-2); margin-left: auto; flex-shrink: 0; }
- .search-btn { position: relative; width: auto; padding-inline: 10px; gap: 8px; color: var(--text-2); }
- .search-btn:hover { color: var(--text); }
- .search-btn__kbd {
-diff --git a/src/styles/responsive.css b/src/styles/responsive.css
-index ea1a4b9..d66f5df
---- a/src/styles/responsive.css
-+++ b/src/styles/responsive.css
-@@ -1,5 +1,6 @@
--/* Laptop and below */
--@media (max-width: 1060px) {
-+/* Small laptop and below: the full desktop nav no longer fits, so it moves
-+   into the burger menu instead of wrapping inside the header. */
-+@media (max-width: 1280px) {
-   .primary-nav { display: none; }
-   .menu-btn { display: inline-grid; }
-   .search-btn__kbd { display: none; }
+ const env = { get: (k) => Deno.env.get(k) };
+ 
+@@ -14,5 +15,5 @@ Deno.serve((req) => {
+     authApi: admin.auth,
+     env,
+     webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
+-  });
++  }).then((res) => withCors(res, req, env));
+ });
+diff --git a/supabase/functions/reconcile-sync/index.js b/supabase/functions/reconcile-sync/index.js
+index 178f45a..49ef5ee
+--- a/supabase/functions/reconcile-sync/index.js
++++ b/supabase/functions/reconcile-sync/index.js
+@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
+ import { makeDb } from '../_shared/db.js';
+ import { makeGithub } from '../_shared/githubClient.js';
+ import { handleReconcile } from '../_shared/handlers/reconcile.js';
++import { withCors } from '../_shared/cors.js';
+ 
+ const env = { get: (k) => Deno.env.get(k) };
+ 
+@@ -16,5 +17,5 @@ Deno.serve((req) => {
+     env,
+     webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
+     github: makeGithub(env),
+-  });
++  }).then((res) => withCors(res, req, env));
+ });
+diff --git a/supabase/functions/review/index.js b/supabase/functions/review/index.js
+index 1ec903f..bfabdea
+--- a/supabase/functions/review/index.js
++++ b/supabase/functions/review/index.js
+@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
+ import { makeDb } from '../_shared/db.js';
+ import { makeGithub } from '../_shared/githubClient.js';
+ import { handleReview } from '../_shared/handlers/review.js';
++import { withCors } from '../_shared/cors.js';
+ 
+ const env = { get: (k) => Deno.env.get(k) };
+ 
+@@ -16,5 +17,5 @@ Deno.serve((req) => {
+     env,
+     webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
+     github: makeGithub(env),
+-  });
++  }).then((res) => withCors(res, req, env));
+ });
