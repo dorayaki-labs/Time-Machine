@@ -24,47 +24,7 @@
   "characters": [],
   "gadgets": [],
   "voiceActors": [],
-  "sources": [
-    {
-      "type": "direct",
-      "data": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4",
-      "label": "Sample file — replace me",
-      "language": "Japanese",
-      "subtitles": {
-        "has": true,
-        "type": "hard",
-        "languages": [
-          "English"
-        ]
-      },
-      "quality": "1080p",
-      "notes": "Example entry showing the source detail fields. Replace with a real source."
-    },
-    {
-      "type": "direct",
-      "data": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
-      "label": "Sample file — soft subs",
-      "language": "Japanese",
-      "subtitles": {
-        "has": true,
-        "type": "soft",
-        "languages": [
-          "English",
-          "Spanish"
-        ]
-      },
-      "quality": "720p"
-    },
-    {
-      "type": "embed",
-      "data": "https://www.youtube.com/embed/aqz-KE-bpKQ",
-      "label": "Sample embed — replace me",
-      "language": "Japanese",
-      "subtitles": "none",
-      "quality": "720p",
-      "notes": "Embeds are shown as submitted, with no player of ours."
-    }
-  ],
+  "sources": [],
   "references": [],
   "updatedAt": "2026-11-02"
 }
