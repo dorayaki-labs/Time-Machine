@@ -10,7 +10,10 @@ const API = 'https://api.github.com';
 
 function headers(env) {
   return {
-    Authorization: `Bearer ${env.token}`,
+    // Reads on a public repository work unauthenticated; only ever send a
+    // token when one is configured — "Bearer undefined" reads as bad
+    // credentials and turns every read into a misleading 401.
+    ...(env.token ? { Authorization: `Bearer ${env.token}` } : {}),
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
     'Content-Type': 'application/json',

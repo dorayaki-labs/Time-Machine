@@ -20,7 +20,10 @@ const serialize = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
 export const ENTITY_TYPES = ['episode', 'movie', 'character', 'gadget'];
 
-/** Where an entity lives inside the repository. */
+/** Where an entity lives inside the repository. All paths are REPO paths:
+ *  Vite serves the public/ directory at the site root, so the archive's
+ *  source of truth lives under public/ and the GitHub API must address it
+ *  from the repository root. */
 export function resolvePaths(entityType, entityId) {
   if (entityType === 'episode') {
     const seriesId = String(entityId ?? '').split('-').slice(0, 2).join('-');
@@ -30,9 +33,9 @@ export function resolvePaths(entityType, entityId) {
     return {
       seriesId,
       kind: 'episode',
-      recordPath: `${series.dir}/episodes/${pad(number)}.json`,
+      recordPath: `public/${series.dir}/episodes/${pad(number)}.json`,
       recordPathInIndex: `episodes/${pad(number)}.json`,
-      indexPath: `${series.dir}/index.json`,
+      indexPath: `public/${series.dir}/index.json`,
       entityId, number,
     };
   }
@@ -42,17 +45,17 @@ export function resolvePaths(entityType, entityId) {
     return {
       seriesId: 'movies',
       kind: 'movie',
-      recordPath: `archive/movies/${pad(number)}.json`,
+      recordPath: `public/archive/movies/${pad(number)}.json`,
       recordPathInIndex: `${pad(number)}.json`,
-      indexPath: 'archive/movies/index.json',
+      indexPath: 'public/archive/movies/index.json',
       entityId, number,
     };
   }
   if (entityType === 'character') {
-    return { kind: 'character', arrayPath: 'data/characters.json', entityId };
+    return { kind: 'character', arrayPath: 'public/data/characters.json', entityId };
   }
   if (entityType === 'gadget') {
-    return { kind: 'gadget', arrayPath: 'data/gadgets.json', entityId };
+    return { kind: 'gadget', arrayPath: 'public/data/gadgets.json', entityId };
   }
   return { error: `entityType must be one of ${ENTITY_TYPES.join(', ')}.` };
 }
