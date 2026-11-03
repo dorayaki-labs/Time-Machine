@@ -1,6 +1,6 @@
 // CORS + JSON helpers. Allowed origins are supplied through the
-// ALLOWED_ORIGINS function secret (comma-separated); requests from anywhere
-// else are rejected before any work happens.
+// ALLOWED_ORIGINS function secret (comma-separated, "*" allows every origin);
+// requests from anywhere else are rejected before any work happens.
 
 export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
@@ -14,9 +14,21 @@ export function allowedOrigins(env) {
     .split(',').map((s) => s.trim()).filter(Boolean);
 }
 
+/** Origins are compared scheme+host+port only, so a trailing slash or
+ *  uppercase host in the secret cannot silently break matching. */
+export function normalizeOrigin(origin) {
+  try {
+    const u = new URL(String(origin));
+    return `${u.protocol}//${u.host.toLowerCase()}`;
+  } catch {
+    return String(origin ?? '').trim().replace(/\/+$/, '');
+  }
+}
+
 export function corsHeaders(env, origin) {
   const list = allowedOrigins(env);
-  return origin && list.includes(origin)
+  const ok = origin && (list.includes('*') || list.some((o) => normalizeOrigin(o) === normalizeOrigin(origin)));
+  return ok
     ? {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
@@ -46,4 +58,18 @@ export function checkOrigin(req, env) {
     return { ok: false, response: json({ error: 'Origin not allowed.' }, 403) };
   }
   return { ok: true, headers };
+}
+
+/** The browser demands Access-Control-Allow-Origin on the ACTUAL response,
+ *  not just on the preflight — without it every POST dies as "NetworkError"
+ *  even when the preflight passed. Wrap each handler's response with this so
+ *  every reply to an allowed origin carries the headers. */
+export function withCors(response, req, env) {
+  const origin = req.headers.get('Origin');
+  if (!origin) return response;
+  const headers = corsHeaders(env, origin);
+  if (!headers['Access-Control-Allow-Origin']) return response;  // rejected upstream
+  const out = new Headers(response.headers);
+  for (const [k, v] of Object.entries(headers)) if (!out.has(k)) out.set(k, v);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: out });
 }

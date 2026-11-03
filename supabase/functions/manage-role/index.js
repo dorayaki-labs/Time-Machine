@@ -1,7 +1,9 @@
 // Edge Function: manage-role — appoint/revoke checkers and admins.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { makeDb } from '../_shared/db.js';
+import { makeGithub } from '../_shared/githubClient.js';
 import { handleManageRole } from '../_shared/handlers/manageRole.js';
+import { withCors } from '../_shared/cors.js';
 
 const env = { get: (k) => Deno.env.get(k) };
 
@@ -14,5 +16,5 @@ Deno.serve((req) => {
     authApi: admin.auth,
     env,
     webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
-  });
+  }).then((res) => withCors(res, req, env));
 });
