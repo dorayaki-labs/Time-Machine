@@ -1,7 +1,6 @@
 // Edge Function: manage-role — appoint/revoke checkers and admins.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { makeDb } from '../_shared/db.js';
-import { makeGithub } from '../_shared/githubClient.js';
 import { handleManageRole } from '../_shared/handlers/manageRole.js';
 import { withCors } from '../_shared/cors.js';
 

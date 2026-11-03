@@ -2,6 +2,11 @@
 // ALLOWED_ORIGINS function secret (comma-separated, "*" allows every origin);
 // requests from anywhere else are rejected before any work happens.
 
+// Bumped on every change to this file so a live deployment can be verified
+// without credentials: `curl -i -X OPTIONS <function-url>` must show
+// x-tm-cors-version: 2. If it is missing, the function is running old code.
+export const CORS_VERSION = '2';
+
 export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -33,6 +38,8 @@ export function corsHeaders(env, origin) {
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Expose-Headers': 'x-tm-cors-version',
+        'x-tm-cors-version': CORS_VERSION,
         Vary: 'Origin',
       }
     : { Vary: 'Origin' };
