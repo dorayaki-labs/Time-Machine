@@ -38,6 +38,7 @@ const state = {
   entries: [],
   entriesById: new Map(),
   series: new Map(),
+  rawEntries: new Map(),
   characters: [],
   gadgets: [],
   languages: [],
@@ -102,6 +103,18 @@ async function buildState() {
       }
     })));
 
+  // Raw record files, exactly as stored in the repository. The staff editor
+  // commits against THESE — the merged entry carries derived fields (path,
+  // kind, forced arrays, normalized sources) that never exist in the file,
+  // so using it as an edit base fails the server's concurrency check.
+  state.rawEntries = new Map(Object.values(recordsBySeries).flatMap((recs) => Object.entries(recs)));
+
+  // Raw record files, exactly as stored in the repository. The staff editor
+  // commits against THESE — the merged entry carries derived fields (path,
+  // kind, forced arrays, normalized sources) that never exist in the file,
+  // so using it as an edit base fails the server's concurrency check.
+  state.rawEntries = new Map(Object.values(recordsBySeries).flatMap((recs) => Object.entries(recs)));
+
   state.entries = [];
   state.entriesById = new Map();
 
@@ -155,6 +168,22 @@ export async function loadRecord(entryOrId) {
   const entry = typeof entryOrId === 'string' ? getEntry(entryOrId) : entryOrId;
   return entry ?? null;
 }
+
+/**
+ * The RAW record file behind an entry id, exactly as stored in the repository
+ * (no roster merge, no derived fields). This is what editing and committing
+ * must round-trip through. Null when the id is unknown or its file failed to
+ * load.
+ */
+export const getRawEntry = (id) => state.rawEntries.get(id) ?? null;
+
+/**
+ * The RAW record file behind an entry id, exactly as stored in the repository
+ * (no roster merge, no derived fields). This is what editing and committing
+ * must round-trip through. Null when the id is unknown or its file failed to
+ * load.
+ */
+export const getRawEntry = (id) => state.rawEntries.get(id) ?? null;
 
 /** Previous and next documented entry in the same catalogue. Gaps in numbering are fine. */
 export function getNeighbors(entry) {

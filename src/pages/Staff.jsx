@@ -14,7 +14,7 @@ import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
 import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
 import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
 import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
-import { getEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries } from '@/lib/catalog.js';
+import { getEntry, getRawEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries } from '@/lib/catalog.js';
 import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
@@ -61,9 +61,13 @@ const ENTITY_OPTIONS = [
 ];
 
 function findEntity(entityType, entityId) {
+  // The editor MUST edit the raw record file, not the merged catalogue entry:
+  // the server compares the submitted baseRecord against the file on GitHub,
+  // and any derived field (path, kind, forced arrays, normalized sources)
+  // would make every edit fail with "changed since it was loaded".
   if (entityType === 'character') return getCharacters().find((c) => c.id === entityId) ?? null;
   if (entityType === 'gadget') return getGadgets().find((g) => g.id === entityId) ?? null;
-  return getEntry(entityId);
+  return getRawEntry(entityId);
 }
 
 function buildNewRecord(entityType, entityId) {
@@ -162,14 +166,9 @@ function ArchiveEditor({ contribution, onApplied, onCancel }) {
     setError(null);
     const existing = findEntity(type, id);
     if (existing) {
+      // Raw record file content — no derived fields to strip, so the committed
+      // JSON matches the file schema and the server's baseRecord check passes.
       const raw = JSON.parse(JSON.stringify(existing));
-      // The merged entry carries derived fields; strip them so the committed
-      // record matches the file schema.
-      delete raw.url; delete raw.availability; delete raw.status;
-      if (raw.sources) raw.sources = raw.sources.map((s) => ({
-        type: s.type, data: s.data, label: s.label ?? null, language: s.language ?? null,
-        subtitles: s.subtitles ?? 'none', quality: s.quality ?? null, notes: s.notes ?? null,
-      }));
       setBase(JSON.parse(JSON.stringify(raw))); setDraft(raw); setRawJson(JSON.stringify(raw, null, 2));
     } else {
       const fresh = buildNewRecord(type, id);
