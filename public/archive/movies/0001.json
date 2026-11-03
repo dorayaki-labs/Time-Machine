@@ -5,8 +5,8 @@
   "seriesId": "movies",
   "number": 1,
   "title": {
-    "en": "Movie 1",
-    "ja": null
+    "en": "Doraemon: Nobita's Dinosaur",
+    "ja": "ドラえもん のび太の恐竜"
   },
   "alternateTitles": [],
   "originalLanguage": "ja",
@@ -15,11 +15,13 @@
     "precision": "day",
     "region": "JP"
   },
-  "durationMinutes": null,
-  "director": null,
+  "durationMinutes": 92,
+  "director": {
+    "en": "Hitoshi Fukutomi"
+  },
   "summary": null,
   "image": {
-    "url": null,
+    "url": "https://static.wikia.nocookie.net/doraemon/images/3/3d/1980.jpg/revision/latest/scale-to-width-down/1000?cb=20170901062806&path-prefix=en",
     "alt": null
   },
   "screenshots": [],
@@ -28,19 +30,19 @@
   "voiceActors": [],
   "sources": [
     {
-      "type": "direct",
-      "data": "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4",
-      "label": "Sample file — replace me",
+      "type": "embed",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/s-2/72782/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto",
       "language": "Japanese",
       "subtitles": {
         "has": true,
-        "type": "hard",
+        "type": null,
         "languages": [
           "English"
         ]
       },
-      "quality": "1080p",
-      "notes": "Example entry showing the source detail fields. Replace with a real source."
+      "quality": "HD",
+      "notes": null
     }
   ],
   "references": [],
