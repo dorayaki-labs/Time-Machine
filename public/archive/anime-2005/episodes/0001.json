@@ -3,14 +3,16 @@
   "type": "episode",
   "image": {
     "alt": null,
-    "url": null
+    "url": "https://test.vlitzz.store/doraemonTest.png"
   },
   "title": {
     "en": "Fishing Pond in the Study Room",
     "ja": "勉強べやの釣り堀"
   },
   "number": 1,
-  "gadgets": [],
+  "gadgets": [
+    "gadget-anywhere-door"
+  ],
   "release": {
     "date": "2005-04-15",
     "region": "JP",
@@ -20,7 +22,9 @@
   "summary": null,
   "seriesId": "anime-2005",
   "updatedAt": "2026-11-02",
-  "characters": [],
+  "characters": [
+    "char-nobita"
+  ],
   "screenshots": [
     {
       "alt": null,
