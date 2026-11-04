@@ -1,0 +1,52 @@
+diff --git a/src/components/MediaImage.jsx b/src/components/MediaImage.jsx
+index 1bdd787..051d1c8 100755
+--- a/src/components/MediaImage.jsx
++++ b/src/components/MediaImage.jsx
+@@ -20,11 +20,18 @@ function hueFor(seed = '') {
+  */
+ export default function MediaImage({ src, alt = '', kind = 'episode', seed, label, className = '', priority = false }) {
+   const [failed, setFailed] = useState(false);
+-  const showReal = Boolean(src) && !failed;
++  // The `image` field has been stored both as a plain URL string and as
++  // { url, alt } (and Gallery shots can carry a data URI). Normalise here so
++  // a caller can pass the whole field through without picking it apart —
++  // passing the object straight through used to render src="[object Object]"
++  // and silently fall back to the placeholder on detail pages.
++  const url = typeof src === 'string' ? src : src?.url ?? src?.data ?? null;
++  const altText = alt || (src && typeof src === 'object' ? src.alt : '') || '';
++  const showReal = Boolean(url) && !failed;
+   return (
+-    <div className={`media media--${kind} ${className}`} style={{ '--hue': hueFor(seed ?? alt) }}>
++    <div className={`media media--${kind} ${className}`} style={{ '--hue': hueFor(seed ?? altText) }}>
+       {showReal ? (
+-        <img className="media__img" src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(true)} />
++        <img className="media__img" src={url} alt={altText} loading={priority ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(true)} />
+       ) : (
+         <>
+           <img className="media__placeholder" src={PLACEHOLDERS[kind] ?? PLACEHOLDERS.episode} alt="" loading="lazy" decoding="async" />
+diff --git a/src/pages/CharacterDetails.jsx b/src/pages/CharacterDetails.jsx
+index aaf0c90..b134e20 100755
+--- a/src/pages/CharacterDetails.jsx
++++ b/src/pages/CharacterDetails.jsx
+@@ -25,7 +25,7 @@ export default function CharacterDetails() {
+         <Link to="/characters">Characters</Link><span aria-hidden="true">/</span><span aria-current="page">{character.name.en}</span>
+       </nav>
+       <section className="profile">
+-        <div className="profile__portrait"><MediaImage kind="character" seed={character.id} label={character.name.en.charAt(0)} src={character.image} alt={character.name.en} priority /></div>
++        <div className="profile__portrait"><MediaImage kind="character" seed={character.id} label={character.name.en.charAt(0)} src={character.image?.url ?? null} alt={character.image?.alt || character.name.en} priority /></div>
+         <div className="profile__main">
+           <p className="eyebrow">{characterCategoryLabel(character.category)}</p>
+           <h1>{character.name.en}</h1>
+diff --git a/src/pages/GadgetDetails.jsx b/src/pages/GadgetDetails.jsx
+index 5a09daf..d91e848 100755
+--- a/src/pages/GadgetDetails.jsx
++++ b/src/pages/GadgetDetails.jsx
+@@ -25,7 +25,7 @@ export default function GadgetDetails() {
+         <Link to="/gadgets">Gadgets</Link><span aria-hidden="true">/</span><span aria-current="page">{gadget.name.en}</span>
+       </nav>
+       <section className="profile profile--gadget">
+-        <div className="profile__portrait"><MediaImage kind="gadget" seed={gadget.id} src={gadget.image} alt={gadget.name.en} priority /></div>
++        <div className="profile__portrait"><MediaImage kind="gadget" seed={gadget.id} src={gadget.image?.url ?? null} alt={gadget.image?.alt || gadget.name.en} priority /></div>
+         <div className="profile__main">
+           <p className="eyebrow">Gadget</p>
+           <h1>{gadget.name.en}</h1>

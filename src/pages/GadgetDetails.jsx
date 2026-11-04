@@ -25,7 +25,7 @@ export default function GadgetDetails() {
         <Link to="/gadgets">Gadgets</Link><span aria-hidden="true">/</span><span aria-current="page">{gadget.name.en}</span>
       </nav>
       <section className="profile profile--gadget">
-        <div className="profile__portrait"><MediaImage kind="gadget" seed={gadget.id} src={gadget.image} alt={gadget.name.en} priority /></div>
+        <div className="profile__portrait"><MediaImage kind="gadget" seed={gadget.id} src={gadget.image?.url ?? null} alt={gadget.image?.alt || gadget.name.en} priority /></div>
         <div className="profile__main">
           <p className="eyebrow">Gadget</p>
           <h1>{gadget.name.en}</h1>

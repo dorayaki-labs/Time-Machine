@@ -25,7 +25,7 @@ export default function CharacterDetails() {
         <Link to="/characters">Characters</Link><span aria-hidden="true">/</span><span aria-current="page">{character.name.en}</span>
       </nav>
       <section className="profile">
-        <div className="profile__portrait"><MediaImage kind="character" seed={character.id} label={character.name.en.charAt(0)} src={character.image} alt={character.name.en} priority /></div>
+        <div className="profile__portrait"><MediaImage kind="character" seed={character.id} label={character.name.en.charAt(0)} src={character.image?.url ?? null} alt={character.image?.alt || character.name.en} priority /></div>
         <div className="profile__main">
           <p className="eyebrow">{characterCategoryLabel(character.category)}</p>
           <h1>{character.name.en}</h1>
