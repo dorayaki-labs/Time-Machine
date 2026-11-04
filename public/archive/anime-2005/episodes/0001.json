@@ -1,29 +1,34 @@
 {
-  "schemaVersion": 3,
   "id": "anime-2005-0001",
   "type": "episode",
-  "seriesId": "anime-2005",
-  "number": 1,
-  "title": {
-    "en": "Episode 1",
-    "ja": null
+  "image": {
+    "alt": null,
+    "url": null
   },
-  "alternateTitles": [],
-  "originalLanguage": "ja",
+  "title": {
+    "en": "Fishing Pond in the Study Room",
+    "ja": "勉強べやの釣り堀"
+  },
+  "number": 1,
+  "gadgets": [],
   "release": {
     "date": "2005-04-15",
-    "precision": "day",
-    "region": "JP"
+    "region": "JP",
+    "precision": "day"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [],
-  "updatedAt": "2026-11-02"
+  "summary": null,
+  "seriesId": "anime-2005",
+  "updatedAt": "2026-11-02",
+  "characters": [],
+  "screenshots": [
+    {
+      "alt": null,
+      "url": "https://test.vlitzz.store/doraemonTest.png"
+    }
+  ],
+  "voiceActors": [],
+  "schemaVersion": 3,
+  "alternateTitles": [],
+  "originalLanguage": "ja"
 }
