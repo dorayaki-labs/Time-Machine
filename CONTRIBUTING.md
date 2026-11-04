@@ -6,9 +6,14 @@ The **only** intended contribution path for archive content is the website
 itself:
 
 1. Sign in with Discord (one click, top-right).
-2. Open **Contribute** and pick the matching form — missing episode, metadata
-   correction, character or gadget info, images, viewing source, broken
-   source report, or a reference.
+2. Pick how to contribute:
+   - **Edit this entry** (fastest) — the button on any episode, movie,
+     character or gadget page opens the actual record; change what needs
+     changing and send it. A checker sees your exact diff and can accept it
+     in one click.
+   - Open **Contribute** and pick the matching form — missing episode,
+     metadata correction, character or gadget info, images, viewing source,
+     or a broken source report.
 3. Fill it in. The form validates as you go; the server validates again and
    applies rate limits (a short cooldown between submissions, a cap on
    pending submissions per account).

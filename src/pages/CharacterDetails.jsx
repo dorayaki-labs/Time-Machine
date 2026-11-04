@@ -5,7 +5,6 @@ import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import AppearanceLists from '@/components/AppearanceLists.jsx';
 import GadgetCard from '@/components/GadgetCard.jsx';
-import { ReferencesSection } from '@/components/EntrySections.jsx';
 import NotFound from './NotFound.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
 import { getCharacter, getEntriesForCharacter, getGadgetsForCharacter, getEntry, characterCategoryLabel, languageName, displayTitle } from '@/lib/catalog.js';
@@ -69,7 +68,6 @@ export default function CharacterDetails() {
           <div className="grid grid--compact">{gadgets.map((g) => <GadgetCard key={g.id} gadget={g} compact />)}</div>
         </MetadataSection>
       ) : null}
-      <ReferencesSection references={character.references} />
     </PageContainer>
   );
 }

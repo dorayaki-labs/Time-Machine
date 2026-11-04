@@ -7,7 +7,7 @@ import SourceList from '@/components/SourceList.jsx';
 import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
-import { CharactersSection, GadgetsSection, VoiceActorsSection, ReferencesSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
+import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
 import NotFound from './NotFound.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
 import useAsync from '@/hooks/useAsync.js';
@@ -80,7 +80,6 @@ export default function EpisodeDetails({ seriesId }) {
       <CharactersSection ids={record.characters} />
       <GadgetsSection ids={record.gadgets} />
       <VoiceActorsSection voiceActors={record.voiceActors} />
-      <ReferencesSection references={record.references} updatedAt={record.updatedAt} />
       <PrevNext previous={previous} next={next} label="episode" />
     </PageContainer>
   );

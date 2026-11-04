@@ -12,12 +12,13 @@ review every submission before it reaches the archive.
 
 - **The archive** — episodes (1979, 2005 series and the historical 1973
   series), movies, characters and gadgets, each with titles (English and
-  Japanese), release data, summaries, screenshots, viewing sources and
-  references.
-- **The contribution system** — account holders submit corrections, missing
-  entries, images and viewing sources through in-site forms. Submissions are
-  rate-limited, validated server-side, reviewed by human checkers, and every
-  accepted change is committed to the archive's JSON files on GitHub with a
+  Japanese), release data, summaries, screenshots and viewing sources.
+- **The contribution system** — account holders edit any entry directly
+  ("Edit this entry" on its page, reviewed before it goes live) or submit
+  corrections, missing entries, images and viewing sources through in-site
+  forms. Submissions are rate-limited, validated server-side, reviewed by
+  human checkers, and every accepted change is committed to the archive's
+  JSON files on GitHub with a
   complete before/after change record.
 - **The public record** — the Statistics page and the public Contribution log
   show real numbers and every accepted contribution. Nothing is hardcoded.

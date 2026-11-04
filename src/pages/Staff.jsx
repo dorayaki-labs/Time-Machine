@@ -15,8 +15,9 @@ import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
 import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
 import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
 import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
-import { getEntry, getRawEntry, getCharacter, getCharacters, getGadget, getGadgets, getSeries, getAllEntries, reloadCatalog } from '@/lib/catalog.js';
+import { getCharacters, getGadgets, getAllEntries, reloadCatalog } from '@/lib/catalog.js';
 import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
+import RecordEditor, { findEntity, buildNewRecord } from '@/components/RecordEditor.jsx';
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 const entryLink = (entryId) => {
@@ -30,7 +31,10 @@ const entryLink = (entryId) => {
   return null;
 };
 
-const categoryLabel = (type) => CONTRIBUTION_CATEGORIES.find((c) => c.id === type)?.label ?? type;
+const categoryLabel = (type) => {
+  if (type === 'archive-edit') return 'Direct record edit';
+  return CONTRIBUTION_CATEGORIES.find((c) => c.id === type)?.label ?? type;
+};
 
 function ChangesTable({ changes }) {
   if (!changes?.length) return <p className="muted small">No field-level changes recorded.</p>;
@@ -61,100 +65,17 @@ const ENTITY_OPTIONS = [
   { value: 'gadget', label: 'Gadget' },
 ];
 
-function findEntity(entityType, entityId) {
-  // The editor MUST edit the raw record file, not the merged catalogue entry:
-  // the server compares the submitted baseRecord against the file on GitHub,
-  // and any derived field (path, kind, forced arrays, normalized sources)
-  // would make every edit fail with "changed since it was loaded".
-  if (entityType === 'character') return getCharacters().find((c) => c.id === entityId) ?? null;
-  if (entityType === 'gadget') return getGadgets().find((g) => g.id === entityId) ?? null;
-  return getRawEntry(entityId);
-}
-
-function buildNewRecord(entityType, entityId) {
-  if (entityType === 'character') {
-    return { id: entityId, name: { en: '', ja: null }, aliases: [], description: null, category: 'main',
-      image: { url: null, alt: null }, voiceActors: [], firstAppearance: { entryId: null, note: null }, references: [] };
-  }
-  if (entityType === 'gadget') {
-    return { id: entityId, name: { en: '', ja: null }, aliases: [], description: null,
-      image: { url: null, alt: null }, voiceActors: [], firstAppearance: { entryId: null, note: null }, howItWorks: null, references: [] };
-  }
-  const isMovie = entityType === 'movie';
-  const number = isMovie ? Number(entityId.replace(/^movie-/, '')) : Number(entityId.split('-').pop());
-  const seriesId = isMovie ? 'movies' : entityId.split('-').slice(0, 2).join('-');
-  return {
-    schemaVersion: 3, id: entityId, type: isMovie ? 'movie' : 'episode', seriesId, number,
-    title: { en: '', ja: null }, alternateTitles: [], originalLanguage: 'ja',
-    release: { date: null, precision: null, region: null }, summary: null,
-    image: { url: null, alt: null }, screenshots: [], characters: [], gadgets: [], voiceActors: [],
-    sources: [], references: [], ...(isMovie ? { durationMinutes: null, director: { en: null, ja: null } } : {}),
-  };
-}
-
-/** One text field bound to a deep path of the draft record. */
-function RecordField({ label, value, onChange, multiline, rows = 3, optional = true, placeholder }) {
-  return (
-    <div className="field">
-      <label>{label}{optional ? <span className="field__opt"> (optional)</span> : <span className="field__req"> *</span>}</label>
-      {multiline
-        ? <textarea rows={rows} value={value ?? ''} placeholder={placeholder} onChange={(e) => onChange(e.target.value || null)} />
-        : <input type="text" value={value ?? ''} placeholder={placeholder} onChange={(e) => onChange(e.target.value || null)} />}
-    </div>
-  );
-}
-
-function SourceRows({ sources, onChange }) {
-  const update = (i, patch) => onChange(sources.map((s, j) => (j === i ? { ...s, ...patch } : s)));
-  const remove = (i) => onChange(sources.filter((_, j) => j !== i));
-  const add = () => onChange([...sources, { type: 'direct', data: '', label: null, language: null, subtitles: 'none', quality: null, notes: null }]);
-  return (
-    <div className="field">
-      <label>Viewing sources <span className="field__opt">(shown on the entry page; leave empty for none)</span></label>
-      {sources.map((s, i) => (
-        <div key={i} className="submission" style={{ padding: '0.8rem' }}>
-          <div className="submission__fields">
-            <div className="row"><dt>Type</dt><dd>
-              <select value={s.type ?? ''} onChange={(e) => update(i, { type: e.target.value || null })}>
-                <option value="">auto</option><option value="direct">direct</option>
-                <option value="embed">embed</option><option value="youtube">youtube</option>
-              </select>
-            </dd></div>
-            <div className="row"><dt>URL / iframe</dt><dd><input type="text" value={s.data ?? ''} onChange={(e) => update(i, { data: e.target.value })} /></dd></div>
-            <div className="row"><dt>Label</dt><dd><input type="text" value={s.label ?? ''} onChange={(e) => update(i, { label: e.target.value || null })} /></dd></div>
-            <div className="row"><dt>Audio language</dt><dd><input type="text" value={s.language ?? ''} onChange={(e) => update(i, { language: e.target.value || null })} /></dd></div>
-            <div className="row"><dt>Subtitles</dt><dd>
-              <select value={typeof s.subtitles === 'object' ? (s.subtitles.type ?? 'yes') : (s.subtitles ?? 'none')}
-                onChange={(e) => update(i, { subtitles: e.target.value === 'none' ? 'none' : e.target.value === 'yes' ? true : e.target.value })}>
-                <option value="none">none</option><option value="hard">hard sub</option>
-                <option value="soft">soft sub</option><option value="yes">yes (unknown)</option>
-              </select>
-            </dd></div>
-            <div className="row"><dt>Subtitle languages</dt><dd>
-              <input type="text" value={Array.isArray(s.subtitles?.languages) ? s.subtitles.languages.join(', ') : ''}
-                onChange={(e) => {
-                  const langs = e.target.value ? e.target.value.split(',').map((x) => x.trim()).filter(Boolean) : [];
-                  const base = typeof s.subtitles === 'object' && s.subtitles ? s.subtitles : { has: true, type: null, languages: [] };
-                  update(i, { subtitles: { ...base, has: base.has ?? true, languages: langs } });
-                }} />
-            </dd></div>
-            <div className="row"><dt>Quality</dt><dd><input type="text" value={s.quality ?? ''} onChange={(e) => update(i, { quality: e.target.value || null })} /></dd></div>
-            <div className="row"><dt>Notes</dt><dd><input type="text" value={s.notes ?? ''} onChange={(e) => update(i, { notes: e.target.value || null })} /></dd></div>
-          </div>
-          <div className="btn-row"><button type="button" className="btn btn--ghost btn--danger" onClick={() => remove(i)}>Remove source</button></div>
-        </div>
-      ))}
-      <div className="btn-row"><button type="button" className="btn btn--ghost" onClick={add}><Icon name="plus" size={15} /> Add a source</button></div>
-    </div>
-  );
-}
 
 function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
   // When opened from a contribution: entityId/type preset and "commit" is the
   // accept action; otherwise it is a direct edit. Deep links from detail
   // pages arrive through `preset` and load their record immediately.
   const { profile } = useAuth();
-  const canDeleteEntry = isAdmin(profile);
+  // Creating or deleting archive files rewrites the repository structure —
+  // owner only. Everyone else can propose edits (review) or make direct
+  // edits to existing records.
+  const isOwnerUser = isOwner(profile);
+  const canDeleteEntry = isOwnerUser;
   const [entityType, setEntityType] = useState(contribution?.entityType ?? preset?.entityType ?? 'episode');
   const [entityId, setEntityId] = useState(contribution?.entityId ?? preset?.entityId ?? '');
   const [deleting, setDeleting] = useState(false);
@@ -177,13 +98,23 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
       // JSON matches the file schema and the server's baseRecord check passes.
       const raw = JSON.parse(JSON.stringify(existing));
       setBase(JSON.parse(JSON.stringify(raw))); setDraft(raw); setRawJson(JSON.stringify(raw, null, 2));
-    } else {
+    } else if (isOwnerUser) {
       const fresh = buildNewRecord(type, id);
       setBase(null); setDraft(fresh); setRawJson(JSON.stringify(fresh, null, 2));
+    } else {
+      setError(`"${id}" was not found in the archive. Creating new entries is owner-only — if you meant to propose a new entry, use the contribution forms instead.`);
     }
   };
 
   useEffect(() => {
+    // Adjusting an archive-edit: open the member's proposed record (with the
+    // version it was based on) so their exact changes are the starting point.
+    if (contribution?.presetRecord) {
+      setBase(contribution.presetBase ? JSON.parse(JSON.stringify(contribution.presetBase)) : null);
+      setDraft(JSON.parse(JSON.stringify(contribution.presetRecord)));
+      setRawJson(JSON.stringify(contribution.presetRecord, null, 2));
+      return;
+    }
     if (contribution?.entityId) loadEntity(contribution.entityType, contribution.entityId);
     else if (preset?.entityId) loadEntity(preset.entityType, preset.entityId);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -212,7 +143,12 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
         return;
       }
       const record = showRaw ? JSON.parse(rawJson) : draft;
-      const patch = { entityType, entityId: entityId.trim(), mode: base ? 'update' : 'create', record, ...(base ? { baseRecord: base } : {}) };
+      const mode = base ? 'update' : 'create';
+      if (mode === 'create' && !isOwnerUser) {
+        setError('Only the owner can create new archive entries. Use the contribution forms to propose one.');
+        return;
+      }
+      const patch = { entityType, entityId: entityId.trim(), mode, record, ...(base ? { baseRecord: base } : {}) };
       if (contribution) {
         const res = await reviewContribution({
           action: 'accept', contributionId: contribution.id, proposedPatch: patch, reviewNotes: reviewNotes || null,
@@ -252,7 +188,7 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
         <>
           <p className="submission__meta">
             {deleting ? 'Deleting' : 'Editing'} <strong className="mono">{entityType} {entityId}</strong>
-            {base || deleting ? '' : ' (new record)'}
+            {base || deleting ? '' : ' (new record — owner only)'}
             <button type="button" className="btn btn--ghost" style={{ marginLeft: '0.8rem' }} onClick={() => { setDraft(null); setBase(null); setDeleting(false); }}>Choose another record</button>
           </p>
 
@@ -284,35 +220,7 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
                   <button type="button" className="btn btn--ghost" style={{ marginTop: '0.5rem' }} onClick={() => { try { setDraft(JSON.parse(rawJson)); setError(null); } catch (err) { setError(`Invalid JSON: ${err.message}`); } }}>Apply JSON to the draft</button>
                 </div>
               ) : (
-                <div className="contribution-form__grid">
-                  {(entityType === 'episode' || entityType === 'movie') ? (
-                    <>
-                      <RecordField label="English title" value={draft.title?.en} onChange={(v) => setField('title.en', v ?? '')} optional={false} />
-                      <RecordField label="Japanese title" value={draft.title?.ja} onChange={(v) => setField('title.ja', v)} />
-                      <RecordField label="Release date" placeholder="YYYY, YYYY-MM or YYYY-MM-DD" value={draft.release?.date} onChange={(v) => setField('release.date', v)} />
-                      <RecordField label="Summary" multiline value={draft.summary} onChange={(v) => setField('summary', v)} />
-                      <RecordField label="Main image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
-                      <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
-                      <RecordField label="Characters (ids, comma-separated)" value={(draft.characters ?? []).join(', ')} onChange={(v) => setField('characters', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
-                      <RecordField label="Gadgets (ids, comma-separated)" value={(draft.gadgets ?? []).join(', ')} onChange={(v) => setField('gadgets', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
-                      {entityType === 'movie' ? <RecordField label="Runtime (minutes)" value={draft.durationMinutes} onChange={(v) => setField('durationMinutes', v ? Number(v) : null)} /> : null}
-                      {entityType === 'movie' ? <RecordField label="Director (English)" value={draft.director?.en} onChange={(v) => setField('director.en', v)} /> : null}
-                      <div className="span-2"><SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} /></div>
-                    </>
-                  ) : (
-                    <>
-                      <RecordField label="English name" value={draft.name?.en} onChange={(v) => setField('name.en', v ?? '')} optional={false} />
-                      <RecordField label="Japanese name" value={draft.name?.ja} onChange={(v) => setField('name.ja', v)} />
-                      <RecordField label="Aliases (comma-separated)" value={(draft.aliases ?? []).join(', ')} onChange={(v) => setField('aliases', v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])} />
-                      {entityType === 'character' ? <RecordField label="Category" placeholder="main / supporting / …" value={draft.category} onChange={(v) => setField('category', v)} /> : null}
-                      {entityType === 'gadget' ? <RecordField label="How it works" multiline value={draft.howItWorks} onChange={(v) => setField('howItWorks', v)} /> : null}
-                      <RecordField label="Description" multiline rows={5} value={draft.description} onChange={(v) => setField('description', v)} optional={false} />
-                      <RecordField label="Image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
-                      <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
-                      <RecordField label="First appearance (entry id or note)" value={draft.firstAppearance?.note ?? draft.firstAppearance?.entryId} onChange={(v) => setField('firstAppearance', { entryId: v && /^((anime-(1979|2005|1973)-\d{4})|movie-\d{4})$/.test(v) ? v : null, note: v && !/^((anime-(1979|2005|1973)-\d{4})|movie-\d{4})$/.test(v) ? v : null })} />
-                    </>
-                  )}
-                </div>
+                <RecordEditor entityType={entityType} draft={draft} setField={setField} />
               )}
 
               <h4 className="section-heading" style={{ marginTop: '1.4rem' }}>Preview of changes</h4>
@@ -366,6 +274,12 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
 
   const payload = row.payload_edited ?? row.payload ?? {};
   const link = entryLink(row.entry_id);
+  const isArchiveEdit = row.type === 'archive-edit';
+  // The member's proposal already contains the exact final record; the
+  // checker can accept it as-is (one click, no re-typing) or open it in the
+  // editor to adjust first. Accept runs with the stored proposed patch.
+  const proposedChanges = isArchiveEdit && payload.record && payload.baseRecord
+    ? deepDiff(payload.baseRecord, payload.record) : [];
 
   const act = async (fn, done) => {
     setBusy(true); setError(null); setMessage(null);
@@ -391,16 +305,24 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
         <StatusChip status={row.status} />
       </div>
 
-      <dl className="submission__fields">
-        {Object.entries(payload).map(([key, value]) => (
-          <div className="row" key={key}>
-            <dt>{key}</dt>
-            <dd>{typeof value === 'string' && /^https?:\/\//.test(value)
-              ? <a href={value} target="_blank" rel="noreferrer noopener">{value}</a>
-              : typeof value === 'object' ? JSON.stringify(value) : String(value ?? '—')}</dd>
-          </div>
-        ))}
-      </dl>
+      {isArchiveEdit ? (
+        <>
+          {payload.note ? <p className="notice" style={{ marginTop: 0 }}><strong>Contributor note:</strong> {payload.note}</p> : null}
+          <h4 className="section-heading">Proposed changes</h4>
+          <ChangesTable changes={proposedChanges} />
+        </>
+      ) : (
+        <dl className="submission__fields">
+          {Object.entries(payload).map(([key, value]) => (
+            <div className="row" key={key}>
+              <dt>{key}</dt>
+              <dd>{typeof value === 'string' && /^https?:\/\//.test(value)
+                ? <a href={value} target="_blank" rel="noreferrer noopener">{value}</a>
+                : typeof value === 'object' ? JSON.stringify(value) : String(value ?? '—')}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
 
       {row.review_reason ? (
         <p className="notice" style={{ marginTop: 0 }}>
@@ -417,8 +339,18 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
       {canReview && row.status === 'pending' ? (
         <>
           <div className="submission__actions">
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => setEditorOpen((v) => !v)}>
-              {editorOpen ? 'Close editor' : 'Open in archive editor…'}
+            {isArchiveEdit ? (
+              <button type="button" className="btn btn--primary" disabled={busy || !row.proposed_patch}
+                title="Applies the member's exact record to the repository and accepts the contribution"
+                onClick={() => act(
+                  () => reviewContribution({ action: 'accept', contributionId: row.id }),
+                  (res) => { setMessage(`Accepted and committed${res?.commit_sha ? ` (commit ${String(res.commit_sha).slice(0, 7)})` : ''}.`); onAcceptApplied?.(); },
+                )}>
+                {busy ? 'Working…' : 'Accept — apply these changes'}
+              </button>
+            ) : null}
+            <button type="button" className={`btn ${isArchiveEdit ? 'btn--ghost' : 'btn--primary'}`} disabled={busy} onClick={() => setEditorOpen((v) => !v)}>
+              {editorOpen ? 'Close editor' : isArchiveEdit ? 'Adjust in editor…' : 'Open in archive editor…'}
             </button>
             <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setDeclineOpen((v) => !v)}>Decline…</button>
             {canDelete ? <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={() => setDeleteOpen((v) => !v)}>Delete…</button> : null}
@@ -428,10 +360,15 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
             <div style={{ marginTop: '1rem' }}>
               <ArchiveEditor
                 contribution={{
-                  id: row.id, number: row.number, entityType: row.type === 'source' || row.type === 'images'
-                    ? (row.entry_id?.startsWith('movie-') ? 'movie' : 'episode')
-                    : row.entry_id?.startsWith('char-') ? 'character' : row.entry_id?.startsWith('gadget-') ? 'gadget' : 'episode',
+                  id: row.id, number: row.number,
+                  entityType: isArchiveEdit
+                    ? (row.entry_id?.startsWith('char-') ? 'character' : row.entry_id?.startsWith('gadget-') ? 'gadget' : row.entry_id?.startsWith('movie-') ? 'movie' : 'episode')
+                    : row.type === 'source' || row.type === 'images'
+                      ? (row.entry_id?.startsWith('movie-') ? 'movie' : 'episode')
+                      : row.entry_id?.startsWith('char-') ? 'character' : row.entry_id?.startsWith('gadget-') ? 'gadget' : 'episode',
                   entityId: row.entry_id,
+                  presetRecord: isArchiveEdit ? payload.record : null,
+                  presetBase: isArchiveEdit ? payload.baseRecord : null,
                 }}
                 onApplied={(res) => { setEditorOpen(false); setMessage(`Accepted and committed${res?.commit_sha ? ` (commit ${String(res.commit_sha).slice(0, 7)})` : ''}.`); onAcceptApplied?.(); }}
                 onCancel={() => setEditorOpen(false)}

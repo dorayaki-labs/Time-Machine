@@ -1,57 +1,83 @@
 import { useEffect, useState } from 'react';
 import Icon from './Icon.jsx';
 
-/** Screenshot gallery with a keyboard-friendly lightbox. Images without rights-cleared URLs are not listed. */
+/**
+ * Screenshot carousel: one big frame with prev/next controls and a filmstrip
+ * of thumbnails underneath. Keyboard users get arrows and a counter; clicking
+ * the frame opens the lightbox for full-size viewing. Images are lazy-loaded,
+ * and reduced-motion users get no slide transition (global CSS handles that).
+ */
 export default function Gallery({ screenshots = [], title }) {
-  const [openIndex, setOpenIndex] = useState(null);
-  const open = openIndex !== null && screenshots[openIndex];
+  const usable = screenshots.filter((s) => s && (s.url || s.data));
+  const count = usable.length;
+  const [active, setActive] = useState(0);
+  const [lightbox, setLightbox] = useState(null);
+
+  const step = (dir) => setActive((i) => (i + dir + count) % count);
 
   useEffect(() => {
-    if (openIndex === null) return undefined;
+    if (!count) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') setOpenIndex(null);
-      if (e.key === 'ArrowRight') setOpenIndex((i) => (i === null ? null : (i + 1) % screenshots.length));
-      if (e.key === 'ArrowLeft') setOpenIndex((i) => (i === null ? null : (i - 1 + screenshots.length) % screenshots.length));
+      if (lightbox !== null) {
+        if (e.key === 'Escape') setLightbox(null);
+        if (e.key === 'ArrowRight') setLightbox((i) => (i === null ? null : (i + 1) % count));
+        if (e.key === 'ArrowLeft') setLightbox((i) => (i === null ? null : (i - 1 + count) % count));
+        return;
+      }
+      if (e.key === 'ArrowRight') step(1);
+      if (e.key === 'ArrowLeft') step(-1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [openIndex, screenshots.length]);
+  }); // no dependency array on purpose: count/lightbox stay current
 
-  if (!screenshots.length) return null;
+  if (!count) return null;
+  const current = usable[Math.min(active, count - 1)];
+  const src = current.url || current.data;
 
   return (
     <section className="gallery" aria-label={`Screenshots of ${title}`}>
       <header className="detail-section__head">
         <h2>Screenshots</h2>
-        <span className="muted">{screenshots.length}</span>
+        <span className="muted">{count}</span>
       </header>
-      <div className="gallery__grid">
-        {screenshots.map((shot, i) => (
-          <button key={shot.url} type="button" className="gallery__thumb" onClick={() => setOpenIndex(i)} aria-label={`Open screenshot ${i + 1} of ${screenshots.length}`}>
-            <img src={shot.url} alt={shot.alt || `Screenshot ${i + 1}`} loading="lazy" decoding="async" />
-          </button>
-        ))}
+
+      <div className="carousel" role="group" aria-roledescription="carousel" aria-label="Screenshots">
+        <button type="button" className="carousel__nav carousel__nav--prev icon-btn" onClick={() => step(-1)} aria-label="Previous screenshot" disabled={count === 1}>
+          <Icon name="chevronLeft" size={22} />
+        </button>
+        <button type="button" className="carousel__frame" onClick={() => setLightbox(Math.min(active, count - 1))} aria-label={`Open screenshot ${active + 1} of ${count}`}>
+          <img src={src} alt={current.alt || `Screenshot ${active + 1} of ${count}`} loading={active === 0 ? 'eager' : 'lazy'} decoding="async" />
+          <span className="carousel__counter" aria-hidden="true">{active + 1} / {count}</span>
+        </button>
+        <button type="button" className="carousel__nav carousel__nav--next icon-btn" onClick={() => step(1)} aria-label="Next screenshot" disabled={count === 1}>
+          <Icon name="chevronRight" size={22} />
+        </button>
       </div>
 
-      {open ? (
-        <div className="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot viewer" onMouseDown={(e) => e.target === e.currentTarget && setOpenIndex(null)}>
-          <button type="button" className="lightbox__close icon-btn" onClick={() => setOpenIndex(null)} aria-label="Close viewer"><Icon name="close" size={20} /></button>
-          <button
-            type="button"
-            className="lightbox__nav lightbox__nav--prev icon-btn"
-            onClick={() => setOpenIndex((i) => (i - 1 + screenshots.length) % screenshots.length)}
-            aria-label="Previous screenshot"
-          ><Icon name="chevronLeft" size={22} /></button>
+      {count > 1 ? (
+        <div className="carousel__strip" role="tablist" aria-label="Choose a screenshot">
+          {usable.map((s, i) => (
+            <button key={`${s.url || s.data}-${i}`} type="button" role="tab" aria-selected={i === active}
+              className={`carousel__thumb${i === active ? ' is-active' : ''}`}
+              onClick={() => setActive(i)} aria-label={`Screenshot ${i + 1}`}>
+              <img src={s.url || s.data} alt="" loading="lazy" decoding="async" />
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {lightbox !== null && usable[lightbox] ? (
+        <div className="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot viewer" onMouseDown={(e) => e.target === e.currentTarget && setLightbox(null)}>
+          <button type="button" className="lightbox__close icon-btn" onClick={() => setLightbox(null)} aria-label="Close viewer"><Icon name="close" size={20} /></button>
+          <button type="button" className="lightbox__nav lightbox__nav--prev icon-btn"
+            onClick={() => setLightbox((i) => (i - 1 + count) % count)} aria-label="Previous screenshot"><Icon name="chevronLeft" size={22} /></button>
           <figure className="lightbox__figure">
-            <img src={open.url} alt={open.alt || `Screenshot ${openIndex + 1}`} />
-            {open.alt ? <figcaption>{open.alt}</figcaption> : null}
+            <img src={usable[lightbox].url || usable[lightbox].data} alt={usable[lightbox].alt || `Screenshot ${lightbox + 1}`} />
+            {usable[lightbox].alt ? <figcaption>{usable[lightbox].alt}</figcaption> : null}
           </figure>
-          <button
-            type="button"
-            className="lightbox__nav lightbox__nav--next icon-btn"
-            onClick={() => setOpenIndex((i) => (i + 1) % screenshots.length)}
-            aria-label="Next screenshot"
-          ><Icon name="chevronRight" size={22} /></button>
+          <button type="button" className="lightbox__nav lightbox__nav--next icon-btn"
+            onClick={() => setLightbox((i) => (i + 1) % count)} aria-label="Next screenshot"><Icon name="chevronRight" size={22} /></button>
         </div>
       ) : null}
     </section>

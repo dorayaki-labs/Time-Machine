@@ -20,6 +20,14 @@ const serialize = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
 export const ENTITY_TYPES = ['episode', 'movie', 'character', 'gadget'];
 
+/** Returns the record without `references` (removed from the schema). */
+function stripReferences(record) {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return record;
+  if (!('references' in record)) return record;
+  const { references, ...rest } = record;
+  return rest;
+}
+
 /** Where an entity lives inside the repository. All paths are REPO paths:
  *  Vite serves the public/ directory at the site root, so the archive's
  *  source of truth lives under public/ and the GitHub API must address it
@@ -72,7 +80,9 @@ export async function applyArchivePatch(github, patch) {
 
   const paths = resolvePaths(entityType, patch.entityId);
   if (paths.error) return { error: paths.error };
-  const record = patch.record;
+  // `references` is no longer part of the archive schema. Strip it from
+  // anything a client sends so it can never be (re)introduced by a commit.
+  const record = stripReferences(patch.record);
 
   // ---- entities stored as one record per file (episodes, movies) ----------
   if (paths.kind === 'episode' || paths.kind === 'movie') {
@@ -184,9 +194,9 @@ export async function applyArchivePatch(github, patch) {
   const validation = validateEntityRecord(record, entityType);
   if (!validation.ok) return { error: `The proposed record is not valid: ${validation.errors.join(' ')}` };
 
-  const nextList = mode === 'update'
+  const nextList = (mode === 'update'
     ? list.map((r, i) => (i === index ? record : r))
-    : [...list, record];
+    : [...list, record]).map(stripReferences);
   const fileValidation = validateEntityFile(nextList, entityType);
   if (!fileValidation.ok) return { error: `The resulting file is not valid: ${fileValidation.errors.join(' ')}` };
 

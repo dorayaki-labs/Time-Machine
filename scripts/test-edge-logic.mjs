@@ -117,7 +117,7 @@ test('contribution payload validation mirrors the form rules', () => {
 test('every FORM_SPECS type is one the frontend submits', () => {
   assert.deepEqual(
     Object.keys(FORM_SPECS).sort(),
-    ['broken-source', 'character', 'gadget', 'images', 'metadata-correction', 'missing-entry', 'reference', 'source'],
+    ['broken-source', 'character', 'gadget', 'images', 'metadata-correction', 'missing-entry', 'source'],
   );
 });
 
@@ -144,6 +144,8 @@ test('role hierarchy and self-review prevention', () => {
   assert.equal(canReviewContribution('member', 'u1', { contributor_id: 'u1' }), false);
   assert.equal(canReviewContribution('checker', 'u1', { contributor_id: 'u1' }), false);
   assert.equal(canReviewContribution('checker', 'u1', { contributor_id: 'u2' }), true);
+  // The owner has ultimate authority, including over their own submissions.
+  assert.equal(canReviewContribution('owner', 'u1', { contributor_id: 'u1' }), true);
   assert.equal(checkRoleAction({ role: 'admin' }, 'grant', 'checker').ok, true);
   assert.equal(checkRoleAction({ role: 'admin' }, 'grant', 'admin').ok, false);
   assert.equal(checkRoleAction({ role: 'owner' }, 'grant', 'admin').ok, true);
@@ -152,10 +154,10 @@ test('role hierarchy and self-review prevention', () => {
 
 // ---------------------------------------------------------------- patch.js
 test('resolvePaths derives paths, never trusts the client', () => {
-  assert.equal(resolvePaths('episode', 'anime-1979-0004').recordPath, 'archive/anime-1979/episodes/0004.json');
-  assert.equal(resolvePaths('episode', 'anime-1973-0002').recordPath, 'archive/historical/anime-1973/episodes/0002.json');
-  assert.equal(resolvePaths('movie', 'movie-0007').recordPath, 'archive/movies/0007.json');
-  assert.equal(resolvePaths('character', 'char-nobita').arrayPath, 'data/characters.json');
+  assert.equal(resolvePaths('episode', 'anime-1979-0004').recordPath, 'public/archive/anime-1979/episodes/0004.json');
+  assert.equal(resolvePaths('episode', 'anime-1973-0002').recordPath, 'public/archive/historical/anime-1973/episodes/0002.json');
+  assert.equal(resolvePaths('movie', 'movie-0007').recordPath, 'public/archive/movies/0007.json');
+  assert.equal(resolvePaths('character', 'char-nobita').arrayPath, 'public/data/characters.json');
   assert.ok(resolvePaths('episode', 'bogus-id').error);
 });
 
@@ -171,7 +173,7 @@ const fakeGithub = {
 let lastCommitMessage = '';
 
 test('update patch diffs, validates and commits the record file', async () => {
-  files['archive/anime-1979/episodes/0004.json'] = JSON.stringify(baseEpisode);
+  files['public/archive/anime-1979/episodes/0004.json'] = JSON.stringify(baseEpisode);
   const res = await applyArchivePatch(fakeGithub, {
     entityType: 'episode', entityId: 'anime-1979-0004', mode: 'update',
     record: { ...baseEpisode, title: { en: 'Corrected title', ja: '正しいタイトル' } },
@@ -190,7 +192,7 @@ test('update with identical data is rejected', async () => {
 });
 
 test('create patch updates the index atomically', async () => {
-  files['archive/movies/index.json'] = JSON.stringify({
+  files['public/archive/movies/index.json'] = JSON.stringify({
     schemaVersion: 3, id: 'movies', type: 'series', title: 'Movies', description: '',
     entries: [{ id: 'movie-0001', number: 1, path: '0001.json' }],
   });
@@ -203,14 +205,14 @@ test('create patch updates the index atomically', async () => {
   assert.equal(res.files.length, 2, 'record + index committed together');
   assert.equal(res.indexChanged, true);
   await fakeGithub.commit(res.files, `archive: accept contribution #1 (movie movie-0002)`);
-  const index = JSON.parse(files['archive/movies/index.json']);
+  const index = JSON.parse(files['public/archive/movies/index.json']);
   assert.equal(index.entries.length, 2);
   assert.deepEqual(index.entries[1], { id: 'movie-0002', number: 2, path: '0002.json' });
   assert.ok(lastCommitMessage.includes('movie-0002'));
 });
 
 test('create on an existing entity and update on a missing one both fail', async () => {
-  files['archive/movies/0001.json'] = JSON.stringify({
+  files['public/archive/movies/0001.json'] = JSON.stringify({
     schemaVersion: 3, id: 'movie-0001', type: 'movie', seriesId: 'movies', number: 1,
     title: { en: 'Movie 1', ja: null }, sources: [],
   });
@@ -224,18 +226,78 @@ test('create on an existing entity and update on a missing one both fail', async
 });
 
 test('character update edits the array file by id', async () => {
-  files['data/characters.json'] = JSON.stringify([
-    { id: 'char-nobita', name: { en: 'Nobita', ja: null }, aliases: [], description: null, category: 'main', image: { url: null, alt: null }, voiceActors: [], firstAppearance: { entryId: null, note: null }, references: [] },
+  files['public/data/characters.json'] = JSON.stringify([
+    { id: 'char-nobita', name: { en: 'Nobita', ja: null }, aliases: [], description: null, category: 'main', image: { url: null, alt: null }, voiceActors: [], firstAppearance: { entryId: null, note: null } },
   ]);
-  const record = JSON.parse(files['data/characters.json'])[0];
+  const record = JSON.parse(files['public/data/characters.json'])[0];
   record.description = 'Protagonist.';
   const res = await applyArchivePatch(fakeGithub, { entityType: 'character', entityId: 'char-nobita', mode: 'update', record });
   assert.equal(res.error, undefined);
   await fakeGithub.commit(res.files, 'test commit');  // handlers commit after applying
-  const list = JSON.parse(files['data/characters.json']);
+  const list = JSON.parse(files['public/data/characters.json']);
   assert.equal(list.length, 1);
   assert.equal(list[0].description, 'Protagonist.');
   assert.deepEqual(res.changes, [{ field: 'description', before: null, after: 'Protagonist.' }]);
+});
+
+test('references is stripped from every write', async () => {
+  const res = await applyArchivePatch(fakeGithub, {
+    entityType: 'character', entityId: 'char-nobita', mode: 'update',
+    record: { id: 'char-nobita', name: { en: 'Nobita', ja: null }, description: 'Updated.', references: ['https://example.com'] },
+  });
+  assert.equal(res.error, undefined);
+  await fakeGithub.commit(res.files, 'strip test');
+  const stored = JSON.parse(files['public/data/characters.json'])[0];
+  assert.equal(stored.description, 'Updated.');
+  assert.equal('references' in stored, false, 'references must not survive a commit');
+});
+
+test('delete mode removes the episode file and its index entry', async () => {
+  files['public/archive/movies/0009.json'] = JSON.stringify({
+    schemaVersion: 3, id: 'movie-0009', type: 'movie', seriesId: 'movies', number: 9,
+    title: { en: 'Movie 9', ja: null }, sources: [],
+  });
+  files['public/archive/movies/index.json'] = JSON.stringify({
+    schemaVersion: 3, id: 'movies', type: 'series', title: 'Movies', description: '',
+    entries: [{ id: 'movie-0001', number: 1, path: '0001.json' }, { id: 'movie-0009', number: 9, path: '0009.json' }],
+  });
+  const res = await applyArchivePatch(fakeGithub, { entityType: 'movie', entityId: 'movie-0009', mode: 'delete' });
+  assert.equal(res.error, undefined);
+  assert.ok(res.files.some((f) => f.delete && f.path === 'public/archive/movies/0009.json'));
+  const index = JSON.parse(res.files.find((f) => f.path === 'public/archive/movies/index.json').content);
+  assert.equal(index.entries.length, 1, 'index entry removed atomically');
+});
+
+test('delete mode on an array file removes the record', async () => {
+  const res = await applyArchivePatch(fakeGithub, { entityType: 'gadget', entityId: 'gadget-anywhere-door', mode: 'delete' })
+    .catch(() => null);
+  // gadget file may not exist in this mock — patch one in and retry properly
+  files['public/data/gadgets.json'] = JSON.stringify([
+    { id: 'gadget-anywhere-door', name: { en: 'Anywhere Door', ja: null }, description: 'A door.' },
+    { id: 'gadget-small-light', name: { en: 'Small Light', ja: null }, description: 'A torch.' },
+  ]);
+  const res2 = await applyArchivePatch(fakeGithub, { entityType: 'gadget', entityId: 'gadget-anywhere-door', mode: 'delete' });
+  assert.equal(res2.error, undefined);
+  const list = JSON.parse(res2.files[0].content);
+  assert.equal(list.length, 1);
+  assert.equal(list[0].id, 'gadget-small-light');
+});
+
+test('baseRecord freshness check rejects edits made against stale data', async () => {
+  files['public/archive/movies/0001.json'] = JSON.stringify({
+    schemaVersion: 3, id: 'movie-0001', type: 'movie', seriesId: 'movies', number: 1,
+    title: { en: 'Movie 1 (current)', ja: null }, sources: [],
+  });
+  const staleBase = {
+    schemaVersion: 3, id: 'movie-0001', type: 'movie', seriesId: 'movies', number: 1,
+    title: { en: 'Movie 1 (stale)', ja: null }, sources: [],
+  };
+  const res = await applyArchivePatch(fakeGithub, {
+    entityType: 'movie', entityId: 'movie-0001', mode: 'update',
+    record: { ...staleBase, title: { en: 'Movie 1 (edited)', ja: null } },
+    baseRecord: staleBase,
+  });
+  assert.ok(res.error.includes('changed since it was loaded'), res.error);
 });
 
 await run();

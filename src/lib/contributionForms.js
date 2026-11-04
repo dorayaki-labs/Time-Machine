@@ -78,20 +78,6 @@ export const CONTRIBUTION_CATEGORIES = [
     ],
   },
   {
-    id: 'reference',
-    label: 'Reference submission',
-    summary: 'Add a source that backs a fact in the archive.',
-    fields: () => [
-      { name: 'entryId', label: 'Entry ID (if for one entry)', type: 'text', placeholder: 'e.g. movie-0002', validate: 'entryId' },
-      { name: 'title', label: 'Reference title', type: 'text', required: true, placeholder: 'e.g. Episode list — Japanese Wikipedia' },
-      { name: 'url', label: 'Reference URL (web sources only)', type: 'url', validate: 'url', placeholder: 'Leave empty for offline sources such as a book', help: 'For a book, magazine or other offline source, leave this empty and name the source in "What does it verify?" below.' },
-      { name: 'type', label: 'Reference type', type: 'select', required: true, options: [
-        { value: 'episode list', label: 'Episode list' }, { value: 'article', label: 'Article' },
-        { value: 'book', label: 'Book or print' }, { value: 'note', label: 'Note' }] },
-      { name: 'notes', label: 'What does it verify?', type: 'textarea', rows: 3, required: true },
-    ],
-  },
-  {
     id: 'source',
     label: 'Viewing source submission',
     summary: 'Suggest a place to watch an episode or movie — a direct video file or an embed.',

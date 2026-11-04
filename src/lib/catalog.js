@@ -33,24 +33,50 @@ const BASE = import.meta.env.BASE_URL || '/';
 const ARCHIVE_REPO = import.meta.env.VITE_ARCHIVE_REPO || 'karizzmaa/time-machine';
 const ARCHIVE_BRANCH = import.meta.env.VITE_ARCHIVE_BRANCH || 'main';
 const SHA_CACHE_KEY = 'tm-archive-head';
-const SHA_CACHE_TTL = 3 * 60_000;
+// Short on purpose: the HEAD lookup is one tiny unauthenticated API request,
+// and this window is how long a visitor can look at a stale archive after a
+// commit before a reload / tab focus refreshes it.
+const SHA_CACHE_TTL = 45_000;
 
-async function archiveHeadSha() {
-  const cached = sessionStorage.getItem(SHA_CACHE_KEY);
-  if (cached) {
-    try {
-      const { sha, ts } = JSON.parse(cached);
-      if (sha && Date.now() - ts < SHA_CACHE_TTL) return sha;
-    } catch { /* re-resolve */ }
+let resolvedSha = null;
+
+async function archiveHeadSha({ force = false } = {}) {
+  if (!force) {
+    const cached = sessionStorage.getItem(SHA_CACHE_KEY);
+    if (cached) {
+      try {
+        const { sha, ts } = JSON.parse(cached);
+        if (sha && Date.now() - ts < SHA_CACHE_TTL) return sha;
+      } catch { /* re-resolve */ }
+    }
   }
   const res = await fetch(`https://api.github.com/repos/${ARCHIVE_REPO}/commits/${ARCHIVE_BRANCH}`, {
     headers: { accept: 'application/vnd.github+json' },
+    // Never let the HTTP cache answer the freshness question for us.
+    cache: 'no-store',
   });
   if (!res.ok) throw new Error(`GitHub API ${res.status}`);
   const sha = (await res.json())?.sha;
   if (!sha) throw new Error('GitHub API returned no sha');
+  resolvedSha = sha;
   sessionStorage.setItem(SHA_CACHE_KEY, JSON.stringify({ sha, ts: Date.now() }));
   return sha;
+}
+
+/**
+ * Re-resolves the repository HEAD and reports whether the archive moved
+ * since the data currently on screen was loaded. Callers reload when true.
+ * Cheap (one API request, no file traffic) and failure-safe.
+ */
+export async function refreshArchiveIfStale() {
+  if (import.meta.env.DEV || !state.loaded) return false;
+  const previous = resolvedSha;
+  try {
+    const fresh = await archiveHeadSha({ force: true });
+    return Boolean(previous && fresh !== previous);
+  } catch {
+    return false;
+  }
 }
 
 let sourcePromise = null;
@@ -124,6 +150,7 @@ const state = {
 };
 
 let loadPromise = null;
+let reloadPromise = null;
 
 /**
  * Merges a record file over its roster entry. The record wins on every field
@@ -145,11 +172,30 @@ function mergeEntry(rosterEntry, record, seriesId, meta) {
   entry.gadgets = Array.isArray(entry.gadgets) ? entry.gadgets : [];
   entry.languages = Array.isArray(entry.languages) ? entry.languages : [];
   entry.alternateTitles = Array.isArray(entry.alternateTitles) ? entry.alternateTitles : [];
-  entry.image = entry.image && typeof entry.image === 'object' ? entry.image : { url: null, alt: null };
+  entry.image = entry.image && typeof entry.image === 'object'
+    ? entry.image
+    : typeof entry.image === 'string' ? { url: entry.image, alt: null } : { url: null, alt: null };
+  entry.screenshots = Array.isArray(entry.screenshots)
+    ? entry.screenshots.filter((shot) => shot && typeof shot === 'object' && (shot.url || shot.data))
+    : [];
   entry.sources = normalizeSources(entry.sources);
   entry.availability = availabilityFor(entry.sources);
   entry.status = computeStatus(entry);
   return entry;
+}
+
+/**
+ * Characters and gadgets come from array files that have historically stored
+ * `image` both as a plain URL string and as { url, alt }. Normalise to the
+ * object form here so every card and detail page can rely on image.url —
+ * the shape mismatch is why some list pages showed no artwork.
+ */
+function normalizePerson(person) {
+  if (!person || typeof person !== 'object') return person;
+  let image = { url: null, alt: null };
+  if (typeof person.image === 'string') image = { url: person.image, alt: person.name?.en ?? null };
+  else if (person.image && typeof person.image === 'object') image = { url: person.image.url ?? null, alt: person.image.alt ?? null };
+  return { ...person, image };
 }
 
 async function buildState() {
@@ -180,68 +226,71 @@ async function buildState() {
       }
     })));
 
-  // Raw record files, exactly as stored in the repository. The staff editor
-  // commits against THESE — the merged entry carries derived fields (path,
-  // kind, forced arrays, normalized sources) that never exist in the file,
-  // so using it as an edit base fails the server's concurrency check.
-  state.rawEntries = new Map(Object.values(recordsBySeries).flatMap((recs) => Object.entries(recs)));
+  // Raw record files, exactly as stored in the repository. Editors commit
+  // against THESE — merged entries carry derived fields (path, kind, forced
+  // arrays, normalized sources) that never exist in the file, so using one
+  // as an edit base fails the server's concurrency check.
+  const rawEntries = new Map(Object.values(recordsBySeries).flatMap((recs) => Object.entries(recs)));
 
-  // Raw record files, exactly as stored in the repository. The staff editor
-  // commits against THESE — the merged entry carries derived fields (path,
-  // kind, forced arrays, normalized sources) that never exist in the file,
-  // so using it as an edit base fails the server's concurrency check.
-  state.rawEntries = new Map(Object.values(recordsBySeries).flatMap((recs) => Object.entries(recs)));
-
-  state.entries = [];
-  state.entriesById = new Map();
-
+  const entries = [];
+  const entriesById = new Map();
+  const series = new Map();
   for (const [id, meta] of Object.entries(SERIES)) {
     const index = indexes[id];
     const records = recordsBySeries[id] ?? {};
-    const entries = (index.entries ?? []).map((rosterEntry) => mergeEntry(rosterEntry, records[rosterEntry.id], id, meta));
-    for (const entry of entries) state.entriesById.set(entry.id, entry);
-    state.series.set(id, {
+    const seriesEntries = (index.entries ?? []).map((rosterEntry) => mergeEntry(rosterEntry, records[rosterEntry.id], id, meta));
+    for (const entry of seriesEntries) entriesById.set(entry.id, entry);
+    series.set(id, {
       ...meta,
       title: index.title ?? meta.label,
       description: index.description ?? '',
-      entries,
+      entries: seriesEntries,
     });
-    state.entries.push(...entries);
+    entries.push(...seriesEntries);
   }
 
-  state.characters = characters;
-  state.gadgets = gadgets;
-  state.languages = languages;
-  state.categories = categories;
-  state.relations = null;
-  state.loaded = true;
+  // Built completely off to the side and swapped in by applyState(), so a
+  // reload never leaves a half-empty catalogue visible mid-render.
+  return {
+    loaded: true,
+    entries,
+    entriesById,
+    series,
+    rawEntries,
+    characters: (characters ?? []).map(normalizePerson),
+    gadgets: (gadgets ?? []).map(normalizePerson),
+    languages: languages ?? [],
+    categories: categories ?? {},
+    relations: null,
+  };
+}
+
+function applyState(next) {
+  Object.assign(state, next);
 }
 
 /** Loads the catalogue once. Concurrent callers share the same request. */
 export function loadCatalog() {
   if (!loadPromise) {
-    loadPromise = buildState().catch((error) => {
-      loadPromise = null;
-      throw error;
-    });
+    loadPromise = buildState()
+      .then((next) => { applyState(next); })
+      .catch((error) => { loadPromise = null; throw error; });
   }
   return loadPromise;
 }
 
 /**
- * Drops everything and reloads the catalogue from GitHub. Called after a
- * staff edit (accept, direct edit, delete) so the live UI reflects the
- * repository's new state without a page reload.
+ * Rebuilds the catalogue from GitHub and swaps it in atomically (no
+ * half-empty state mid-render). Called after a staff edit, and by the
+ * focus-based freshness check when the repository HEAD moved.
  */
 export function reloadCatalog() {
-  state.loaded = false;
-  state.entries = [];
-  state.entriesById = new Map();
-  state.series = new Map();
-  state.rawEntries = new Map();
-  loadPromise = null;
-  resetArchiveSource();
-  return loadCatalog();
+  if (!reloadPromise) {
+    reloadPromise = buildState()
+      .then((next) => { applyState(next); })
+      .catch((error) => { reloadPromise = null; throw error; });
+  }
+  return reloadPromise;
 }
 
 export const isCatalogReady = () => state.loaded;

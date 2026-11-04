@@ -46,6 +46,7 @@ export default function Header() {
         <div className="header-actions">
           <AccountMenu />
           <ThemePicker />
+          <Link to="/log" className="icon-btn log-btn" aria-label="Contribution log" title="Contribution log"><Icon name="archive" size={19} /></Link>
           <button type="button" className="icon-btn search-btn" onClick={openSearch} aria-label="Search the archive" aria-keyshortcuts="Control+K /">
             <Icon name="search" size={20} />
             <kbd className="search-btn__kbd" aria-hidden="true">/</kbd>

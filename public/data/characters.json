@@ -65,8 +65,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-gian",
@@ -85,8 +84,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-suneo",
@@ -105,8 +103,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-dekisugi",
@@ -125,8 +122,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-jaiko",
@@ -145,8 +141,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-dorami",
@@ -165,8 +160,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-sewashi",
@@ -185,8 +179,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-tamako",
@@ -205,8 +198,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-nobisuke",
@@ -225,8 +217,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   },
   {
     "id": "char-sensei",
@@ -245,7 +236,6 @@
     "firstAppearance": {
       "entryId": null,
       "note": null
-    },
-    "references": []
+    }
   }
 ]

@@ -13,7 +13,6 @@ const CATEGORY_ICONS = {
   character: 'user',
   gadget: 'gadget',
   images: 'film',
-  reference: 'external',
   source: 'play',
   'broken-source': 'alert',
 };
@@ -79,9 +78,10 @@ export default function Contribute() {
         <p className="eyebrow">Contribute</p>
         <h1>Help build the archive.</h1>
         <p className="page-head__lead">
-          Found a video, spotted a mistake, or know an episode we are missing? Pick the match below —
-          every form checks your input as you go, and submitting stores it safely in the archive's
-          review queue. Sign in with Discord so we can credit you and follow up on your submission.
+          Found a video, spotted a mistake, or know an episode we are missing? The fastest route is
+          the <strong>Edit this entry</strong> button on any episode, movie, character or gadget
+          page — it opens the record with your changes ready for a checker to accept in one click.
+          The forms below cover everything else.
         </p>
         <ul className="contribute-assurances" aria-label="What contributing involves">
           <li><Icon name="check" size={14} /> Discord sign-in</li>
@@ -90,6 +90,12 @@ export default function Contribute() {
           <li><Icon name="check" size={14} /> Follow your submission in “My contributions”</li>
         </ul>
       </header>
+
+      <div className="notice contribute-direct-hint">
+        <strong>Tip:</strong> to fix a detail on an existing episode, movie, character or gadget,
+        open its page and press <em>Edit this entry</em> — you edit the actual record and a checker
+        accepts it in one click. No form needed.
+      </div>
 
       <section className="contribute-quick" aria-label="Common contributions">
         {QUICK_START.map((q) => (

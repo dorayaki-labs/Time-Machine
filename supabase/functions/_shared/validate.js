@@ -165,9 +165,6 @@ export function validateEntryRecord(record) {
   checkIdList(errors, record.characters, CHARACTER_ID, 'characters');
   checkIdList(errors, record.gadgets, GADGET_ID, 'gadgets');
   checkSources(errors, record.sources);
-  if (record.references !== undefined && record.references !== null && !Array.isArray(record.references)) {
-    add(errors, 'references must be an array.');
-  }
   if (record.type === 'movie') {
     if (record.durationMinutes !== undefined && record.durationMinutes !== null
         && (!Number.isInteger(record.durationMinutes) || record.durationMinutes < 1)) {
@@ -200,7 +197,6 @@ export function validateEntityRecord(record, entityType) {
     else if (record.firstAppearance.entryId !== null && record.firstAppearance.entryId !== undefined
              && typeof record.firstAppearance.entryId !== 'string') add(errors, 'firstAppearance.entryId must be a string or null.');
   }
-  if (record.references !== undefined && record.references !== null && !Array.isArray(record.references)) add(errors, 'references must be an array.');
   return problems(errors);
 }
 

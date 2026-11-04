@@ -60,33 +60,6 @@ export function VoiceActorsSection({ voiceActors = [] }) {
   );
 }
 
-export function ReferencesSection({ references = [], updatedAt }) {
-  return (
-    <section className="detail-section" id="references" aria-label="References">
-      <details className="collapsible">
-        <summary>
-          <span>References and research notes</span>
-          <span className="muted">{references.length}</span>
-        </summary>
-        <div className="collapsible__body">
-          {references.length ? (
-            <ul className="reference-list">
-              {references.map((r, i) => (
-                <li key={`${r.title}-${i}`}>
-                  {r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer nofollow">{r.title}</a> : <span>{r.title}</span>}
-                  {r.type ? <span className="chip">{r.type}</span> : null}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState title="No references yet" message="This record has no listed references. Contributors can add them with a metadata correction." />
-          )}
-          {updatedAt ? <p className="muted small">Record last updated {updatedAt}.</p> : null}
-        </div>
-      </details>
-    </section>
-  );
-}
 
 export function Completeness({ checklist }) {
   if (!checklist.length) return null;

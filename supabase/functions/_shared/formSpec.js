@@ -51,13 +51,6 @@ export const FORM_SPECS = {
     { name: 'rights', kind: 'select', required: true, options: ['own-work', 'licensed'] },
     urlList('references'),
   ],
-  reference: [
-    { name: 'entryId', kind: 'text', validate: 'entryId' },
-    { name: 'title', kind: 'text', required: true },
-    { name: 'url', kind: 'text', validate: 'url' },
-    { name: 'type', kind: 'select', required: true, options: ['episode list', 'article', 'book', 'note'] },
-    { name: 'notes', kind: 'textarea', required: true },
-  ],
   source: [
     { name: 'entryId', kind: 'text', required: true, validate: 'entryId' },
     { name: 'sourceType', kind: 'select', required: true, options: ['direct', 'embed', 'youtube'] },

@@ -19,7 +19,7 @@ export function metadataChecklist(record) {
     { label: 'Gadgets', done: (record.gadgets?.length ?? 0) > 0 },
     { label: 'Voice actors', done: (record.voiceActors?.length ?? 0) > 0 },
     !isEpisode && { label: 'Runtime', done: Number.isFinite(record.durationMinutes) },
-    { label: 'References', done: (record.references?.length ?? 0) > 0 },
+    { label: 'Screenshots', done: (record.screenshots?.length ?? 0) > 0 },
   ].filter(Boolean);
 }
 

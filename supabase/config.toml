@@ -13,6 +13,10 @@ entrypoint = "./functions/review/index.js"
 verify_jwt = true
 entrypoint = "./functions/direct-edit/index.js"
 
+[functions.archive-edit]
+verify_jwt = true
+entrypoint = "./functions/archive-edit/index.js"
+
 [functions.manage-role]
 verify_jwt = true
 entrypoint = "./functions/manage-role/index.js"

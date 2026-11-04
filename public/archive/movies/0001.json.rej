@@ -1,0 +1,8 @@
+diff a/public/archive/movies/0001.json b/public/archive/movies/0001.json	(rejected hunks)
+@@ -45,6 +45,5 @@
+       "notes": null
+     }
+   ],
+-  "references": [],
+   "updatedAt": "2026-11-02"
+ }
