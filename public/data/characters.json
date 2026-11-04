@@ -38,13 +38,13 @@
     "description": "A kind-hearted but lazy and clumsy schoolboy who relies on Doraemon's futuristic gadgets to overcome everyday problems.",
     "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/FFYLdfG2/nobita.png",
+      "alt": "nobita"
     },
     "voiceActors": [],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Nobita first appeared in the 1969 manga debut under Shogakukan."
     },
     "references": []
   },
