@@ -51,20 +51,65 @@
   {
     "id": "char-shizuka",
     "name": {
-      "en": "Character 3",
-      "ja": null
+      "en": "Shizuka Minamoto",
+      "ja": "源 静香"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Shizuka-chan",
+      "Shizu-chan",
+      "Sue"
+    ],
+    "description": "A kind-hearted, intelligent and gentle schoolgirl who is Nobita's close friend and future wife. She enjoys playing the piano and spending time with her friends.",
     "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/MwsbTWRs/shizuka.png",
+      "alt": "Shizuka"
     },
-    "voiceActors": [],
+    "voiceActors": [
+      {
+        "name": {
+          "en": "Masako Ebisu",
+          "ja": "星野 真沙子"
+        },
+        "language": "ja",
+        "version": "1973 anime"
+      },
+      {
+        "name": {
+          "en": "Michiko Nomura",
+          "ja": "野村 道子"
+        },
+        "language": "ja",
+        "version": "1979 anime (until March 2005)"
+      },
+      {
+        "name": {
+          "en": "Rei Sakuma",
+          "ja": "佐久間 レイ"
+        },
+        "language": "ja",
+        "version": "Young Shizuka (2000)"
+      },
+      {
+        "name": {
+          "en": "Yumi Kakazu",
+          "ja": "かかず ゆみ"
+        },
+        "language": "ja",
+        "version": "2005 anime onwards"
+      },
+      {
+        "name": {
+          "en": "",
+          "ja": null
+        },
+        "language": null,
+        "version": null
+      }
+    ],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Shizuka first appeared in the 1969 manga debut under Shogakukan."
     }
   },
   {
