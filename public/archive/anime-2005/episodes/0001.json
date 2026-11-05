@@ -10,7 +10,9 @@
     "ja": "勉強べやの釣り堀"
   },
   "number": 1,
-  "gadgets": [],
+  "gadgets": [
+    "gadget-anywhere-door"
+  ],
   "release": {
     "date": "2005-04-15",
     "region": "JP",
@@ -18,8 +20,8 @@
   },
   "sources": [
     {
-      "type": "youtube",
-      "data": "https://youtu.be/embed/ZniA47cptPk",
+      "type": "embed",
+      "data": "https://www.youtube-nocookie.com/embed/ZniA47cptPk",
       "label": "YouTube",
       "language": "ja",
       "subtitles": {
