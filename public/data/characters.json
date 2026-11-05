@@ -107,20 +107,24 @@
   {
     "id": "char-gian",
     "name": {
-      "en": "Character 4",
-      "ja": null
+      "en": "Gian",
+      "ja": "剛田 武"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Gian",
+      "Big G",
+      "Takeshi"
+    ],
+    "description": "A strong, confident and short-tempered boy who is Nobita's classmate and close friend. He enjoys singing, playing baseball and spending time with his friends.",
     "category": "classmate",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/HLLZ6dFW/image.png",
+      "alt": "Takeshi"
     },
     "voiceActors": [],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Shizuka first appeared in the 1969 manga debut under Shogakukan."
     }
   },
   {
