@@ -21,15 +21,15 @@
   {
     "id": "gadget-bamboo-copter",
     "name": {
-      "en": "Gadget 2",
-      "ja": null
+      "en": "Take Copter",
+      "ja": "タケコプタ"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Take-copter is a small bamboo helicopter that attaches to your head and lets you fly through the air. It's easy to use, portable, and allows you to travel without needing any vehicles.",
+    "howItWorks": "Place the Take-copter on top of your head, make sure it's attached properly😅, and switch it on. It'll start spinning and lift you into the air. Just think about where you want to go and fly!",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://vlitzz.store/gadgets/TakeCopter.webp",
+      "alt": "TakeCopter appearance"
     },
     "firstAppearance": {
       "entryId": null,
