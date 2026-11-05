@@ -3,7 +3,7 @@
   "type": "episode",
   "image": {
     "alt": null,
-    "url": "https://test.vlitzz.store/doraemonTest.png"
+    "url": "https://vlitzz.store/doraemonTest.png"
   },
   "title": {
     "en": "Fishing Pond in the Study Room",
@@ -18,7 +18,23 @@
     "region": "JP",
     "precision": "day"
   },
-  "sources": [],
+  "sources": [
+    {
+      "type": "youtube",
+      "data": "https://www.youtube.com/watch?v=ZniA47cptPk",
+      "label": "YouTube",
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "Vietnamese"
+        ]
+      },
+      "quality": "720p",
+      "notes": null
+    }
+  ],
   "summary": null,
   "seriesId": "anime-2005",
   "updatedAt": "2026-11-02",
@@ -28,7 +44,7 @@
   "screenshots": [
     {
       "alt": "fish",
-      "url": "https://test.vlitzz.store/doraemonTest.png"
+      "url": "https://vlitzz.store/thumbnail/e01.png"
     }
   ],
   "voiceActors": [],
