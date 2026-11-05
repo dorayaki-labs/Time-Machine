@@ -59,14 +59,14 @@
   {
     "id": "gadget-time-cloth",
     "name": {
-      "en": "Gadget 4",
-      "ja": null
+      "en": "Time Cloth",
+      "ja": "タイムふろしき"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Time Cloth is a special cloth that can change an object's age. Depending on which side you use, it can make things older or restore them to how they were when they were new.",
+    "howItWorks": "Place the Time Cloth over an object and rub it gently. One side makes the object older, while the other turns it back to its original state.",
     "image": {
-      "url": null,
+      "url": "https://vlitzz.store/gadgets/TimeCloth.png",
       "alt": null
     },
     "firstAppearance": {
