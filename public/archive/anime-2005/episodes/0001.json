@@ -10,9 +10,7 @@
     "ja": "勉強べやの釣り堀"
   },
   "number": 1,
-  "gadgets": [
-    "gadget-anywhere-door"
-  ],
+  "gadgets": [],
   "release": {
     "date": "2005-04-15",
     "region": "JP",
