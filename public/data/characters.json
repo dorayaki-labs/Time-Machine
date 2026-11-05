@@ -130,20 +130,56 @@
   {
     "id": "char-suneo",
     "name": {
-      "en": "Character 5",
-      "ja": null
+      "en": "Suneo Honekawa",
+      "ja": "スネ夫 骨川"
     },
-    "aliases": [],
-    "description": null,
-    "category": "classmate",
+    "aliases": [
+      "Suneo",
+      "Sneech"
+    ],
+    "description": "A clever, wealthy and boastful boy who is Nobita's classmate and friend. He enjoys showing off his possessions, playing video games and spending time with his friends.",
+    "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/Rvw2g0Jr/image.png",
+      "alt": "Suneo "
     },
-    "voiceActors": [],
+    "voiceActors": [
+      {
+        "name": {
+          "en": "Shun Yashiro",
+          "ja": "矢代 駿"
+        },
+        "language": "ja",
+        "version": "1973"
+      },
+      {
+        "name": {
+          "en": "Kaneta Kimotsuki",
+          "ja": "肝付 兼太"
+        },
+        "language": "ja",
+        "version": "1979–March 2005"
+      },
+      {
+        "name": {
+          "en": "Naoki Tatsuta",
+          "ja": "龍田 直樹"
+        },
+        "language": "ja",
+        "version": "1985, substitute voice"
+      },
+      {
+        "name": {
+          "en": "Tomokazu Seki",
+          "ja": "関 智一"
+        },
+        "language": "ja",
+        "version": "April 2005–present"
+      }
+    ],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Suneo first appeared in the 1969 manga debut under Shogakukan."
     }
   },
   {
