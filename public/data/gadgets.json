@@ -2,15 +2,15 @@
   {
     "id": "gadget-anywhere-door",
     "name": {
-      "en": "Gadget 1",
-      "ja": null
+      "en": "Anywhere Door",
+      "ja": "どこでもドア"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Anywhere Door lets you travel to almost any place instantly by simply opening it. However, it has a limited range (usually 10 light-years), can be affected by electromagnetic interference, and doesn't normally allow time travel or access to other dimensions.",
+    "howItWorks": "You simply think or choose your destination, set it on the Anywhere Door, and open it. Walk through the doorway to instantly arrive at your chosen location!",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://vlitzz.store/gadgets/AnywhereDoor.webp",
+      "alt": "Anywhere Door"
     },
     "firstAppearance": {
       "entryId": null,
