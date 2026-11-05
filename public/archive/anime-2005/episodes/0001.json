@@ -20,8 +20,8 @@
   },
   "sources": [
     {
-      "type": "direct",
-      "data": "https://ik.imagekit.io/qydjrjg66l/episode1(1).mp4",
+      "type": "embed",
+      "data": "https://www.youtube-nocookie.com/embed/ZniA47cptPk",
       "label": "YouTube",
       "language": "ja",
       "subtitles": {
