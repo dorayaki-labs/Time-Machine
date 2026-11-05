@@ -40,14 +40,14 @@
   {
     "id": "gadget-time-machine",
     "name": {
-      "en": "Gadget 3",
+      "en": "Time Machine",
       "ja": null
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Time Machine allows you to travel to different periods in the past or future. Simply choose your desired date and time, enter the machine, and let it take you to another era.",
+    "howItWorks": "Set your destination date and time using the controls, then start the Time Machine. Once activated, sit back and wait until you arrive at your chosen point in time.",
     "image": {
-      "url": null,
+      "url": "https://vlitzz.store/gadgets/timemachine.png",
       "alt": null
     },
     "firstAppearance": {
