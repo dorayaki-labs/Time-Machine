@@ -41,7 +41,7 @@
     "id": "gadget-time-machine",
     "name": {
       "en": "Time Machine",
-      "ja": null
+      "ja": "タイムマシン"
     },
     "aliases": [],
     "description": "The Time Machine allows you to travel to different periods in the past or future. Simply choose your desired date and time, enter the machine, and let it take you to another era.",
