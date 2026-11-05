@@ -185,20 +185,40 @@
   {
     "id": "char-dekisugi",
     "name": {
-      "en": "Character 6",
-      "ja": null
+      "en": "Hidetoshi Dekisugi",
+      "ja": "出木杉 英才"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Dekisugi-kun",
+      "Ace Goody"
+    ],
+    "description": "A highly intelligent, polite and talented boy who is Nobita's classmate and Shizuka's close friend. He excels in academics and sports and enjoys reading, science and helping others.",
     "category": "classmate",
     "image": {
       "url": null,
       "alt": null
     },
-    "voiceActors": [],
+    "voiceActors": [
+      {
+        "name": {
+          "en": "Sumiko Shirakawa",
+          "ja": "白川 澄子"
+        },
+        "language": "ja",
+        "version": "1979–March 2005"
+      },
+      {
+        "name": {
+          "en": "Shihoko Hagino",
+          "ja": "萩野 志保子"
+        },
+        "language": "ja",
+        "version": "May 2005–present"
+      }
+    ],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Hidetoshi Dekisugi first appeared in the September 1979 issue of CoroCoro Comic in the manga chapter titled \"Doraemon and Dorami-chan\"."
     }
   },
   {
