@@ -51,77 +51,174 @@
   {
     "id": "char-shizuka",
     "name": {
-      "en": "Character 3",
-      "ja": null
+      "en": "Shizuka Minamoto",
+      "ja": "源 静香"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Shizuka-chan",
+      "Shizu-chan",
+      "Sue"
+    ],
+    "description": "A kind-hearted, intelligent and gentle schoolgirl who is Nobita's close friend and future wife. She enjoys playing the piano and spending time with her friends.",
     "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/MwsbTWRs/shizuka.png",
+      "alt": "Shizuka"
     },
-    "voiceActors": [],
+    "voiceActors": [
+      {
+        "name": {
+          "en": "Masako Ebisu",
+          "ja": "星野 真沙子"
+        },
+        "language": "ja",
+        "version": "1973 anime"
+      },
+      {
+        "name": {
+          "en": "Michiko Nomura",
+          "ja": "野村 道子"
+        },
+        "language": "ja",
+        "version": "1979 anime (until March 2005)"
+      },
+      {
+        "name": {
+          "en": "Rei Sakuma",
+          "ja": "佐久間 レイ"
+        },
+        "language": "ja",
+        "version": "Young Shizuka (2000)"
+      },
+      {
+        "name": {
+          "en": "Yumi Kakazu",
+          "ja": "かかず ゆみ"
+        },
+        "language": "ja",
+        "version": "2005 anime onwards"
+      }
+    ],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Shizuka first appeared in the 1969 manga debut under Shogakukan."
     }
   },
   {
     "id": "char-gian",
     "name": {
-      "en": "Character 4",
-      "ja": null
+      "en": "Takeshi Gouda",
+      "ja": "剛田 武"
     },
-    "aliases": [],
-    "description": null,
-    "category": "classmate",
+    "aliases": [
+      "Gian",
+      "Big G",
+      "Takeshi"
+    ],
+    "description": "A strong, confident and short-tempered boy who is Nobita's classmate and close friend. He enjoys singing, playing baseball and spending time with his friends.",
+    "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/HLLZ6dFW/image.png",
+      "alt": "Takeshi"
     },
     "voiceActors": [],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Gian first appeared in the 1969 manga debut under Shogakukan."
     }
   },
   {
     "id": "char-suneo",
     "name": {
-      "en": "Character 5",
-      "ja": null
+      "en": "Suneo Honekawa",
+      "ja": "スネ夫 骨川"
     },
-    "aliases": [],
-    "description": null,
-    "category": "classmate",
+    "aliases": [
+      "Suneo",
+      "Sneech"
+    ],
+    "description": "A clever, wealthy and boastful boy who is Nobita's classmate and friend. He enjoys showing off his possessions, playing video games and spending time with his friends.",
+    "category": "main",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/Rvw2g0Jr/image.png",
+      "alt": "Suneo "
     },
-    "voiceActors": [],
+    "voiceActors": [
+      {
+        "name": {
+          "en": "Shun Yashiro",
+          "ja": "矢代 駿"
+        },
+        "language": "ja",
+        "version": "1973"
+      },
+      {
+        "name": {
+          "en": "Kaneta Kimotsuki",
+          "ja": "肝付 兼太"
+        },
+        "language": "ja",
+        "version": "1979–March 2005"
+      },
+      {
+        "name": {
+          "en": "Naoki Tatsuta",
+          "ja": "龍田 直樹"
+        },
+        "language": "ja",
+        "version": "1985, substitute voice"
+      },
+      {
+        "name": {
+          "en": "Tomokazu Seki",
+          "ja": "関 智一"
+        },
+        "language": "ja",
+        "version": "April 2005–present"
+      }
+    ],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Suneo first appeared in the 1969 manga debut under Shogakukan."
     }
   },
   {
     "id": "char-dekisugi",
     "name": {
-      "en": "Character 6",
-      "ja": null
+      "en": "Hidetoshi Dekisugi",
+      "ja": "出木杉 英才"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Dekisugi-kun",
+      "Ace Goody"
+    ],
+    "description": "A highly intelligent, polite and talented boy who is Nobita's classmate and Shizuka's close friend. He excels in academics and sports and enjoys reading, science and helping others.",
     "category": "classmate",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://vlitzz.store/char/hidetoshi.png",
+      "alt": "Hidetoshi Dekisugi Appearance"
     },
-    "voiceActors": [],
+    "voiceActors": [
+      {
+        "name": {
+          "en": "Sumiko Shirakawa",
+          "ja": "白川 澄子"
+        },
+        "language": "ja",
+        "version": "1979–March 2005"
+      },
+      {
+        "name": {
+          "en": "Shihoko Hagino",
+          "ja": "萩野 志保子"
+        },
+        "language": "ja",
+        "version": "May 2005–present"
+      }
+    ],
     "firstAppearance": {
       "entryId": null,
-      "note": null
+      "note": "Hidetoshi Dekisugi first appeared in the September 1979 issue of CoroCoro Comic in the manga chapter titled \"Doraemon and Dorami-chan\"."
     }
   },
   {
