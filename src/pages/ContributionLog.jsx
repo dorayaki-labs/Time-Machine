@@ -1,7 +1,8 @@
 // The public contribution log: real activity from the backend, merged from
 // two public views — submissions (with their outcome) and direct archive
 // edits/deletions. Shows who did what, when, with avatars; review reasons
-// and payloads stay private to the people involved.
+// and payloads stay private to the people involved. Every row is pressable
+// and opens a large detail view of that event.
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,37 +11,11 @@ import LoadingState from '@/components/LoadingState.jsx';
 import EmptyState from '@/components/EmptyState.jsx';
 import Icon from '@/components/Icon.jsx';
 import Avatar from '@/components/Avatar.jsx';
+import ContributionModal, { submissionView, editView } from '@/components/ContributionModal.jsx';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { fetchPublicLog, fetchPublicEdits } from '@/lib/stats.js';
+import { SUBMISSION_EVENT, EDIT_EVENT, fmtTime } from '@/lib/activity.js';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
-
-const entryPath = (entryId) => {
-  if (!entryId) return null;
-  if (entryId.startsWith('movie-')) return `/movies/${entryId}`;
-  if (entryId.startsWith('anime-1973-')) return `/historical/1973/${entryId}`;
-  if (entryId.startsWith('anime-1979-')) return `/anime/1979/${entryId}`;
-  if (entryId.startsWith('anime-2005-')) return `/anime/2005/${entryId}`;
-  if (entryId.startsWith('char-')) return `/characters/${entryId}`;
-  if (entryId.startsWith('gadget-')) return `/gadgets/${entryId}`;
-  return null;
-};
-
-const SUBMISSION_EVENT = {
-  pending: { label: 'submitted', icon: 'plus', tone: 'pending' },
-  accepted: { label: 'approved', icon: 'check', tone: 'ok' },
-  declined: { label: 'declined', icon: 'close', tone: 'bad' },
-  deleted: { label: 'removed', icon: 'trash', tone: 'muted' },
-};
-
-const EDIT_EVENT = {
-  archive_direct_edit: { label: 'edited the archive', icon: 'edit', tone: 'review' },
-  archive_entry_deleted: { label: 'deleted an archive entry', icon: 'trash', tone: 'bad' },
-  archive_sync_recovered: { label: 'recovered a failed archive sync', icon: 'check', tone: 'ok' },
-};
-
-const fmtTime = (iso) => (iso
-  ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-  : '—');
 
 export default function ContributionLog() {
   useDocumentTitle('Contribution log');
@@ -48,6 +23,7 @@ export default function ContributionLog() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -89,8 +65,9 @@ export default function ContributionLog() {
         <h1>Contribution log</h1>
         <p className="page-opening__lead">
           Everything the community does to the archive, newest first: new submissions, review
-          decisions, and direct edits by the staff. Review notes and submission details stay
-          private to the people involved.
+          decisions, and direct edits by the staff. Select any entry to see who contributed, who
+          accepted it, and when it happened. Review notes and submission details stay private to
+          the people involved.
         </p>
       </div>
 
@@ -123,54 +100,58 @@ export default function ContributionLog() {
               if (row.kind === 'edit') {
                 const meta = EDIT_EVENT[row.edit.action?.replace(/\./g, '_')] ?? { label: row.edit.action, icon: 'edit', tone: 'review' };
                 return (
-                  <li key={row.key} className={`activity-item activity-item--${meta.tone}`}>
-                    <Avatar name={row.edit.editor_name} url={row.edit.editor_avatar} size={34} />
-                    <div className="activity-item__body">
-                      <p className="activity-item__line">
-                        <strong>{row.edit.editor_name ?? 'A staff member'}</strong>
-                        <span className={`activity-chip activity-chip--${meta.tone}`}>
-                          <Icon name={meta.icon} size={12} /> {meta.label}
-                        </span>
-                      </p>
-                      <p className="activity-item__meta">
-                        <span className="mono">{row.edit.entity_type} {row.edit.entity_id}</span>
-                        {' · '}{fmtTime(row.at)}
-                        {row.edit.commit_sha ? <> · commit <span className="mono">{String(row.edit.commit_sha).slice(0, 7)}</span></> : null}
-                      </p>
-                    </div>
+                  <li key={row.key}>
+                    <button type="button" className={`activity-item activity-item--${meta.tone} activity-item--clickable`}
+                      onClick={() => setSelected(editView(row.edit))}>
+                      <Avatar name={row.edit.editor_name} url={row.edit.editor_avatar} size={34} />
+                      <div className="activity-item__body">
+                        <p className="activity-item__line">
+                          <strong>{row.edit.editor_name ?? 'A staff member'}</strong>
+                          <span className={`activity-chip activity-chip--${meta.tone}`}>
+                            <Icon name={meta.icon} size={12} /> {meta.label}
+                          </span>
+                        </p>
+                        <p className="activity-item__meta">
+                          <span className="mono">{row.edit.entity_type} {row.edit.entity_id}</span>
+                          {' · '}{fmtTime(row.at)}
+                          {row.edit.commit_sha ? <> · commit <span className="mono">{String(row.edit.commit_sha).slice(0, 7)}</span></> : null}
+                        </p>
+                      </div>
+                    </button>
                   </li>
                 );
               }
               const sub = row.submission;
               const meta = SUBMISSION_EVENT[sub.status] ?? SUBMISSION_EVENT.pending;
-              const path = entryPath(sub.entry_id);
               return (
-                <li key={row.key} className={`activity-item activity-item--${meta.tone}`}>
-                  <Avatar name={sub.contributor_name} url={sub.contributor_avatar} size={34} />
-                  <div className="activity-item__body">
-                    <p className="activity-item__line">
-                      <strong>{sub.contributor_name ?? 'A community member'}</strong>
-                      <span className={`activity-chip activity-chip--${meta.tone}`}>
-                        <Icon name={meta.icon} size={12} /> {meta.label}
-                      </span>
-                      <span className="activity-item__title">#{sub.number} · {sub.title}</span>
-                    </p>
-                    <p className="activity-item__meta">
-                      {path
-                        ? <Link className="mono" to={path}>{sub.entry_id} →</Link>
-                        : sub.entry_id ? <span className="mono">{sub.entry_id}</span>
-                          : <span>{sub.type}</span>}
-                      {' · '}{fmtTime(row.at)}
-                      {sub.status === 'accepted' && sub.reviewer_name
-                        ? <> · approved by {sub.reviewer_name}</> : null}
-                    </p>
-                  </div>
+                <li key={row.key}>
+                  <button type="button" className={`activity-item activity-item--${meta.tone} activity-item--clickable`}
+                    onClick={() => setSelected(submissionView(sub))}>
+                    <Avatar name={sub.contributor_name} url={sub.contributor_avatar} size={34} />
+                    <div className="activity-item__body">
+                      <p className="activity-item__line">
+                        <strong>{sub.contributor_name ?? 'A community member'}</strong>
+                        <span className={`activity-chip activity-chip--${meta.tone}`}>
+                          <Icon name={meta.icon} size={12} /> {meta.label}
+                        </span>
+                        <span className="activity-item__title">#{sub.number} · {sub.title}</span>
+                      </p>
+                      <p className="activity-item__meta">
+                        {sub.entry_id ? <span className="mono">{sub.entry_id}</span> : <span>{sub.type}</span>}
+                        {' · '}{fmtTime(row.at)}
+                        {sub.status === 'accepted' && sub.reviewer_name
+                          ? <> · accepted by {sub.reviewer_name}</> : null}
+                      </p>
+                    </div>
+                  </button>
                 </li>
               );
             })}
           </ol>
         </>
       )}
+
+      {selected ? <ContributionModal row={selected} onClose={() => setSelected(null)} /> : null}
     </PageContainer>
   );
 }

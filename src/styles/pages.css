@@ -360,3 +360,8 @@
 .carousel__thumb:hover { opacity: 1; }
 .carousel__thumb.is-active { opacity: 1; border-color: var(--accent); }
 .contribute-direct-hint { margin-block: var(--s-4) 0; }
+
+/* My contributions: quick CTA in the page head + pressable history rows */
+.page-opening__cta { margin: 0 0 var(--s-3); display: flex; }
+.log-item--clickable { cursor: pointer; transition: background 0.12s, border-color 0.12s; }
+.log-item--clickable:hover { background: var(--surface-2); }

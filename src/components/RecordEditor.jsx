@@ -83,15 +83,32 @@ export function IdListField({ label, ids = [], onChange, kind }) {
   );
 }
 
-/** Voice actors: repeatable { name: { en, ja }, language, version } rows. */
-export function VoiceActorRows({ value = [], onChange }) {
-  const update = (i, patch) => onChange(value.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  const remove = (i) => onChange(value.filter((_, j) => j !== i));
-  const add = () => onChange([...value, { name: { en: '', ja: null }, language: null, version: null }]);
+/**
+ * Voice actors: repeatable rows.
+ *  - On characters: { name, language, version } — a character is voiced by
+ *    different people across the 1979/2005 series, so rows carry a version.
+ *  - On episodes and movies (withCharacter): { name, characterId, language }
+ *    — the row is about WHO voiced WHICH character in THIS entry, so it
+ *    carries a character instead of a version (each entry is itself a
+ *    version). Rows keep no `version` key: legacy values are stripped the
+ *    moment the list is edited so committed JSON matches the schema.
+ */
+export function VoiceActorRows({ value = [], onChange, withCharacter = false }) {
+  const clean = (rows) => rows.map((r) => {
+    if (!withCharacter) return r;
+    const { version, ...rest } = r;
+    return rest;
+  });
+  const update = (i, patch) => onChange(clean(value.map((r, j) => (j === i ? { ...r, ...patch } : r))));
+  const remove = (i) => onChange(clean(value.filter((_, j) => j !== i)));
+  const add = () => onChange(clean([...value, withCharacter
+    ? { name: { en: '', ja: null }, characterId: null, language: null }
+    : { name: { en: '', ja: null }, language: null, version: null }]));
   const langs = languageOptions();
+  const charOptions = getCharacters().map((c) => ({ value: c.id, label: c.name?.en ?? c.id }));
   return (
     <div className="field span-2">
-      <label>Voice actors <span className="field__opt">(who voiced this character / who appears in this entry)</span></label>
+      <label>Voice actors <span className="field__opt">{withCharacter ? '(who voiced which character in this entry)' : '(who voiced this character)'}</span></label>
       {value.map((v, i) => (
         <div key={i} className="repeat-row">
           <input type="text" placeholder="Name (English)" value={v.name?.en ?? ''} onChange={(e) => update(i, { name: { ...v.name, en: e.target.value || null } })} aria-label={`Voice actor ${i + 1} English name`} />
@@ -103,10 +120,17 @@ export function VoiceActorRows({ value = [], onChange }) {
             </select>
             <Icon name="chevronDown" size={16} className="select-wrap__chev" />
           </div>
-          <input type="text" placeholder="Version (e.g. 1979 anime)" value={v.version ?? ''} onChange={(e) => update(i, { version: e.target.value || null })} aria-label={`Voice actor ${i + 1} version`} />
+          {withCharacter ? (
+            <input type="text" list="va-character-ids" placeholder="Character (e.g. char-nobita)" value={v.characterId ?? ''}
+              onChange={(e) => update(i, { characterId: e.target.value || null })}
+              aria-label={`Voice actor ${i + 1} character`} />
+          ) : (
+            <input type="text" placeholder="Version (e.g. 1979 anime)" value={v.version ?? ''} onChange={(e) => update(i, { version: e.target.value || null })} aria-label={`Voice actor ${i + 1} version`} />
+          )}
           <button type="button" className="btn btn--ghost btn--danger" onClick={() => remove(i)} aria-label={`Remove voice actor ${i + 1}`}><Icon name="trash" size={15} /></button>
         </div>
       ))}
+      <datalist id="va-character-ids">{charOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</datalist>
       <div className="btn-row"><button type="button" className="btn btn--ghost btn--sm" onClick={add}><Icon name="plus" size={15} /> Add a voice actor</button></div>
     </div>
   );
@@ -234,7 +258,7 @@ export default function RecordEditor({ entityType, draft, setField }) {
         <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
         <IdListField label="Characters in this entry" ids={draft.characters ?? []} onChange={(list) => setField('characters', list)} kind="character" />
         <IdListField label="Gadgets in this entry" ids={draft.gadgets ?? []} onChange={(list) => setField('gadgets', list)} kind="gadget" />
-        <VoiceActorRows value={draft.voiceActors ?? []} onChange={(list) => setField('voiceActors', list)} />
+        <VoiceActorRows value={draft.voiceActors ?? []} onChange={(list) => setField('voiceActors', list)} withCharacter />
         <ScreenshotRows value={draft.screenshots ?? []} onChange={(list) => setField('screenshots', list)} />
         <SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} />
       </div>

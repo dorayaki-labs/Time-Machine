@@ -41,16 +41,30 @@ export async function fetchPublicEdits({ limit = 60 } = {}) {
   return data ?? [];
 }
 
-/** The signed-in user's own submissions with statuses. */
+/** The signed-in user's own submissions with statuses, review details and
+    their payloads (RLS only returns these for the author), plus the name of
+    whoever reviewed each one. */
 export async function fetchMyContributions() {
   if (!backendConfigured || !supabase) return null;
   const { data, error } = await supabase
     .from('contributions')
-    .select('id, number, type, title, entry_id, status, reviewer_id, reviewed_at, review_reason, created_at, commit_sha')
+    .select('id, number, type, title, entry_id, status, reviewer_id, reviewed_at, review_reason, created_at, commit_sha, payload, payload_edited')
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const rows = data ?? [];
+  const ids = [...new Set(rows.map((r) => r.reviewer_id).filter(Boolean))];
+  if (!ids.length) return rows;
+  const { data: people, error: peopleError } = await supabase
+    .from('profiles')
+    .select('id, display_name, avatar_url')
+    .in('id', ids);
+  if (peopleError) throw new Error(peopleError.message);
+  const byId = new Map((people ?? []).map((p) => [p.id, p]));
+  return rows.map((r) => ({
+    ...r,
+    reviewer_profile: byId.get(r.reviewer_id) ?? null,
+  }));
 }
 
 /** Staff: all submissions with contributor info, filtered and paged. */
@@ -78,7 +92,11 @@ export async function fetchSubmissions({ status = 'all', type = 'all', search = 
     .in('id', ids);
   if (peopleError) throw new Error(peopleError.message);
   const byId = new Map((people ?? []).map((p) => [p.id, p]));
-  return rows.map((r) => ({ ...r, profiles: byId.get(r.contributor_id) ?? null }));
+  return rows.map((r) => ({
+    ...r,
+    profiles: byId.get(r.contributor_id) ?? null,
+    reviewer_profile: byId.get(r.reviewer_id) ?? null,
+  }));
 }
 
 /** Staff: audit events, newest first. */

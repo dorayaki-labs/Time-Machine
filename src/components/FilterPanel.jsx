@@ -24,7 +24,9 @@ export default function FilterPanel({ fields, values, onChange, onReset, title =
         {activeCount ? <span className="filter-panel__count">{activeCount}</span> : null}
         <Icon name="chevronDown" size={18} className="filter-panel__chev" />
       </button>
-      <div className="filter-panel__body" id={`${baseId}-body`}>
+      <div className="filter-panel__body" id={`${baseId}-body`} aria-hidden={!open}>
+        <div className="filter-panel__inner">
+        <div className="filter-panel__divider" aria-hidden="true" />
         <div className="filter-panel__grid">
           {fields.map((f) => {
             if (f.type === 'range') {
@@ -60,6 +62,7 @@ export default function FilterPanel({ fields, values, onChange, onReset, title =
         </div>
         <div className="filter-panel__foot">
           <button type="button" className="btn btn--ghost btn--sm" onClick={onReset} disabled={!activeCount}>Clear filters</button>
+        </div>
         </div>
       </div>
     </div>

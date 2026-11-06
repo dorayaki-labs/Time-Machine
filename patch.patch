@@ -1,0 +1,1620 @@
+diff --git a/src/App.jsx b/src/App.jsx
+index c163d66..a7c93d1 100755
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -34,8 +34,13 @@ import NotFound from '@/pages/NotFound.jsx';
+ // Suspense flicker on first visit to a page.
+ 
+ function ScrollToTop() {
+-  const { pathname } = useLocation();
+-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
++  const { pathname, state } = useLocation();
++  useEffect(() => {
++    // Prev/next navigation from the bottom of an episode or movie page passes
++    // preserveScroll so the reader stays where they were instead of being
++    // thrown back to the top of every new page.
++    if (!state?.preserveScroll) window.scrollTo(0, 0);
++  }, [pathname, state]);
+   return null;
+ }
+ 
+diff --git a/src/components/AccountMenu.jsx b/src/components/AccountMenu.jsx
+index dc28790..ee05960 100644
+--- a/src/components/AccountMenu.jsx
++++ b/src/components/AccountMenu.jsx
+@@ -62,10 +62,10 @@ export default function AccountMenu() {
+             <li><Link role="menuitem" to="/account" onClick={() => setOpen(false)}><Icon name="user" size={15} /> My contributions</Link></li>
+             <li><Link role="menuitem" to="/stats" onClick={() => setOpen(false)}><Icon name="stats" size={15} /> Statistics</Link></li>
+             {['checker', 'admin', 'owner'].includes(role)
+-              ? <li><Link role="menuitem" to="/staff" onClick={() => setOpen(false)}><Icon name="check" size={15} /> Moderation panel</Link></li>
++              ? <li><Link role="menuitem" to="/staff" onClick={() => setOpen(false)}><Icon name="shield" size={15} /> Moderation panel</Link></li>
+               : null}
+             <li role="separator" />
+-            <li><button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}><Icon name="close" size={15} /> Sign out</button></li>
++            <li><button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}><Icon name="logout" size={15} /> Sign out</button></li>
+           </ul>
+         </div>
+       ) : null}
+diff --git a/src/components/ContributionForm.jsx b/src/components/ContributionForm.jsx
+index 773a91c..01c62ff 100755
+--- a/src/components/ContributionForm.jsx
++++ b/src/components/ContributionForm.jsx
+@@ -91,7 +91,12 @@ export default function ContributionForm({ category, initialValues = null }) {
+         const res = await submitContribution({
+           type: category.id,
+           title: suggestionTitle(category, normalized),
+-          entryId: typeof normalized.entryId === 'string' && normalized.entryId.trim() ? normalized.entryId.trim() : null,
++          // Character and gadget forms use their own id fields; the backend
++          // stores them as entry_id (any `[a-z0-9-]` id is valid) so the
++          // contribution shows up on that page's activity box and links to it.
++          entryId: ['entryId', 'characterId', 'gadgetId']
++            .map((k) => (typeof normalized[k] === 'string' ? normalized[k].trim() : ''))
++            .find((v) => v) ?? null,
+           payload: normalized,
+           honeypot: normalized.company ?? null,
+         });
+diff --git a/src/components/ContributionModal.jsx b/src/components/ContributionModal.jsx
+new file mode 100644
+index 0000000..32578fd
+--- /dev/null
++++ b/src/components/ContributionModal.jsx
+@@ -0,0 +1,154 @@
++// Detail view for one contribution, shown as a large (optionally fullscreen)
++// modal from the public log, My Contributions and the per-page activity
++// boxes. Public visitors see metadata only; the author and staff also see
++// the submitted answers and — for record edits — a field-level before/after
++// diff of exactly what changed.
++
++import { useEffect } from 'react';
++import { Link } from 'react-router-dom';
++import Icon from './Icon.jsx';
++import Avatar from './Avatar.jsx';
++import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
++import { entryPath, fmtTime, contributionTypeLabel } from '@/lib/activity.js';
++import { commitUrl } from '@/lib/catalog.js';
++import { STATUS_LABELS } from '@/lib/stats.js';
++
++export function ChangesTable({ changes, emptyText = 'No field-level changes recorded.' }) {
++  if (!changes?.length) return <p className="muted small">{emptyText}</p>;
++  return (
++    <div className="table-wrap">
++      <table className="changes-table">
++        <thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
++        <tbody>
++          {changes.map((c, i) => (
++            <tr key={i}>
++              <td className="mono">{c.field}</td>
++              <td className="mono">{fmtChangeValue(c.before)}</td>
++              <td className="mono">{fmtChangeValue(c.after)}</td>
++            </tr>
++          ))}
++        </tbody>
++      </table>
++    </div>
++  );
++}
++
++/**
++ * `row` is a normalised view of a contribution or a public edit event:
++ * { kind: 'submission'|'edit', at, title, number?, type?, status?,
++ *   entryId?, contributor?, reviewer?, submittedAt?, reviewedAt?,
++ *   reviewReason?, commitSha?, payload?, payloadEdited?, proposedPatch?,
++ *   action? (edits) }
++ */
++export default function ContributionModal({ row, onClose, fullscreen = true, children }) {
++  useEffect(() => {
++    const onKey = (e) => e.key === 'Escape' && onClose();
++    document.addEventListener('keydown', onKey);
++    document.body.style.overflow = 'hidden';
++    return () => {
++      document.removeEventListener('keydown', onKey);
++      document.body.style.overflow = '';
++    };
++  }, [onClose]);
++
++  const path = entryPath(row.entryId);
++  const commit = commitUrl(row.commitSha);
++  const payload = row.payloadEdited ?? row.payload ?? null;
++  const diff = row.proposedPatch?.record && row.proposedPatch?.baseRecord
++    ? deepDiff(row.proposedPatch.baseRecord, row.proposedPatch.record)
++    : payload?.record && payload?.baseRecord
++      ? deepDiff(payload.baseRecord, payload.record)
++      : null;
++
++  return (
++    <div className="modal-overlay modal-overlay--fullscreen" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
++      <div className={`modal modal--wide${fullscreen ? ' modal--tall' : ''}`} role="dialog" aria-modal="true" aria-label={`Contribution ${row.number ? `#${row.number}` : row.title}`}>
++        <div className="modal__head">
++          <h3>
++            {row.kind === 'edit' ? <Icon name={row.action?.includes('deleted') ? 'trash' : 'edit'} size={17} /> : <Icon name="archive" size={17} />}
++            {' '}{row.number ? <>#{row.number} · </> : null}{row.title}
++          </h3>
++          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><Icon name="close" size={19} /></button>
++        </div>
++        <div className="modal__body">
++          <dl className="submission__fields contribution-modal__fields">
++            {row.kind === 'submission' ? <div className="row"><dt>Type</dt><dd>{contributionTypeLabel(row.type)}</dd></div> : null}
++            {row.kind === 'edit' ? <div className="row"><dt>Action</dt><dd>{String(row.action ?? '').replace(/[._]/g, ' ')}</dd></div> : null}
++            {row.status ? <div className="row"><dt>Status</dt><dd>{STATUS_LABELS[row.status] ?? row.status}</dd></div> : null}
++            {row.contributor ? (
++              <div className="row"><dt>Contributor</dt><dd className="contribution-modal__who"><Avatar name={row.contributor.name} url={row.contributor.avatar} size={24} /> {row.contributor.name}</dd></div>
++            ) : null}
++            {row.reviewer ? (
++              <div className="row"><dt>{row.status === 'accepted' ? 'Accepted by' : 'Reviewed by'}</dt><dd className="contribution-modal__who"><Avatar name={row.reviewer.name} url={row.reviewer.avatar} size={24} /> {row.reviewer.name}</dd></div>
++            ) : null}
++            {row.entryId ? (
++              <div className="row"><dt>Entry</dt><dd>{path ? <Link className="mono" to={path}>{row.entryId} →</Link> : <span className="mono">{row.entryId}</span>}</dd></div>
++            ) : null}
++            {row.submittedAt ? <div className="row"><dt>Submitted</dt><dd>{fmtTime(row.submittedAt)}</dd></div> : null}
++            {row.reviewedAt ? <div className="row"><dt>Reviewed</dt><dd>{fmtTime(row.reviewedAt)}</dd></div> : null}
++            {row.at && !row.submittedAt ? <div className="row"><dt>When</dt><dd>{fmtTime(row.at)}</dd></div> : null}
++            {row.commitSha ? (
++              <div className="row"><dt>Archive commit</dt><dd className="mono">{commit ? <a href={commit} target="_blank" rel="noreferrer noopener">{String(row.commitSha).slice(0, 7)}</a> : String(row.commitSha).slice(0, 7)}</dd></div>
++            ) : null}
++            {row.note ? <div className="row"><dt>Note</dt><dd>{row.note}</dd></div> : null}
++            {row.reviewReason ? <div className="row"><dt>Reviewer note</dt><dd>{row.reviewReason}</dd></div> : null}
++          </dl>
++
++          {diff ? (
++            <>
++              <h4 className="section-heading">Changes made</h4>
++              <ChangesTable changes={diff} />
++            </>
++          ) : row.kind === 'submission' ? (
++            <p className="muted small">The submitted answers are visible to the contributor and to staff only.</p>
++          ) : null}
++
++          {payload && Object.keys(payload).length ? (
++            <details className="contribution-modal__payload">
++              <summary>View submitted answers (JSON)</summary>
++              <pre className="submission-result__json" tabIndex={0}>{JSON.stringify(payload, null, 2)}</pre>
++            </details>
++          ) : null}
++
++          {children}
++        </div>
++        <div className="modal__foot">
++          <button type="button" className="btn btn--primary" onClick={onClose}>Close</button>
++        </div>
++      </div>
++    </div>
++  );
++}
++
++/** Normalisers: turn a public-log / own-contribution / edit row into the view model above. */
++export const submissionView = (sub) => ({
++  kind: 'submission',
++  number: sub.number,
++  title: sub.title,
++  type: sub.type,
++  status: sub.status,
++  entryId: sub.entry_id,
++  contributor: sub.contributor_name || sub.profiles?.display_name
++    ? { name: sub.contributor_name ?? sub.profiles?.display_name, avatar: sub.contributor_avatar ?? sub.profiles?.avatar_url }
++    : null,
++  reviewer: sub.reviewer_name || sub.reviewer_profile?.display_name
++    ? { name: sub.reviewer_name ?? sub.reviewer_profile?.display_name, avatar: sub.reviewer_avatar ?? sub.reviewer_profile?.avatar_url }
++    : null,
++  submittedAt: sub.submitted_at ?? sub.created_at,
++  reviewedAt: sub.reviewed_at,
++  reviewReason: sub.review_reason,
++  commitSha: sub.commit_sha,
++  payload: sub.payload,
++  payloadEdited: sub.payload_edited,
++  proposedPatch: sub.proposed_patch,
++});
++
++export const editView = (edit) => ({
++  kind: 'edit',
++  title: `${edit.entity_type} ${edit.entity_id}`,
++  action: edit.action,
++  entryId: edit.entity_id,
++  contributor: edit.editor_name ? { name: edit.editor_name, avatar: edit.editor_avatar } : null,
++  at: edit.created_at,
++  commitSha: edit.commit_sha,
++});
+diff --git a/src/components/EntryEditDialog.jsx b/src/components/EntryEditDialog.jsx
+index f8ea4ac..7a22ba0 100644
+--- a/src/components/EntryEditDialog.jsx
++++ b/src/components/EntryEditDialog.jsx
+@@ -167,14 +167,16 @@ export default function EntryEditDialog({ entry, onClose }) {
+               <ChangesTable changes={changes} />
+ 
+               <div className="field" style={{ marginTop: '1rem' }}>
+-                <label>What did you change and why? <span className="field__opt">(optional, helps the checker)</span></label>
+-                <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. corrected the broadcast date per the official episode list" />
++                <label htmlFor="entry-edit-note">What did you change and why? <span className="field__req" aria-hidden="true"> *</span></label>
++                <textarea id="entry-edit-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. corrected the broadcast date per the official episode list" required />
++                <p className="field__help">A short source or reason helps the checker accept your edit in one click.</p>
+               </div>
+ 
+               {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
+             </div>
+             <div className="modal__foot">
+-              <button type="button" className="btn btn--primary" disabled={busy || changes.length === 0} onClick={submit}>
++              <button type="button" className="btn btn--primary" disabled={busy || changes.length === 0 || !note.trim()}
++                title={!note.trim() ? 'Describe what you changed and why first' : undefined} onClick={submit}>
+                 {busy ? 'Sending…' : 'Send for review'}
+               </button>
+               <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>
+diff --git a/src/components/EntrySections.jsx b/src/components/EntrySections.jsx
+index 12e109e..1b57322 100755
+--- a/src/components/EntrySections.jsx
++++ b/src/components/EntrySections.jsx
+@@ -31,22 +31,25 @@ export function GadgetsSection({ ids = [] }) {
+   );
+ }
+ 
+-export function VoiceActorsSection({ voiceActors = [] }) {
++export function VoiceActorsSection({ voiceActors }) {
++  const rows = Array.isArray(voiceActors) ? voiceActors : [];
+   return (
+     <MetadataSection id="voice-actors" title="Voice actors">
+-      {voiceActors.length ? (
++      {rows.length ? (
+         <div className="table-wrap">
++          {/* Episodes and movies do not carry a `version` on voice actors —
++              each entry IS a version — so the table is character, actor,
++              language, with the character linking to its page. */}
+           <table className="data-table">
+-            <thead><tr><th scope="col">Character</th><th scope="col">Voice actor</th><th scope="col">Language</th><th scope="col">Version</th></tr></thead>
++            <thead><tr><th scope="col">Character</th><th scope="col">Voice actor</th><th scope="col">Language</th></tr></thead>
+             <tbody>
+-              {voiceActors.map((v, i) => {
++              {rows.map((v, i) => {
+                 const c = getCharacter(v.characterId);
+                 return (
+-                  <tr key={`${v.characterId}-${v.name?.en}-${i}`}>
+-                    <td>{c ? <Link to={`/characters/${c.id}`}>{c.name.en}</Link> : v.characterId}</td>
++                  <tr key={`${v.characterId ?? 'unknown'}-${v.name?.en}-${i}`}>
++                    <td>{c ? <Link to={`/characters/${c.id}`}>{c.name.en}</Link> : (v.characterId ?? '—')}</td>
+                     <td>{v.name?.en}{v.name?.ja ? <span className="muted" lang="ja"> {v.name.ja}</span> : null}</td>
+                     <td>{languageName(v.language)}</td>
+-                    <td>{v.version ?? '—'}</td>
+                   </tr>
+                 );
+               })}
+@@ -80,13 +83,13 @@ export function PrevNext({ previous, next, label }) {
+   return (
+     <nav className="prev-next" aria-label={`Previous and next ${label}`}>
+       {previous ? (
+-        <Link to={previous.url} className="prev-next__link prev-next__link--prev" rel="prev">
++        <Link to={previous.url} state={{ preserveScroll: true }} className="prev-next__link prev-next__link--prev" rel="prev">
+           <span className="prev-next__dir">Previous {label}</span>
+           <span className="prev-next__title">{label === 'movie' ? 'No.' : '#'}{previous.number} {displayTitle(previous)}</span>
+         </Link>
+       ) : <span />}
+       {next ? (
+-        <Link to={next.url} className="prev-next__link prev-next__link--next" rel="next">
++        <Link to={next.url} state={{ preserveScroll: true }} className="prev-next__link prev-next__link--next" rel="next">
+           <span className="prev-next__dir">Next {label}</span>
+           <span className="prev-next__title">{label === 'movie' ? 'No.' : '#'}{next.number} {displayTitle(next)}</span>
+         </Link>
+diff --git a/src/components/FilterPanel.jsx b/src/components/FilterPanel.jsx
+index 0960af4..247448d 100755
+--- a/src/components/FilterPanel.jsx
++++ b/src/components/FilterPanel.jsx
+@@ -24,7 +24,9 @@ export default function FilterPanel({ fields, values, onChange, onReset, title =
+         {activeCount ? <span className="filter-panel__count">{activeCount}</span> : null}
+         <Icon name="chevronDown" size={18} className="filter-panel__chev" />
+       </button>
+-      <div className="filter-panel__body" id={`${baseId}-body`}>
++      <div className="filter-panel__body" id={`${baseId}-body`} aria-hidden={!open}>
++        <div className="filter-panel__inner">
++        <div className="filter-panel__divider" aria-hidden="true" />
+         <div className="filter-panel__grid">
+           {fields.map((f) => {
+             if (f.type === 'range') {
+@@ -61,6 +63,7 @@ export default function FilterPanel({ fields, values, onChange, onReset, title =
+         <div className="filter-panel__foot">
+           <button type="button" className="btn btn--ghost btn--sm" onClick={onReset} disabled={!activeCount}>Clear filters</button>
+         </div>
++        </div>
+       </div>
+     </div>
+   );
+diff --git a/src/components/Icon.jsx b/src/components/Icon.jsx
+index 8b5104a..0ad0435 100755
+--- a/src/components/Icon.jsx
++++ b/src/components/Icon.jsx
+@@ -25,6 +25,9 @@ const PATHS = {
+   trash: <><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /></>,
+   edit: <><path d="M4 20h4.5L20 8.5a2.1 2.1 0 0 0-3-3L5.5 17 4 20Z" /><path d="m13.5 7.5 3 3" /></>,
+   palette: <><path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-.8 2-1.8 0-.9-.7-1.4-.7-2.2 0-1 .8-1.8 2-1.8H17a4.5 4.5 0 0 0 4.5-4.5C21.5 6 17.2 3 12 3Z" /><circle cx="7.5" cy="11" r="1" /><circle cx="11" cy="7.5" r="1" /><circle cx="15.5" cy="8" r="1" /></>,
++  stats: <><path d="M5 20V10M12 20V4M19 20v-7" /></>,
++  shield: <><path d="M12 3 5 5.8v5.4c0 4.3 2.9 8.3 7 9.8 4.1-1.5 7-5.5 7-9.8V5.8L12 3Z" /></>,
++  logout: <><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5M4 12h11m-4-4 4 4-4 4" /></>,
+ };
+ 
+ export default function Icon({ name, size = 20, className = '', title }) {
+diff --git a/src/components/PageContributions.jsx b/src/components/PageContributions.jsx
+new file mode 100644
+index 0000000..8088859
+--- /dev/null
++++ b/src/components/PageContributions.jsx
+@@ -0,0 +1,148 @@
++// A small activity box on every archive detail page (episode, movie,
++// character, gadget) listing the contributions and staff edits made to THIS
++// page's record. Clicking it opens a fullscreen list of just this page's
++// history. Public data only (the same views the contribution log uses), so
++// it renders nothing when the backend is not configured.
++
++import { useEffect, useState } from 'react';
++import { Link } from 'react-router-dom';
++import Icon from './Icon.jsx';
++import Avatar from './Avatar.jsx';
++import ContributionModal, { submissionView, editView } from './ContributionModal.jsx';
++import { SUBMISSION_EVENT, EDIT_EVENT, fmtTime } from '@/lib/activity.js';
++import { useAuth } from '@/hooks/useAuth.jsx';
++import { supabase } from '@/lib/backend.js';
++
++const PAGE_LIMIT = 60;
++
++async function fetchPageActivity(entryId) {
++  const [subs, edits] = await Promise.all([
++    supabase.from('public_log')
++      .select('number, title, type, entry_id, status, submitted_at, reviewed_at, contributor_name, contributor_avatar, reviewer_name, reviewer_avatar')
++      .eq('entry_id', entryId)
++      .order('submitted_at', { ascending: false })
++      .limit(PAGE_LIMIT),
++    supabase.from('public_edits')
++      .select('id, action, entity_type, entity_id, commit_sha, created_at, editor_name, editor_avatar')
++      .eq('entity_id', entryId)
++      .order('created_at', { ascending: false })
++      .limit(PAGE_LIMIT),
++  ]);
++  if (subs.error) throw new Error(subs.error.message);
++  if (edits.error) throw new Error(edits.error.message);
++  return [
++    ...(subs.data ?? []).map((row) => ({ key: `c-${row.number}`, at: row.reviewed_at ?? row.submitted_at, row: submissionView(row) })),
++    ...(edits.data ?? []).map((row) => ({ key: `e-${row.id}`, at: row.created_at, row: editView(row) })),
++  ].sort((a, b) => String(b.at ?? '').localeCompare(String(a.at ?? '')));
++}
++
++function ActivityLine({ event, onClick }) {
++  const view = event.row;
++  const meta = view.kind === 'edit'
++    ? (EDIT_EVENT[view.action?.replace(/\./g, '_')] ?? { label: 'edited the archive', icon: 'edit', tone: 'review' })
++    : (SUBMISSION_EVENT[view.status] ?? SUBMISSION_EVENT.pending);
++  return (
++    <button type="button" className={`page-contributions__row page-contributions__row--${meta.tone}`} onClick={onClick}>
++      <Icon name={meta.icon} size={14} />
++      <span className="page-contributions__who">
++        {view.contributor?.name ?? view.reviewer?.name ?? 'Someone'}{' '}
++        <span className="page-contributions__verb">{meta.label}</span>
++        {view.number ? <span className="mono"> #{view.number}</span> : null}
++      </span>
++      <span className="page-contributions__when">{fmtTime(event.at)}</span>
++    </button>
++  );
++}
++
++export default function PageContributions({ entryId }) {
++  const { backendConfigured } = useAuth();
++  const [events, setEvents] = useState(null);
++  const [failed, setFailed] = useState(false);
++  const [open, setOpen] = useState(false);
++
++  useEffect(() => {
++    if (!backendConfigured || !entryId) return undefined;
++    let active = true;
++    fetchPageActivity(entryId)
++      .then((rows) => active && setEvents(rows))
++      .catch(() => active && setFailed(true));
++    return () => { active = false; };
++  }, [backendConfigured, entryId]);
++
++  if (!backendConfigured || failed || (events !== null && events.length === 0)) return null;
++
++  if (events === null) {
++    return (
++      <div className="page-contributions" aria-busy="true">
++        <p className="page-contributions__head muted small"><Icon name="clock" size={14} /> Loading page activity…</p>
++      </div>
++    );
++  }
++
++  return (
++    <>
++      <div className="page-contributions">
++        <button type="button" className="page-contributions__toggle" onClick={() => setOpen(true)}
++          aria-haspopup="dialog" aria-expanded={open}>
++          <Icon name="clock" size={15} />
++          <span><strong>{events.length}</strong> {events.length === 1 ? 'contribution' : 'contributions'} on this page</span>
++          <span className="page-contributions__latest">
++            Latest: {events[0].row.contributor?.name ?? events[0].row.reviewer?.name ?? 'community'}
++          </span>
++          <Icon name="arrowRight" size={14} />
++        </button>
++        <div className="page-contributions__list">
++          {events.slice(0, 3).map((event) => (
++            <ActivityLine key={event.key} event={event} onClick={() => setOpen(true)} />
++          ))}
++        </div>
++      </div>
++
++      {open ? (
++        <ContributionModal
++          row={{ kind: 'page', title: `History of ${entryId}`, entryId }}
++          onClose={() => setOpen(false)}
++        >
++          <p className="muted small" style={{ marginTop: 0 }}>
++            Every contribution and staff edit recorded for <span className="mono">{entryId}</span>, newest first.
++            Open an item to see who did what and when.
++          </p>
++          <ol className="activity-list">
++            {events.map((event) => (
++              <li key={event.key} className="activity-item">
++                <Avatar
++                  name={event.row.contributor?.name ?? event.row.reviewer?.name}
++                  url={event.row.contributor?.avatar ?? event.row.reviewer?.avatar}
++                  size={34}
++                />
++                <div className="activity-item__body">
++                  <p className="activity-item__line">
++                    <strong>{event.row.contributor?.name ?? event.row.reviewer?.name ?? 'A community member'}</strong>
++                    <PageEventChip view={event.row} />
++                    {event.row.number ? <span className="activity-item__title">#{event.row.number} · {event.row.title}</span> : null}
++                  </p>
++                  <p className="activity-item__meta">{fmtTime(event.at)}</p>
++                </div>
++              </li>
++            ))}
++          </ol>
++          <p className="muted small">
++            Want to add to this page? Use <strong>Edit this entry</strong> above, or the{' '}
++            <Link to="/contribute">contribution forms</Link>.
++          </p>
++        </ContributionModal>
++      ) : null}
++    </>
++  );
++}
++
++function PageEventChip({ view }) {
++  const meta = view.kind === 'edit'
++    ? (EDIT_EVENT[view.action?.replace(/\./g, '_')] ?? { label: 'edited the archive', icon: 'edit', tone: 'review' })
++    : (SUBMISSION_EVENT[view.status] ?? SUBMISSION_EVENT.pending);
++  return (
++    <span className={`activity-chip activity-chip--${meta.tone}`}>
++      <Icon name={meta.icon} size={12} /> {meta.label}
++    </span>
++  );
++}
+diff --git a/src/components/RecordEditor.jsx b/src/components/RecordEditor.jsx
+index a050a1e..5810338 100644
+--- a/src/components/RecordEditor.jsx
++++ b/src/components/RecordEditor.jsx
+@@ -83,15 +83,32 @@ export function IdListField({ label, ids = [], onChange, kind }) {
+   );
+ }
+ 
+-/** Voice actors: repeatable { name: { en, ja }, language, version } rows. */
+-export function VoiceActorRows({ value = [], onChange }) {
+-  const update = (i, patch) => onChange(value.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+-  const remove = (i) => onChange(value.filter((_, j) => j !== i));
+-  const add = () => onChange([...value, { name: { en: '', ja: null }, language: null, version: null }]);
++/**
++ * Voice actors: repeatable rows.
++ *  - On characters: { name, language, version } — a character is voiced by
++ *    different people across the 1979/2005 series, so rows carry a version.
++ *  - On episodes and movies (withCharacter): { name, characterId, language }
++ *    — the row is about WHO voiced WHICH character in THIS entry, so it
++ *    carries a character instead of a version (each entry is itself a
++ *    version). Rows keep no `version` key: legacy values are stripped the
++ *    moment the list is edited so committed JSON matches the schema.
++ */
++export function VoiceActorRows({ value = [], onChange, withCharacter = false }) {
++  const clean = (rows) => rows.map((r) => {
++    if (!withCharacter) return r;
++    const { version, ...rest } = r;
++    return rest;
++  });
++  const update = (i, patch) => onChange(clean(value.map((r, j) => (j === i ? { ...r, ...patch } : r))));
++  const remove = (i) => onChange(clean(value.filter((_, j) => j !== i)));
++  const add = () => onChange(clean([...value, withCharacter
++    ? { name: { en: '', ja: null }, characterId: null, language: null }
++    : { name: { en: '', ja: null }, language: null, version: null }]));
+   const langs = languageOptions();
++  const charOptions = getCharacters().map((c) => ({ value: c.id, label: c.name?.en ?? c.id }));
+   return (
+     <div className="field span-2">
+-      <label>Voice actors <span className="field__opt">(who voiced this character / who appears in this entry)</span></label>
++      <label>Voice actors <span className="field__opt">{withCharacter ? '(who voiced which character in this entry)' : '(who voiced this character)'}</span></label>
+       {value.map((v, i) => (
+         <div key={i} className="repeat-row">
+           <input type="text" placeholder="Name (English)" value={v.name?.en ?? ''} onChange={(e) => update(i, { name: { ...v.name, en: e.target.value || null } })} aria-label={`Voice actor ${i + 1} English name`} />
+@@ -103,10 +120,17 @@ export function VoiceActorRows({ value = [], onChange }) {
+             </select>
+             <Icon name="chevronDown" size={16} className="select-wrap__chev" />
+           </div>
+-          <input type="text" placeholder="Version (e.g. 1979 anime)" value={v.version ?? ''} onChange={(e) => update(i, { version: e.target.value || null })} aria-label={`Voice actor ${i + 1} version`} />
++          {withCharacter ? (
++            <input type="text" list="va-character-ids" placeholder="Character (e.g. char-nobita)" value={v.characterId ?? ''}
++              onChange={(e) => update(i, { characterId: e.target.value || null })}
++              aria-label={`Voice actor ${i + 1} character`} />
++          ) : (
++            <input type="text" placeholder="Version (e.g. 1979 anime)" value={v.version ?? ''} onChange={(e) => update(i, { version: e.target.value || null })} aria-label={`Voice actor ${i + 1} version`} />
++          )}
+           <button type="button" className="btn btn--ghost btn--danger" onClick={() => remove(i)} aria-label={`Remove voice actor ${i + 1}`}><Icon name="trash" size={15} /></button>
+         </div>
+       ))}
++      <datalist id="va-character-ids">{charOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</datalist>
+       <div className="btn-row"><button type="button" className="btn btn--ghost btn--sm" onClick={add}><Icon name="plus" size={15} /> Add a voice actor</button></div>
+     </div>
+   );
+@@ -234,7 +258,7 @@ export default function RecordEditor({ entityType, draft, setField }) {
+         <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
+         <IdListField label="Characters in this entry" ids={draft.characters ?? []} onChange={(list) => setField('characters', list)} kind="character" />
+         <IdListField label="Gadgets in this entry" ids={draft.gadgets ?? []} onChange={(list) => setField('gadgets', list)} kind="gadget" />
+-        <VoiceActorRows value={draft.voiceActors ?? []} onChange={(list) => setField('voiceActors', list)} />
++        <VoiceActorRows value={draft.voiceActors ?? []} onChange={(list) => setField('voiceActors', list)} withCharacter />
+         <ScreenshotRows value={draft.screenshots ?? []} onChange={(list) => setField('screenshots', list)} />
+         <SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} />
+       </div>
+diff --git a/src/lib/activity.js b/src/lib/activity.js
+new file mode 100644
+index 0000000..77c449f
+--- /dev/null
++++ b/src/lib/activity.js
+@@ -0,0 +1,44 @@
++// Shared vocabulary for contribution activity lists: the public log, the
++// homepage feed and the per-page contribution boxes all label, time and link
++// events the same way, so the maps and formatters live here once.
++
++export const SUBMISSION_EVENT = {
++  pending: { label: 'submitted', icon: 'plus', tone: 'pending' },
++  accepted: { label: 'approved', icon: 'check', tone: 'ok' },
++  declined: { label: 'declined', icon: 'close', tone: 'bad' },
++  deleted: { label: 'removed', icon: 'trash', tone: 'muted' },
++};
++
++export const EDIT_EVENT = {
++  archive_direct_edit: { label: 'edited the archive', icon: 'edit', tone: 'review' },
++  archive_entry_deleted: { label: 'deleted an archive entry', icon: 'trash', tone: 'bad' },
++  archive_sync_recovered: { label: 'recovered a failed archive sync', icon: 'check', tone: 'ok' },
++};
++
++export const fmtTime = (iso) => (iso
++  ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
++  : '—');
++
++/** Detail-page route for an entry / character / gadget id, or null. */
++export const entryPath = (entryId) => {
++  if (!entryId) return null;
++  if (entryId.startsWith('movie-')) return `/movies/${entryId}`;
++  if (entryId.startsWith('anime-1973-')) return `/historical/1973/${entryId}`;
++  if (entryId.startsWith('anime-1979-')) return `/anime/1979/${entryId}`;
++  if (entryId.startsWith('anime-2005-')) return `/anime/2005/${entryId}`;
++  if (entryId.startsWith('char-')) return `/characters/${entryId}`;
++  if (entryId.startsWith('gadget-')) return `/gadgets/${entryId}`;
++  return null;
++};
++
++/** Human label for a contribution type id. */
++export const contributionTypeLabel = (type) => ({
++  'archive-edit': 'Direct record edit',
++  'missing-entry': 'Missing episode or movie',
++  'metadata-correction': 'Metadata correction',
++  'character': 'Character information',
++  'gadget': 'Gadget information',
++  'images': 'Images and screenshots',
++  'source': 'Viewing source',
++  'broken-source': 'Broken source report',
++}[type] ?? type);
+diff --git a/src/lib/catalog.js b/src/lib/catalog.js
+index 797f7eb..a28cab4 100755
+--- a/src/lib/catalog.js
++++ b/src/lib/catalog.js
+@@ -152,6 +152,10 @@ const state = {
+ let loadPromise = null;
+ let reloadPromise = null;
+ 
++/** Public URL for a commit in the archive repository (for log links). */
++export const commitUrl = (sha) => (sha
++  ? `https://github.com/${ARCHIVE_REPO}/commit/${String(sha).slice(0, 40)}` : null);
++
+ /**
+  * Merges a record file over its roster entry. The record wins on every field
+  * it defines; the roster only supplies identity (id, number, path) and the
+@@ -170,6 +174,7 @@ function mergeEntry(rosterEntry, record, seriesId, meta) {
+   const entry = { ...base, ...(record ?? {}) };
+   entry.characters = Array.isArray(entry.characters) ? entry.characters : [];
+   entry.gadgets = Array.isArray(entry.gadgets) ? entry.gadgets : [];
++  entry.voiceActors = Array.isArray(entry.voiceActors) ? entry.voiceActors : [];
+   entry.languages = Array.isArray(entry.languages) ? entry.languages : [];
+   entry.alternateTitles = Array.isArray(entry.alternateTitles) ? entry.alternateTitles : [];
+   entry.image = entry.image && typeof entry.image === 'object'
+diff --git a/src/lib/stats.js b/src/lib/stats.js
+index ded4989..3e1b4f6 100644
+--- a/src/lib/stats.js
++++ b/src/lib/stats.js
+@@ -41,16 +41,30 @@ export async function fetchPublicEdits({ limit = 60 } = {}) {
+   return data ?? [];
+ }
+ 
+-/** The signed-in user's own submissions with statuses. */
++/** The signed-in user's own submissions with statuses, review details and
++    their payloads (RLS only returns these for the author), plus the name of
++    whoever reviewed each one. */
+ export async function fetchMyContributions() {
+   if (!backendConfigured || !supabase) return null;
+   const { data, error } = await supabase
+     .from('contributions')
+-    .select('id, number, type, title, entry_id, status, reviewer_id, reviewed_at, review_reason, created_at, commit_sha')
++    .select('id, number, type, title, entry_id, status, reviewer_id, reviewed_at, review_reason, created_at, commit_sha, payload, payload_edited')
+     .order('created_at', { ascending: false })
+     .limit(100);
+   if (error) throw new Error(error.message);
+-  return data ?? [];
++  const rows = data ?? [];
++  const ids = [...new Set(rows.map((r) => r.reviewer_id).filter(Boolean))];
++  if (!ids.length) return rows;
++  const { data: people, error: peopleError } = await supabase
++    .from('profiles')
++    .select('id, display_name, avatar_url')
++    .in('id', ids);
++  if (peopleError) throw new Error(peopleError.message);
++  const byId = new Map((people ?? []).map((p) => [p.id, p]));
++  return rows.map((r) => ({
++    ...r,
++    reviewer_profile: byId.get(r.reviewer_id) ?? null,
++  }));
+ }
+ 
+ /** Staff: all submissions with contributor info, filtered and paged. */
+@@ -78,7 +92,11 @@ export async function fetchSubmissions({ status = 'all', type = 'all', search =
+     .in('id', ids);
+   if (peopleError) throw new Error(peopleError.message);
+   const byId = new Map((people ?? []).map((p) => [p.id, p]));
+-  return rows.map((r) => ({ ...r, profiles: byId.get(r.contributor_id) ?? null }));
++  return rows.map((r) => ({
++    ...r,
++    profiles: byId.get(r.contributor_id) ?? null,
++    reviewer_profile: byId.get(r.reviewer_id) ?? null,
++  }));
+ }
+ 
+ /** Staff: audit events, newest first. */
+diff --git a/src/pages/Account.jsx b/src/pages/Account.jsx
+index b39c084..5ae95cd 100644
+--- a/src/pages/Account.jsx
++++ b/src/pages/Account.jsx
+@@ -9,6 +9,7 @@ import LoadingState from '@/components/LoadingState.jsx';
+ import EmptyState from '@/components/EmptyState.jsx';
+ import Avatar from '@/components/Avatar.jsx';
+ import Icon from '@/components/Icon.jsx';
++import ContributionModal, { submissionView } from '@/components/ContributionModal.jsx';
+ import { useAuth } from '@/hooks/useAuth.jsx';
+ import { fetchMyContributions, tallyStatuses, STATUS_LABELS } from '@/lib/stats.js';
+ import { reviewContribution } from '@/lib/staffApi.js';
+@@ -56,10 +57,12 @@ function HistoryRow({ row, onChanged }) {
+     finally { setBusy(false); }
+   };
+ 
++  const view = submissionView({ ...row, submitted_at: row.created_at });
++
+   return (
+     <>
+-      <li className="log-item" style={{ cursor: 'pointer' }} onClick={() => setOpen((o) => !o)} role="button" tabIndex={0}
+-          onKeyDown={(e) => e.key === 'Enter' && setOpen((o) => !o)}>
++      <li className="log-item log-item--clickable" onClick={() => setOpen(true)} role="button" tabIndex={0}
++          onKeyDown={(e) => e.key === 'Enter' && setOpen(true)}>
+         <span className="log-item__num">#{row.number}</span>
+         <span className="log-item__title">{row.title}</span>
+         <span className={`chip chip--${row.status}`}>{STATUS_LABELS[row.status]}</span>
+@@ -68,42 +71,35 @@ function HistoryRow({ row, onChanged }) {
+         {row.commit_sha ? <span className="log-item__meta mono">{String(row.commit_sha).slice(0, 7)}</span> : null}
+       </li>
+       {open ? (
+-        <li className="submission" style={{ marginTop: '-0.4rem' }}>
+-          <dl className="submission__fields">
+-            <div className="row"><dt>Type</dt><dd>{row.type}</dd></div>
+-            <div className="row"><dt>Entry</dt><dd>{row.entry_id ?? '—'}</dd></div>
+-            <div className="row"><dt>Submitted</dt><dd>{fmtTime(row.created_at)}</dd></div>
+-            <div className="row"><dt>Status</dt><dd>{STATUS_LABELS[row.status]}</dd></div>
+-            {row.reviewed_at ? <div className="row"><dt>Reviewed</dt><dd>{fmtTime(row.reviewed_at)}</dd></div> : null}
+-            {row.review_reason ? <div className="row"><dt>Reviewer note</dt><dd>{row.review_reason}</dd></div> : null}
+-            {row.commit_sha ? (
+-              <div className="row"><dt>Archive commit</dt><dd className="mono">{String(row.commit_sha).slice(0, 7)}</dd></div>
++        <ContributionModal
++          row={{ ...view, contributor: { name: 'You' } }}
++          onClose={() => { setOpen(false); setEditing(false); setMessage(null); setError(null); }}
++        >
++          <div className="contribution-modal__actions">
++            {pending && !editing ? (
++              <div className="btn-row">
++                <button type="button" className="btn btn--ghost" onClick={startEdit}>
++                  <Icon name="edit" size={15} /> Edit this submission
++                </button>
++                <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={withdraw}>
++                  <Icon name="trash" size={15} /> Withdraw
++                </button>
++              </div>
+             ) : null}
+-          </dl>
+-
+-          {pending && !editing ? (
+-            <div className="btn-row">
+-              <button type="button" className="btn btn--ghost" onClick={startEdit}>
+-                <Icon name="edit" size={15} /> Edit this submission
+-              </button>
+-              <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={withdraw}>
+-                <Icon name="trash" size={15} /> Withdraw
+-              </button>
+-            </div>
+-          ) : null}
+-          {editing ? (
+-            <div className="field">
+-              <label>Submission answers <span className="field__opt">(JSON — same shape you submitted)</span></label>
+-              <textarea rows={10} className="mono" value={json} spellCheck={false} onChange={(e) => setJson(e.target.value)} />
+-              <div className="btn-row" style={{ marginTop: '0.5rem' }}>
+-                <button type="button" className="btn btn--primary" disabled={busy} onClick={saveEdit}>Save changes</button>
+-                <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing(false)}>Cancel</button>
++            {editing ? (
++              <div className="field">
++                <label>Submission answers <span className="field__opt">(JSON — same shape you submitted)</span></label>
++                <textarea rows={10} className="mono" value={json} spellCheck={false} onChange={(e) => setJson(e.target.value)} />
++                <div className="btn-row" style={{ marginTop: '0.5rem' }}>
++                  <button type="button" className="btn btn--primary" disabled={busy} onClick={saveEdit}>Save changes</button>
++                  <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing(false)}>Cancel</button>
++                </div>
+               </div>
+-            </div>
+-          ) : null}
+-          {message ? <p className="notice" role="status">{message}</p> : null}
+-          {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
+-        </li>
++            ) : null}
++            {message ? <p className="notice" role="status">{message}</p> : null}
++            {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
++          </div>
++        </ContributionModal>
+       ) : null}
+     </>
+   );
+@@ -164,6 +160,9 @@ export default function Account() {
+       <div className="page-opening">
+         <p className="eyebrow">Account</p>
+         <h1>My contributions</h1>
++        <p className="page-opening__cta">
++          <Link to="/contribute" className="btn btn--primary btn--sm"><Icon name="plus" size={15} /> Contribute</Link>
++        </p>
+         <p className="page-opening__lead page-opening__lead--identity">
+           <Avatar name={profile?.display_name} url={profile?.avatar_url} size={40} />
+           <span>
+diff --git a/src/pages/CharacterDetails.jsx b/src/pages/CharacterDetails.jsx
+index b134e20..d373dc0 100755
+--- a/src/pages/CharacterDetails.jsx
++++ b/src/pages/CharacterDetails.jsx
+@@ -3,6 +3,7 @@ import PageContainer from '@/components/PageContainer.jsx';
+ import MediaImage from '@/components/MediaImage.jsx';
+ import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+ import EntryActions from '@/components/EntryActions.jsx';
++import PageContributions from '@/components/PageContributions.jsx';
+ import AppearanceLists from '@/components/AppearanceLists.jsx';
+ import GadgetCard from '@/components/GadgetCard.jsx';
+ import NotFound from './NotFound.jsx';
+@@ -41,6 +42,7 @@ export default function CharacterDetails() {
+       </section>
+ 
+       <EntryActions entry={character} />
++      <PageContributions entryId={character.id} />
+ 
+       <MetadataSection id="voice-actors" title="Voice actors">
+         {character.voiceActors?.length ? (
+diff --git a/src/pages/ContributionLog.jsx b/src/pages/ContributionLog.jsx
+index 5e60838..ca0fc3e 100644
+--- a/src/pages/ContributionLog.jsx
++++ b/src/pages/ContributionLog.jsx
+@@ -1,7 +1,8 @@
+ // The public contribution log: real activity from the backend, merged from
+ // two public views — submissions (with their outcome) and direct archive
+ // edits/deletions. Shows who did what, when, with avatars; review reasons
+-// and payloads stay private to the people involved.
++// and payloads stay private to the people involved. Every row is pressable
++// and opens a large detail view of that event.
+ 
+ import { useEffect, useMemo, useState } from 'react';
+ import { Link } from 'react-router-dom';
+@@ -10,44 +11,19 @@ import LoadingState from '@/components/LoadingState.jsx';
+ import EmptyState from '@/components/EmptyState.jsx';
+ import Icon from '@/components/Icon.jsx';
+ import Avatar from '@/components/Avatar.jsx';
++import ContributionModal, { submissionView, editView } from '@/components/ContributionModal.jsx';
+ import { useAuth } from '@/hooks/useAuth.jsx';
+ import { fetchPublicLog, fetchPublicEdits } from '@/lib/stats.js';
++import { SUBMISSION_EVENT, EDIT_EVENT, fmtTime } from '@/lib/activity.js';
+ import useDocumentTitle from '@/hooks/useDocumentTitle.js';
+ 
+-const entryPath = (entryId) => {
+-  if (!entryId) return null;
+-  if (entryId.startsWith('movie-')) return `/movies/${entryId}`;
+-  if (entryId.startsWith('anime-1973-')) return `/historical/1973/${entryId}`;
+-  if (entryId.startsWith('anime-1979-')) return `/anime/1979/${entryId}`;
+-  if (entryId.startsWith('anime-2005-')) return `/anime/2005/${entryId}`;
+-  if (entryId.startsWith('char-')) return `/characters/${entryId}`;
+-  if (entryId.startsWith('gadget-')) return `/gadgets/${entryId}`;
+-  return null;
+-};
+-
+-const SUBMISSION_EVENT = {
+-  pending: { label: 'submitted', icon: 'plus', tone: 'pending' },
+-  accepted: { label: 'approved', icon: 'check', tone: 'ok' },
+-  declined: { label: 'declined', icon: 'close', tone: 'bad' },
+-  deleted: { label: 'removed', icon: 'trash', tone: 'muted' },
+-};
+-
+-const EDIT_EVENT = {
+-  archive_direct_edit: { label: 'edited the archive', icon: 'edit', tone: 'review' },
+-  archive_entry_deleted: { label: 'deleted an archive entry', icon: 'trash', tone: 'bad' },
+-  archive_sync_recovered: { label: 'recovered a failed archive sync', icon: 'check', tone: 'ok' },
+-};
+-
+-const fmtTime = (iso) => (iso
+-  ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+-  : '—');
+-
+ export default function ContributionLog() {
+   useDocumentTitle('Contribution log');
+   const { backendConfigured } = useAuth();
+   const [rows, setRows] = useState(null);
+   const [error, setError] = useState(null);
+   const [filter, setFilter] = useState('all');
++  const [selected, setSelected] = useState(null);
+ 
+   useEffect(() => {
+     let active = true;
+@@ -89,8 +65,9 @@ export default function ContributionLog() {
+         <h1>Contribution log</h1>
+         <p className="page-opening__lead">
+           Everything the community does to the archive, newest first: new submissions, review
+-          decisions, and direct edits by the staff. Review notes and submission details stay
+-          private to the people involved.
++          decisions, and direct edits by the staff. Select any entry to see who contributed, who
++          accepted it, and when it happened. Review notes and submission details stay private to
++          the people involved.
+         </p>
+       </div>
+ 
+@@ -123,54 +100,58 @@ export default function ContributionLog() {
+               if (row.kind === 'edit') {
+                 const meta = EDIT_EVENT[row.edit.action?.replace(/\./g, '_')] ?? { label: row.edit.action, icon: 'edit', tone: 'review' };
+                 return (
+-                  <li key={row.key} className={`activity-item activity-item--${meta.tone}`}>
+-                    <Avatar name={row.edit.editor_name} url={row.edit.editor_avatar} size={34} />
++                  <li key={row.key}>
++                    <button type="button" className={`activity-item activity-item--${meta.tone} activity-item--clickable`}
++                      onClick={() => setSelected(editView(row.edit))}>
++                      <Avatar name={row.edit.editor_name} url={row.edit.editor_avatar} size={34} />
++                      <div className="activity-item__body">
++                        <p className="activity-item__line">
++                          <strong>{row.edit.editor_name ?? 'A staff member'}</strong>
++                          <span className={`activity-chip activity-chip--${meta.tone}`}>
++                            <Icon name={meta.icon} size={12} /> {meta.label}
++                          </span>
++                        </p>
++                        <p className="activity-item__meta">
++                          <span className="mono">{row.edit.entity_type} {row.edit.entity_id}</span>
++                          {' · '}{fmtTime(row.at)}
++                          {row.edit.commit_sha ? <> · commit <span className="mono">{String(row.edit.commit_sha).slice(0, 7)}</span></> : null}
++                        </p>
++                      </div>
++                    </button>
++                  </li>
++                );
++              }
++              const sub = row.submission;
++              const meta = SUBMISSION_EVENT[sub.status] ?? SUBMISSION_EVENT.pending;
++              return (
++                <li key={row.key}>
++                  <button type="button" className={`activity-item activity-item--${meta.tone} activity-item--clickable`}
++                    onClick={() => setSelected(submissionView(sub))}>
++                    <Avatar name={sub.contributor_name} url={sub.contributor_avatar} size={34} />
+                     <div className="activity-item__body">
+                       <p className="activity-item__line">
+-                        <strong>{row.edit.editor_name ?? 'A staff member'}</strong>
++                        <strong>{sub.contributor_name ?? 'A community member'}</strong>
+                         <span className={`activity-chip activity-chip--${meta.tone}`}>
+                           <Icon name={meta.icon} size={12} /> {meta.label}
+                         </span>
++                        <span className="activity-item__title">#{sub.number} · {sub.title}</span>
+                       </p>
+                       <p className="activity-item__meta">
+-                        <span className="mono">{row.edit.entity_type} {row.edit.entity_id}</span>
++                        {sub.entry_id ? <span className="mono">{sub.entry_id}</span> : <span>{sub.type}</span>}
+                         {' · '}{fmtTime(row.at)}
+-                        {row.edit.commit_sha ? <> · commit <span className="mono">{String(row.edit.commit_sha).slice(0, 7)}</span></> : null}
++                        {sub.status === 'accepted' && sub.reviewer_name
++                          ? <> · accepted by {sub.reviewer_name}</> : null}
+                       </p>
+                     </div>
+-                  </li>
+-                );
+-              }
+-              const sub = row.submission;
+-              const meta = SUBMISSION_EVENT[sub.status] ?? SUBMISSION_EVENT.pending;
+-              const path = entryPath(sub.entry_id);
+-              return (
+-                <li key={row.key} className={`activity-item activity-item--${meta.tone}`}>
+-                  <Avatar name={sub.contributor_name} url={sub.contributor_avatar} size={34} />
+-                  <div className="activity-item__body">
+-                    <p className="activity-item__line">
+-                      <strong>{sub.contributor_name ?? 'A community member'}</strong>
+-                      <span className={`activity-chip activity-chip--${meta.tone}`}>
+-                        <Icon name={meta.icon} size={12} /> {meta.label}
+-                      </span>
+-                      <span className="activity-item__title">#{sub.number} · {sub.title}</span>
+-                    </p>
+-                    <p className="activity-item__meta">
+-                      {path
+-                        ? <Link className="mono" to={path}>{sub.entry_id} →</Link>
+-                        : sub.entry_id ? <span className="mono">{sub.entry_id}</span>
+-                          : <span>{sub.type}</span>}
+-                      {' · '}{fmtTime(row.at)}
+-                      {sub.status === 'accepted' && sub.reviewer_name
+-                        ? <> · approved by {sub.reviewer_name}</> : null}
+-                    </p>
+-                  </div>
++                  </button>
+                 </li>
+               );
+             })}
+           </ol>
+         </>
+       )}
++
++      {selected ? <ContributionModal row={selected} onClose={() => setSelected(null)} /> : null}
+     </PageContainer>
+   );
+ }
+diff --git a/src/pages/EpisodeDetails.jsx b/src/pages/EpisodeDetails.jsx
+index e840c76..110f469 100755
+--- a/src/pages/EpisodeDetails.jsx
++++ b/src/pages/EpisodeDetails.jsx
+@@ -7,6 +7,7 @@ import SourceList from '@/components/SourceList.jsx';
+ import Gallery from '@/components/Gallery.jsx';
+ import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+ import EntryActions from '@/components/EntryActions.jsx';
++import PageContributions from '@/components/PageContributions.jsx';
+ import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
+ import NotFound from './NotFound.jsx';
+ import useDocumentTitle from '@/hooks/useDocumentTitle.js';
+@@ -50,6 +51,7 @@ export default function EpisodeDetails({ seriesId }) {
+       </header>
+ 
+       <EntryActions entry={entry} />
++      <PageContributions entryId={entry.id} />
+ 
+       <div className="detail-columns">
+         <div className="detail-columns__media">
+diff --git a/src/pages/GadgetDetails.jsx b/src/pages/GadgetDetails.jsx
+index d91e848..1e761ab 100755
+--- a/src/pages/GadgetDetails.jsx
++++ b/src/pages/GadgetDetails.jsx
+@@ -3,6 +3,7 @@ import PageContainer from '@/components/PageContainer.jsx';
+ import MediaImage from '@/components/MediaImage.jsx';
+ import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+ import EntryActions from '@/components/EntryActions.jsx';
++import PageContributions from '@/components/PageContributions.jsx';
+ import AppearanceLists from '@/components/AppearanceLists.jsx';
+ import GadgetCard from '@/components/GadgetCard.jsx';
+ import NotFound from './NotFound.jsx';
+@@ -42,6 +43,7 @@ export default function GadgetDetails() {
+       </section>
+ 
+       <EntryActions entry={gadget} />
++      <PageContributions entryId={gadget.id} />
+ 
+       <AppearanceLists appearances={appearances} filterKey="gadget" id={gadget.id} />
+ 
+diff --git a/src/pages/Home.jsx b/src/pages/Home.jsx
+index 6d698ac..3212d2e 100755
+--- a/src/pages/Home.jsx
++++ b/src/pages/Home.jsx
+@@ -1,3 +1,4 @@
++import { useEffect, useState } from 'react';
+ import { Link } from 'react-router-dom';
+ import PageContainer from '@/components/PageContainer.jsx';
+ import CharacterCard from '@/components/CharacterCard.jsx';
+@@ -6,9 +7,87 @@ import Icon from '@/components/Icon.jsx';
+ import useDocumentTitle from '@/hooks/useDocumentTitle.js';
+ import { getCharacters, getGadgets, getRecentlyAdded, getSeries, SERIES_IDS } from '@/lib/catalog.js';
+ import { getArchiveStats } from '@/lib/statistics.js';
++import { fetchPublicLog, fetchPublicEdits } from '@/lib/stats.js';
++import { useAuth } from '@/hooks/useAuth.jsx';
++import { SUBMISSION_EVENT, EDIT_EVENT, entryPath } from '@/lib/activity.js';
+ import { DOOR_ART } from '@/config.js';
+ 
+-function RecentList() {
++/* The homepage feed: the latest community contributions and staff edits,
++   newest first, each linking to the page it changed. Falls back to the
++   "recently added" archive list whenever the backend is not configured,
++   has no activity yet, or fails — the section is never empty or broken. */
++function RecentContributions() {
++  const { backendConfigured } = useAuth();
++  const [events, setEvents] = useState(null);
++
++  useEffect(() => {
++    if (!backendConfigured) return undefined;
++    let active = true;
++    Promise.all([fetchPublicLog({ limit: 40 }), fetchPublicEdits({ limit: 40 })])
++      .then(([subs, edits]) => {
++        if (!active) return;
++        const merged = [
++          ...(subs ?? []).map((row) => ({ key: `c-${row.number}`, at: row.reviewed_at ?? row.submitted_at, row })),
++          ...(edits ?? []).map((row) => ({ key: `e-${row.id}`, at: row.created_at, row })),
++        ].sort((a, b) => String(b.at ?? '').localeCompare(String(a.at ?? '')));
++        setEvents(merged.slice(0, 10));
++      })
++      .catch(() => active && setEvents([]));
++    return () => { active = false; };
++  }, [backendConfigured]);
++
++  if (backendConfigured && events === null) {
++    return <ul className="recent-list"><li className="recent-row muted">Loading recent contributions…</li></ul>;
++  }
++  if (!backendConfigured || (events && events.length === 0)) {
++    return <ArchiveRecentList />;
++  }
++  return (
++    <ul className="recent-list">
++      {events.map(({ key, row }) => {
++        if (row.id !== undefined && row.action) {
++          const meta = EDIT_EVENT[row.action?.replace(/\./g, '_')] ?? { label: 'edited the archive', icon: 'edit' };
++          const path = entryPath(row.entity_id);
++          const body = (
++            <>
++              <span className="recent-row__type mono"><Icon name={meta.icon} size={13} /></span>
++              <span className="recent-row__num mono">{String(row.commit_sha ?? '').slice(0, 7)}</span>
++              <span className="recent-row__title">{row.editor_name ?? 'A staff member'} {meta.label} <span className="mono">{row.entity_id}</span></span>
++              <span className="recent-row__catalogue" />
++              <span className="recent-row__date">{new Date(row.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
++            </>
++          );
++          return (
++            <li key={key}>
++              {path ? <Link to={path} className="recent-row">{body}</Link> : <div className="recent-row">{body}</div>}
++            </li>
++          );
++        }
++        const meta = SUBMISSION_EVENT[row.status] ?? SUBMISSION_EVENT.pending;
++        const path = entryPath(row.entry_id);
++        const body = (
++          <>
++            <span className={`recent-row__type mono recent-row__type--${meta.tone}`}>{meta.label}</span>
++            <span className="recent-row__num mono">#{row.number}</span>
++            <span className="recent-row__title">
++              {row.contributor_name ?? 'A community member'}: {row.title}
++            </span>
++            <span className="recent-row__catalogue">{row.reviewer_name && row.status === 'accepted' ? `accepted by ${row.reviewer_name}` : ''}</span>
++            <span className="recent-row__date">{new Date(row.at ?? row.submitted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
++          </>
++        );
++        return (
++          <li key={key}>
++            {path ? <Link to={path} className="recent-row">{body}</Link> : <div className="recent-row">{body}</div>}
++          </li>
++        );
++      })}
++    </ul>
++  );
++}
++
++/* Fallback feed for archive-only mode: the newest records in the catalogues. */
++function ArchiveRecentList() {
+   const recent = getRecentlyAdded(10);
+   return (
+     <ul className="recent-list">
+@@ -20,7 +99,6 @@ function RecentList() {
+             </span>
+             <span className="recent-row__num mono">{e.kind === 'movie' ? `No.${e.number}` : `#${e.number}`}</span>
+             <span className="recent-row__title">{e.title.en || <span lang="ja">{e.title.ja}</span>}</span>
+-            <span className="recent-row__catalogue">{getSeries(e.seriesId).label}</span>
+             <span className="recent-row__date">{e.release?.date ?? ''}</span>
+           </Link>
+         </li>
+@@ -82,12 +160,12 @@ export default function Home() {
+       <PageContainer className="home-section" as="section">
+         <header className="section-head section-head--row">
+           <div>
+-            <h2>Recently added</h2>
+-            <p>Newest and latest records, mixed across the catalogues.</p>
++            <h2>Recent contributions</h2>
++            <p>What the community changed lately — every row opens the page it touched.</p>
+           </div>
+-          <Link to="/contribute" className="btn btn--ghost btn--sm">Add an entry</Link>
++          <Link to="/log" className="btn btn--ghost btn--sm">Full contribution log</Link>
+         </header>
+-        <RecentList />
++        <RecentContributions />
+       </PageContainer>
+ 
+       <PageContainer className="home-section" as="section">
+diff --git a/src/pages/MovieDetails.jsx b/src/pages/MovieDetails.jsx
+index c6fd188..9699955 100755
+--- a/src/pages/MovieDetails.jsx
++++ b/src/pages/MovieDetails.jsx
+@@ -8,6 +8,7 @@ import Gallery from '@/components/Gallery.jsx';
+ import MovieCard from '@/components/MovieCard.jsx';
+ import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+ import EntryActions from '@/components/EntryActions.jsx';
++import PageContributions from '@/components/PageContributions.jsx';
+ import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
+ import NotFound from './NotFound.jsx';
+ import useDocumentTitle from '@/hooks/useDocumentTitle.js';
+@@ -64,6 +65,7 @@ export default function MovieDetails() {
+       </section>
+ 
+       <EntryActions entry={entry} />
++      <PageContributions entryId={entry.id} />
+ 
+       <div className="detail-columns detail-columns--after-film">
+         <MetadataSection id="synopsis" title="Synopsis">
+diff --git a/src/pages/Staff.jsx b/src/pages/Staff.jsx
+index 4743072..dd9e899 100644
+--- a/src/pages/Staff.jsx
++++ b/src/pages/Staff.jsx
+@@ -131,7 +131,9 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
+   const changes = useMemo(() => (base && draft ? deepDiff(base, draft) : []), [base, draft]);
+   const canCommit = draft && entityId.trim();
+ 
++  const noteMissing = !reviewNotes.trim();
+   const commit = async () => {
++    if (noteMissing) { setError('A review note is required — it is shown in the audit log and to the contributor.'); return; }
+     setBusy(true); setError(null);
+     try {
+       if (deleting) {
+@@ -230,19 +232,21 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
+           )}
+ 
+           <div className="field" style={{ marginTop: '1rem' }}>
+-            <label>Review note <span className="field__opt">(optional, shown in the audit log and to the contributor)</span></label>
+-            <textarea rows={2} value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} />
++            <label htmlFor="archive-editor-note">Review note <span className="field__req" aria-hidden="true"> *</span></label>
++            <textarea id="archive-editor-note" rows={2} value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} required
++              placeholder={contribution ? 'e.g. verified against the official episode list' : 'e.g. fixed the broadcast date per the official episode list'} />
++            <p className="field__help">Shown in the audit log and to the contributor.</p>
+           </div>
+ 
+           {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
+ 
+           <div className="submission__actions">
+             {deleting ? (
+-              <button type="button" className="btn btn--danger" disabled={busy || confirmText.trim() !== entityId.trim()} onClick={commit}>
++              <button type="button" className="btn btn--danger" disabled={busy || confirmText.trim() !== entityId.trim() || noteMissing} onClick={commit}>
+                 {busy ? 'Working…' : `Delete ${entityId} permanently`}
+               </button>
+             ) : (
+-              <button type="button" className="btn btn--primary" disabled={busy || !canCommit || (base && changes.length === 0)} onClick={commit}>
++              <button type="button" className="btn btn--primary" disabled={busy || !canCommit || noteMissing || (base && changes.length === 0)} onClick={commit}>
+                 {busy ? 'Working…' : base ? (contribution ? 'Accept & commit to the archive' : 'Commit direct edit') : 'Create the record'}
+               </button>
+             )}
+@@ -296,7 +300,10 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
+           <div>
+             <h3 className="submission__title">#{row.number} · {row.title}</h3>
+             <p className="submission__meta">
+-              {categoryLabel(row.type)} · by <strong>{row.profiles?.display_name ?? 'unknown'}</strong>
++              {categoryLabel(row.type)} · Contributor: <strong>{row.profiles?.display_name ?? 'unknown'}</strong>
++              {(row.status === 'accepted' || row.status === 'declined') && row.reviewer_profile
++                ? <> · {row.status === 'accepted' ? 'Accepted' : 'Reviewed'} by: <strong>{row.reviewer_profile.display_name ?? 'unknown'}</strong></>
++                : null}
+               {row.entry_id ? <> · <span className="mono">{row.entry_id}</span>{link ? <> <Link to={link}>view entry →</Link></> : null}</> : null}
+               <br />submitted {fmtTime(row.created_at)}
+             </p>
+diff --git a/src/styles/cards.css b/src/styles/cards.css
+index 9a01b17..808fe73 100755
+--- a/src/styles/cards.css
++++ b/src/styles/cards.css
+@@ -4,6 +4,11 @@
+   overflow: hidden; background: hsl(var(--hue) 22% 88%);
+ }
+ :root[data-theme='dark'] .media { background: hsl(var(--hue) 18% 16%); }
++/* Gadgets keep one fixed slate background instead of a random per-record
++   hue; #212530 reads as neutral in both themes, and the corner label gets a
++   lighter colour for contrast on it. */
++.media--gadget, :root[data-theme='dark'] .media--gadget { background: #212530; }
++.media--gadget .media__label { color: #8b93a7; }
+ .media--episode { --ratio: 16 / 9; }
+ .media--movie { --ratio: 2 / 3; }
+ .media--character, .media--gadget { --ratio: 1 / 1; }
+@@ -67,6 +72,10 @@
+ .recent-row:hover { border-color: var(--accent-line); background: var(--surface-2); transform: translateX(3px); }
+ .recent-row__type { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
+ .recent-row__type--movie { color: var(--accent); }
++.recent-row__type--ok { color: var(--ok); }
++.recent-row__type--bad { color: var(--bad); }
++.recent-row__type--pending { color: var(--warn); }
++.recent-row__type--muted { color: var(--text-3); }
+ .recent-row__num { color: var(--text-2); }
+ .recent-row__title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ .recent-row__catalogue { color: var(--text-2); font-size: 0.82rem; }
+@@ -99,9 +108,26 @@
+ }
+ .filter-panel__chev { margin-left: auto; transition: transform 0.18s var(--ease); }
+ .filter-panel.is-open .filter-panel__chev { transform: rotate(180deg); }
+-.filter-panel__body { display: none; padding: 0 var(--s-4) var(--s-4); border-top: 1px solid var(--border); }
+-.filter-panel.is-open .filter-panel__body { display: block; animation: rise-in 0.2s var(--ease); }
++/* Smooth open AND close: animate grid-template-rows between 0fr and 1fr
++   instead of toggling display (which can only animate the open direction,
++   making close feel like a flicker). The inner wrapper carries the padding
++   and divider so they collapse away with the panel. */
++.filter-panel__body {
++  display: grid; grid-template-rows: 0fr; overflow: hidden;
++  transition: grid-template-rows 0.28s var(--ease), visibility 0s linear 0.28s;
++  visibility: hidden;
++}
++.filter-panel.is-open .filter-panel__body {
++  grid-template-rows: 1fr; visibility: visible;
++  transition: grid-template-rows 0.28s var(--ease), visibility 0s;
++}
++.filter-panel__inner { min-height: 0; overflow: hidden; padding: 0 var(--s-4); }
++.filter-panel.is-open .filter-panel__inner { padding-bottom: var(--s-4); }
++.filter-panel__divider { border-top: 1px solid var(--border); margin: 0 calc(var(--s-4) * -1); }
+ .filter-panel__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-3) var(--s-4); padding-top: var(--s-3); }
++@media (prefers-reduced-motion: reduce) {
++  .filter-panel__body { transition: none; }
++}
+ .filter-panel__foot { margin-top: var(--s-3); display: flex; justify-content: flex-end; }
+ 
+ .field { display: grid; gap: 5px; }
+diff --git a/src/styles/global.css b/src/styles/global.css
+index 7622db5..41de9ac 100755
+--- a/src/styles/global.css
++++ b/src/styles/global.css
+@@ -291,6 +291,12 @@ button { font: inherit; color: inherit; }
+   transition: border-color 0.15s, transform 0.15s var(--ease);
+ }
+ .activity-item:hover { border-color: var(--border-strong); transform: translatey(-1px); }
++.activity-item--clickable {
++  display: flex; width: 100%; gap: var(--s-3); font: inherit; color: inherit;
++  text-align: left; cursor: pointer; border: 1px solid var(--border);
++  border-radius: var(--r-md); background: var(--surface); padding: var(--s-3);
++}
++.activity-item--clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+ .activity-item__body { min-width: 0; flex: 1; }
+ .activity-item__line {
+   display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin: 0 0 2px;
+@@ -338,6 +344,50 @@ button { font: inherit; color: inherit; }
+   to { opacity: 1; transform: none; }
+ }
+ .modal--wide { width: min(1040px, 100%); }
++.modal--tall { height: min(92vh, 900px); display: flex; flex-direction: column; }
++.modal--tall .modal__body { flex: 1; }
++.modal-overlay--fullscreen { padding: 0; }
++@media (max-width: 720px) {
++  .modal-overlay--fullscreen { padding: 0; }
++  .modal-overlay--fullscreen .modal--wide { width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
++}
++.contribution-modal__fields .row { align-items: center; }
++.contribution-modal__who { display: inline-flex; align-items: center; gap: 8px; }
++.contribution-modal__payload { margin-top: var(--s-3); }
++.contribution-modal__payload summary { cursor: pointer; color: var(--text-2); font-size: 0.88rem; }
++.contribution-modal__payload[open] summary { margin-bottom: var(--s-2); }
++
++/* ---------- per-page contribution box ---------- */
++.page-contributions {
++  margin-block: var(--s-4); border: 1px solid var(--border); border-radius: var(--r-md);
++  background: var(--surface); overflow: hidden;
++}
++.page-contributions__toggle {
++  display: flex; align-items: center; gap: var(--s-2); width: 100%;
++  padding: 10px var(--s-4); background: none; border: 0; cursor: pointer;
++  color: var(--text); font-size: 0.9rem; text-align: left;
++  transition: background 0.14s, color 0.14s;
++}
++.page-contributions__toggle:hover { background: var(--surface-2); }
++.page-contributions__toggle svg:first-child { color: var(--accent); flex: none; }
++.page-contributions__toggle svg:last-child { margin-left: auto; color: var(--text-3); flex: none; }
++.page-contributions__latest { margin-left: auto; color: var(--text-3); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
++.page-contributions__list { display: grid; }
++.page-contributions__row {
++  display: flex; align-items: center; gap: 10px; padding: 8px var(--s-4);
++  background: none; border: 0; border-top: 1px solid var(--border);
++  cursor: pointer; color: var(--text-2); font-size: 0.85rem; text-align: left;
++  transition: background 0.12s, color 0.12s;
++}
++.page-contributions__row:hover { background: var(--surface-2); color: var(--text); }
++.page-contributions__row svg { flex: none; }
++.page-contributions__who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
++.page-contributions__verb { color: var(--text); font-weight: 500; }
++.page-contributions__when { margin-left: auto; flex: none; font-family: var(--mono); font-size: 0.78rem; color: var(--text-3); }
++.page-contributions__row--ok svg { color: var(--ok); }
++.page-contributions__row--bad svg { color: var(--bad); }
++.page-contributions__row--pending svg { color: var(--warn); }
++.page-contributions__row--review svg { color: var(--review); }
+ .modal__head {
+   display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+   padding: var(--s-4) var(--s-5); border-bottom: 1px solid var(--border);
+diff --git a/src/styles/pages.css b/src/styles/pages.css
+index 0ef0dbc..8a1d362 100755
+--- a/src/styles/pages.css
++++ b/src/styles/pages.css
+@@ -360,3 +360,8 @@
+ .carousel__thumb:hover { opacity: 1; }
+ .carousel__thumb.is-active { opacity: 1; border-color: var(--accent); }
+ .contribute-direct-hint { margin-block: var(--s-4) 0; }
++
++/* My contributions: quick CTA in the page head + pressable history rows */
++.page-opening__cta { margin: 0 0 var(--s-3); display: flex; }
++.log-item--clickable { cursor: pointer; transition: background 0.12s, border-color 0.12s; }
++.log-item--clickable:hover { background: var(--surface-2); }
+diff --git a/supabase/functions/_shared/handlers/archiveEdit.js b/supabase/functions/_shared/handlers/archiveEdit.js
+index 7d13454..24e75c2 100644
+--- a/supabase/functions/_shared/handlers/archiveEdit.js
++++ b/supabase/functions/_shared/handlers/archiveEdit.js
+@@ -46,7 +46,10 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
+   if (!ID_PATTERNS[entityType].test(id)) {
+     return json({ error: `"${entityId}" is not a valid ${entityType} id.` }, 400);
+   }
+-  if (typeof note === 'string' && note.length > 2000) {
++  if (typeof note !== 'string' || !note.trim()) {
++    return json({ error: 'A short note explaining what you changed and why is required.' }, 400);
++  }
++  if (note.length > 2000) {
+     return json({ error: 'The note is too long (2000 characters max).' }, 400);
+   }
+ 
+@@ -60,7 +63,16 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
+     record: record ?? null,
+     ...(baseRecord !== undefined ? { baseRecord } : {}),
+   };
+-  const applied = await applyArchivePatch(github, proposedPatch).catch((err) => ({ error: err.message }));
++  // The proposal is validated against the CURRENT repository state without
++  // committing. If the caller's baseRecord is stale (any commit lands between
++  // the page load and this submit — including the visitor's own accepted
++  // edit minutes ago), retry against the live file: the proposed record is
++  // complete and validated either way, and the stored baseRecord below is
++  // the REAL current file, so the review queue always shows a true diff.
++  let applied = await applyArchivePatch(github, proposedPatch).catch((err) => ({ error: err.message }));
++  if (applied.error && /changed since it was loaded/.test(applied.error)) {
++    applied = await applyArchivePatch(github, proposedPatch, { allowStale: true }).catch((err) => ({ error: err.message }));
++  }
+   if (applied.error) return json({ error: applied.error }, 422);
+ 
+   // Same spam guards as regular submissions (pending cap + daily cap), but
+@@ -92,10 +104,13 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
+     title,
+     entry_id: id,
+     entry_series: SERIES_FOR[entityType]?.(id) ?? null,
+-    // The full edited record and the version it was based on, so the queue
+-    // can show a real before/after diff without re-deriving anything.
+-    payload: { record: cleanRecord, baseRecord: baseRecord ?? null, note: typeof note === 'string' ? note : null },
+-    proposed_patch: { ...proposedPatch, record: cleanRecord },
++    // The full edited record plus the file it was ACTUALLY applied against
++    // (the live repository state, not the possibly-stale copy the editor
++    // loaded), so the queue can show a real before/after diff. The stored
++    // patch omits baseRecord: accepting re-applies against whatever the
++    // repository looks like then, without a wedge-prone freshness check.
++    payload: { record: cleanRecord, baseRecord: applied.current ?? baseRecord ?? null, note: note.trim() },
++    proposed_patch: { entityType, entityId: id, mode: 'update', record: cleanRecord },
+     status: 'pending',
+   });
+ 
+@@ -105,13 +120,13 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
+   await db.insertAudit({
+     contribution_id: inserted.id, contribution_number: inserted.number,
+     action: 'contribution.submitted', actor_id: profile.id, actor_display_name: profile.display_name,
+-    entity_id: id, review_notes: typeof note === 'string' ? note : null,
++    entity_id: id, review_notes: note.trim(),
+   });
+   await notify(db, webhookUrl, `contribution.${inserted.id}.submitted`, 'submitted', {
+     number: inserted.number, title, type: 'archive-edit',
+     contributor: profile.display_name,
+     entry: id,
+-    notes: typeof note === 'string' ? note : null,
++    notes: note.trim(),
+   });
+   await flushOutbox(db, webhookUrl);
+   return json({ ok: true, number: inserted.number, changes: applied.changes.length });
+diff --git a/supabase/functions/_shared/handlers/directEdit.js b/supabase/functions/_shared/handlers/directEdit.js
+index 9067ac6..5475e0a 100644
+--- a/supabase/functions/_shared/handlers/directEdit.js
++++ b/supabase/functions/_shared/handlers/directEdit.js
+@@ -36,7 +36,14 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
+   if ((patch?.mode === 'delete' || patch?.mode === 'create') && !isOwner(profile.role)) {
+     return json({ error: 'Only the owner can create or delete archive entries.' }, 403);
+   }
+-  const reviewNotes = typeof body?.reviewNotes === 'string' ? body.reviewNotes.slice(0, 2000) : null;
++  const reviewNotes = typeof body?.reviewNotes === 'string' ? body.reviewNotes.trim().slice(0, 2000) : null;
++  if (!reviewNotes) {
++    return json({ error: 'A review note is required — it is shown in the audit log, on the contribution log and to the contributor.' }, 400);
++  }
++  const entityType = patch?.entityType;
++  const entityId = String(patch?.entityId ?? '');
++  const entrySeries = entityType === 'episode' ? entityId.split('-').slice(0, 2).join('-')
++    : entityType === 'movie' ? 'movies' : null;
+ 
+   const applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
+   if (applied.error) return json({ error: applied.error }, 422);
+@@ -54,6 +61,30 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
+     entity_type: applied.entity.type, entity_id: applied.entity.id,
+     changes: applied.changes, review_notes: reviewNotes, commit_sha: commitSha,
+   });
++
++  // A direct edit IS a contribution: record it as an accepted one so it
++  // appears in the author's "My contributions", the public contribution log
++  // and the page's activity box with the same commit and change list.
++  const recordForPayload = patch.mode === 'delete' ? null : patch.record;
++  const inserted = await db.insertContribution({
++    contributor_id: profile.id,
++    type: 'archive-edit',
++    title: `${applied.entity.type} ${applied.entity.id} — ${isDelete ? 'entry removed' : 'direct edit'}`.slice(0, 200),
++    entry_id: applied.entity.id,
++    entry_series: entrySeries,
++    payload: { record: recordForPayload, baseRecord: patch.baseRecord ?? null, note: reviewNotes },
++    proposed_patch: { entityType: applied.entity.type, entityId: applied.entity.id, mode: patch.mode, record: recordForPayload },
++    status: 'accepted',
++    reviewer_id: profile.id,
++    reviewed_at: new Date().toISOString(),
++    review_reason: reviewNotes,
++    commit_sha: commitSha,
++    sync_state: 'committed',
++  });
++  await db.insertStatusHistory({
++    contribution_id: inserted.id, from_status: null, to_status: 'accepted', actor_id: profile.id,
++    reason: reviewNotes,
++  });
+   await notify(db, webhookUrl, `direct-edit.${commitSha}`, isDelete ? 'entry_deleted' : 'direct_edit', {
+     reviewer: profile.display_name,
+     entry: `${applied.entity.type} ${applied.entity.id}`,
+@@ -61,5 +92,5 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
+     commit: commitSha.slice(0, 7),
+   });
+   await flushOutbox(db, webhookUrl);
+-  return json({ ok: true, commit_sha: commitSha, changes: applied.changes });
++  return json({ ok: true, commit_sha: commitSha, changes: applied.changes, contribution: inserted.number });
+ }
+diff --git a/supabase/functions/_shared/handlers/review.js b/supabase/functions/_shared/handlers/review.js
+index 9a8bc90..18e16ec 100644
+--- a/supabase/functions/_shared/handlers/review.js
++++ b/supabase/functions/_shared/handlers/review.js
+@@ -84,7 +84,21 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
+       // A previous attempt may have committed but failed to record it —
+       // applying again is safe: identical data produces "nothing to change",
+       // which we recognise and finalize instead of failing.
+-      const applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
++      let applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
++      // The record changed between submission and accept (any commit does
++      // that — including other accepted contributions). The checker has
++      // already reviewed the diff, so re-apply against the live file instead
++      // of bouncing the contribution back to its author.
++      if (applied.error && /changed since it was loaded/.test(applied.error)) {
++        applied = await applyArchivePatch(github, patch, { allowStale: true }).catch((err) => ({ error: err.message }));
++      }
++      // "Nothing to change" on a first attempt means the proposed record is
++      // already in the repository (a staff direct edit beat the queue to it,
++      // most commonly). The contribution is genuinely done: accept it
++      // without a commit instead of leaving it stuck pending forever.
++      if (applied.error && applied.noChange) {
++        applied = { noChange: true, changes: [], entity: { type: patch.entityType, id: patch.entityId, number: null } };
++      }
+       if (applied.error && !contribution.commit_sha) {
+         await db.updateContribution(contribution.id, {
+           sync_state: 'failed', sync_error: applied.error.slice(0, 1000),
+@@ -92,19 +106,24 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
+         return json({ error: `Archive update failed: ${applied.error}` }, 502);
+       }
+ 
+-      if (!applied.error) {
++      if (!applied.error || applied.noChange) {
++        // Already-applied patches have no files to write; the contribution
++        // finalizes below with sync_state 'not_required' and no new commit.
+         const message = `archive: accept contribution #${contribution.number} (${applied.entity.type} ${applied.entity.id})\n\nReviewed by ${profile.display_name}.`;
+-        commitSha = await github.commit(applied.files, message).catch(async (err) => {
++        commitSha = applied.noChange ? null : await github.commit(applied.files, message).catch(async (err) => {
+           await db.updateContribution(contribution.id, {
+             sync_state: 'failed', sync_error: String(err.message).slice(0, 1000),
+           });
+           return null;
+         });
+-        if (!commitSha) return json({ error: 'The GitHub commit failed — the contribution stays pending and can be retried.' }, 502);
++        if (!commitSha && !applied.noChange) {
++          return json({ error: 'The GitHub commit failed — the contribution stays pending and can be retried.' }, 502);
++        }
+         changes = applied.changes;
+         entity = applied.entity;
+       } else {
+-        // "Nothing to change" on a retry: a previous commit already applied it.
++        // "Nothing to change": either a retry after a recorded commit, or the
++        // record was already applied by another path (direct edit / prior accept).
+         commitSha = contribution.commit_sha;
+         changes = [];
+         entity = { type: patch.entityType, id: patch.entityId, number: null };
+diff --git a/supabase/functions/_shared/patch.js b/supabase/functions/_shared/patch.js
+index 4b5bb2a..fb68844 100644
+--- a/supabase/functions/_shared/patch.js
++++ b/supabase/functions/_shared/patch.js
+@@ -70,9 +70,21 @@ export function resolvePaths(entityType, entityId) {
+ 
+ /**
+  * Applies a patch to the current repository state.
+- * Returns { files: [{path, content}], changes, entity, indexChanged, error }.
++ * Returns { files: [{path, content}], changes, entity, indexChanged, current, stale, error }.
++ *
++ * `current` is the file content the patch was applied against (the real
++ * before-state), `stale` is true when the caller's baseRecord no longer
++ * matched the repository but `opts.allowStale` let the patch through.
++ * With `opts.allowStale` the optimistic-concurrency check degrades to a
++ * no-op: the proposed record is still fully validated, and the change list
++ * is computed against the CURRENT file, so a stale base can never silently
++ * hide what actually changed. Callers that need strict freshness (member
++ * submissions) leave allowStale off and retry; callers acting on an
++ * explicit human decision (accepting a reviewed contribution) turn it on
++ * so a commit landing between review and accept cannot wedge the queue.
+  */
+-export async function applyArchivePatch(github, patch) {
++export async function applyArchivePatch(github, patch, opts = {}) {
++  const allowStale = opts.allowStale === true;
+   if (!patch || typeof patch !== 'object') return { error: 'patch must be an object.' };
+   const { entityType, mode } = patch;
+   if (!ENTITY_TYPES.includes(entityType)) return { error: `entityType must be one of ${ENTITY_TYPES.join(', ')}.` };
+@@ -91,7 +103,7 @@ export async function applyArchivePatch(github, patch) {
+       if (currentFile.missing) return { error: `${patch.entityId} does not exist in the archive.` };
+       if (patch.baseRecord !== undefined
+           && deepDiff(patch.baseRecord, currentFile.content).length > 0) {
+-        return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
++        if (!allowStale) return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
+       }
+       const indexFile = await github.getJsonFile(paths.indexPath);
+       if (indexFile.missing) return { error: `Index file ${paths.indexPath} not found.` };
+@@ -116,8 +128,9 @@ export async function applyArchivePatch(github, patch) {
+     }
+     // Optimistic concurrency: when the caller states which version it based
+     // the edit on, refuse to overwrite a record that changed since.
+-    if (mode === 'update' && patch.baseRecord !== undefined
+-        && deepDiff(patch.baseRecord, currentFile.content).length > 0) {
++    const stale = mode === 'update' && patch.baseRecord !== undefined
++      && deepDiff(patch.baseRecord, currentFile.content).length > 0;
++    if (stale && !allowStale) {
+       return { error: `${patch.entityId} changed since it was loaded — reopen the editor with the latest version and reapply your changes.` };
+     }
+     if (mode === 'create' && !currentFile.missing) {
+@@ -153,9 +166,9 @@ export async function applyArchivePatch(github, patch) {
+       ? deepDiff(currentFile.content, record)
+       : [{ field: '(new entry)', before: null, after: `${record.id} — ${record.title?.en ?? record.title?.ja ?? ''}`.trim() }];
+     if (mode === 'update' && changes.length === 0) {
+-      return { error: 'The proposed values are identical to the current record — nothing to change.' };
++      return { error: 'The proposed values are identical to the current record — nothing to change.', noChange: true, current: currentFile.content, entity: { type: entityType, id: paths.entityId, number: paths.number } };
+     }
+-    return { files, changes, indexChanged, entity: { type: entityType, id: paths.entityId, number: paths.number } };
++    return { files, changes, indexChanged, stale, current: currentFile.content, entity: { type: entityType, id: paths.entityId, number: paths.number } };
+   }
+ 
+   // ---- entities stored inside an array file (characters, gadgets) ---------
+@@ -165,7 +178,7 @@ export async function applyArchivePatch(github, patch) {
+   const index = list.findIndex((r) => r?.id === patch.entityId);
+   if (mode === 'delete') {
+     if (index === -1) return { error: `${patch.entityId} does not exist in the archive.` };
+-    if (patch.baseRecord !== undefined && deepDiff(patch.baseRecord, list[index]).length > 0) {
++    if (patch.baseRecord !== undefined && deepDiff(patch.baseRecord, list[index]).length > 0 && !allowStale) {
+       return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
+     }
+     const nextList = list.filter((_, i) => i !== index);
+@@ -182,8 +195,9 @@ export async function applyArchivePatch(github, patch) {
+   if (mode === 'update' && index === -1) {
+     return { error: `${patch.entityId} does not exist — use "create" mode.` };
+   }
+-  if (mode === 'update' && patch.baseRecord !== undefined
+-      && deepDiff(patch.baseRecord, list[index]).length > 0) {
++  const stale = mode === 'update' && patch.baseRecord !== undefined
++    && deepDiff(patch.baseRecord, list[index]).length > 0;
++  if (stale && !allowStale) {
+     return { error: `${patch.entityId} changed since it was loaded — reopen the editor with the latest version and reapply your changes.` };
+   }
+   if (mode === 'create' && index !== -1) {
+@@ -206,11 +220,11 @@ export async function applyArchivePatch(github, patch) {
+     : [{ field: '(new record)', before: null, after: record.name?.en ?? record.name?.ja ?? record.id }];
+ 
+   if (mode === 'update' && changes.length === 0) {
+-    return { error: 'The proposed values are identical to the current record — nothing to change.' };
++    return { error: 'The proposed values are identical to the current record — nothing to change.', noChange: true, current: list[index], entity: { type: entityType, id: patch.entityId, number: null } };
+   }
+   return {
+     files: [{ path: paths.arrayPath, content: serialize(nextList) }],
+-    changes, indexChanged: false,
++    changes, indexChanged: false, stale, current: mode === 'update' ? list[index] : null,
+     entity: { type: entityType, id: patch.entityId, number: null },
+   };
+ }

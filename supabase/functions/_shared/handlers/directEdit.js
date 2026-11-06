@@ -36,7 +36,14 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
   if ((patch?.mode === 'delete' || patch?.mode === 'create') && !isOwner(profile.role)) {
     return json({ error: 'Only the owner can create or delete archive entries.' }, 403);
   }
-  const reviewNotes = typeof body?.reviewNotes === 'string' ? body.reviewNotes.slice(0, 2000) : null;
+  const reviewNotes = typeof body?.reviewNotes === 'string' ? body.reviewNotes.trim().slice(0, 2000) : null;
+  if (!reviewNotes) {
+    return json({ error: 'A review note is required — it is shown in the audit log, on the contribution log and to the contributor.' }, 400);
+  }
+  const entityType = patch?.entityType;
+  const entityId = String(patch?.entityId ?? '');
+  const entrySeries = entityType === 'episode' ? entityId.split('-').slice(0, 2).join('-')
+    : entityType === 'movie' ? 'movies' : null;
 
   const applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
   if (applied.error) return json({ error: applied.error }, 422);
@@ -54,6 +61,30 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
     entity_type: applied.entity.type, entity_id: applied.entity.id,
     changes: applied.changes, review_notes: reviewNotes, commit_sha: commitSha,
   });
+
+  // A direct edit IS a contribution: record it as an accepted one so it
+  // appears in the author's "My contributions", the public contribution log
+  // and the page's activity box with the same commit and change list.
+  const recordForPayload = patch.mode === 'delete' ? null : patch.record;
+  const inserted = await db.insertContribution({
+    contributor_id: profile.id,
+    type: 'archive-edit',
+    title: `${applied.entity.type} ${applied.entity.id} — ${isDelete ? 'entry removed' : 'direct edit'}`.slice(0, 200),
+    entry_id: applied.entity.id,
+    entry_series: entrySeries,
+    payload: { record: recordForPayload, baseRecord: patch.baseRecord ?? null, note: reviewNotes },
+    proposed_patch: { entityType: applied.entity.type, entityId: applied.entity.id, mode: patch.mode, record: recordForPayload },
+    status: 'accepted',
+    reviewer_id: profile.id,
+    reviewed_at: new Date().toISOString(),
+    review_reason: reviewNotes,
+    commit_sha: commitSha,
+    sync_state: 'committed',
+  });
+  await db.insertStatusHistory({
+    contribution_id: inserted.id, from_status: null, to_status: 'accepted', actor_id: profile.id,
+    reason: reviewNotes,
+  });
   await notify(db, webhookUrl, `direct-edit.${commitSha}`, isDelete ? 'entry_deleted' : 'direct_edit', {
     reviewer: profile.display_name,
     entry: `${applied.entity.type} ${applied.entity.id}`,
@@ -61,5 +92,5 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
     commit: commitSha.slice(0, 7),
   });
   await flushOutbox(db, webhookUrl);
-  return json({ ok: true, commit_sha: commitSha, changes: applied.changes });
+  return json({ ok: true, commit_sha: commitSha, changes: applied.changes, contribution: inserted.number });
 }

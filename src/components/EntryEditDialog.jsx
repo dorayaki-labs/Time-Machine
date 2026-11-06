@@ -167,14 +167,16 @@ export default function EntryEditDialog({ entry, onClose }) {
               <ChangesTable changes={changes} />
 
               <div className="field" style={{ marginTop: '1rem' }}>
-                <label>What did you change and why? <span className="field__opt">(optional, helps the checker)</span></label>
-                <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. corrected the broadcast date per the official episode list" />
+                <label htmlFor="entry-edit-note">What did you change and why? <span className="field__req" aria-hidden="true"> *</span></label>
+                <textarea id="entry-edit-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. corrected the broadcast date per the official episode list" required />
+                <p className="field__help">A short source or reason helps the checker accept your edit in one click.</p>
               </div>
 
               {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
             </div>
             <div className="modal__foot">
-              <button type="button" className="btn btn--primary" disabled={busy || changes.length === 0} onClick={submit}>
+              <button type="button" className="btn btn--primary" disabled={busy || changes.length === 0 || !note.trim()}
+                title={!note.trim() ? 'Describe what you changed and why first' : undefined} onClick={submit}>
                 {busy ? 'Sending…' : 'Send for review'}
               </button>
               <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>

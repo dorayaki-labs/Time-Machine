@@ -4,6 +4,11 @@
   overflow: hidden; background: hsl(var(--hue) 22% 88%);
 }
 :root[data-theme='dark'] .media { background: hsl(var(--hue) 18% 16%); }
+/* Gadgets keep one fixed slate background instead of a random per-record
+   hue; #212530 reads as neutral in both themes, and the corner label gets a
+   lighter colour for contrast on it. */
+.media--gadget, :root[data-theme='dark'] .media--gadget { background: #212530; }
+.media--gadget .media__label { color: #8b93a7; }
 .media--episode { --ratio: 16 / 9; }
 .media--movie { --ratio: 2 / 3; }
 .media--character, .media--gadget { --ratio: 1 / 1; }
@@ -67,6 +72,10 @@
 .recent-row:hover { border-color: var(--accent-line); background: var(--surface-2); transform: translateX(3px); }
 .recent-row__type { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
 .recent-row__type--movie { color: var(--accent); }
+.recent-row__type--ok { color: var(--ok); }
+.recent-row__type--bad { color: var(--bad); }
+.recent-row__type--pending { color: var(--warn); }
+.recent-row__type--muted { color: var(--text-3); }
 .recent-row__num { color: var(--text-2); }
 .recent-row__title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent-row__catalogue { color: var(--text-2); font-size: 0.82rem; }
@@ -99,9 +108,26 @@
 }
 .filter-panel__chev { margin-left: auto; transition: transform 0.18s var(--ease); }
 .filter-panel.is-open .filter-panel__chev { transform: rotate(180deg); }
-.filter-panel__body { display: none; padding: 0 var(--s-4) var(--s-4); border-top: 1px solid var(--border); }
-.filter-panel.is-open .filter-panel__body { display: block; animation: rise-in 0.2s var(--ease); }
+/* Smooth open AND close: animate grid-template-rows between 0fr and 1fr
+   instead of toggling display (which can only animate the open direction,
+   making close feel like a flicker). The inner wrapper carries the padding
+   and divider so they collapse away with the panel. */
+.filter-panel__body {
+  display: grid; grid-template-rows: 0fr; overflow: hidden;
+  transition: grid-template-rows 0.28s var(--ease), visibility 0s linear 0.28s;
+  visibility: hidden;
+}
+.filter-panel.is-open .filter-panel__body {
+  grid-template-rows: 1fr; visibility: visible;
+  transition: grid-template-rows 0.28s var(--ease), visibility 0s;
+}
+.filter-panel__inner { min-height: 0; overflow: hidden; padding: 0 var(--s-4); }
+.filter-panel.is-open .filter-panel__inner { padding-bottom: var(--s-4); }
+.filter-panel__divider { border-top: 1px solid var(--border); margin: 0 calc(var(--s-4) * -1); }
 .filter-panel__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s-3) var(--s-4); padding-top: var(--s-3); }
+@media (prefers-reduced-motion: reduce) {
+  .filter-panel__body { transition: none; }
+}
 .filter-panel__foot { margin-top: var(--s-3); display: flex; justify-content: flex-end; }
 
 .field { display: grid; gap: 5px; }

@@ -34,8 +34,13 @@ import NotFound from '@/pages/NotFound.jsx';
 // Suspense flicker on first visit to a page.
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  const { pathname, state } = useLocation();
+  useEffect(() => {
+    // Prev/next navigation from the bottom of an episode or movie page passes
+    // preserveScroll so the reader stays where they were instead of being
+    // thrown back to the top of every new page.
+    if (!state?.preserveScroll) window.scrollTo(0, 0);
+  }, [pathname, state]);
   return null;
 }
 

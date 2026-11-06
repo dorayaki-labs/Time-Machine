@@ -91,7 +91,12 @@ export default function ContributionForm({ category, initialValues = null }) {
         const res = await submitContribution({
           type: category.id,
           title: suggestionTitle(category, normalized),
-          entryId: typeof normalized.entryId === 'string' && normalized.entryId.trim() ? normalized.entryId.trim() : null,
+          // Character and gadget forms use their own id fields; the backend
+          // stores them as entry_id (any `[a-z0-9-]` id is valid) so the
+          // contribution shows up on that page's activity box and links to it.
+          entryId: ['entryId', 'characterId', 'gadgetId']
+            .map((k) => (typeof normalized[k] === 'string' ? normalized[k].trim() : ''))
+            .find((v) => v) ?? null,
           payload: normalized,
           honeypot: normalized.company ?? null,
         });

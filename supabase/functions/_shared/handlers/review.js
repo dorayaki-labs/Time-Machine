@@ -84,7 +84,21 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       // A previous attempt may have committed but failed to record it —
       // applying again is safe: identical data produces "nothing to change",
       // which we recognise and finalize instead of failing.
-      const applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
+      let applied = await applyArchivePatch(github, patch).catch((err) => ({ error: err.message }));
+      // The record changed between submission and accept (any commit does
+      // that — including other accepted contributions). The checker has
+      // already reviewed the diff, so re-apply against the live file instead
+      // of bouncing the contribution back to its author.
+      if (applied.error && /changed since it was loaded/.test(applied.error)) {
+        applied = await applyArchivePatch(github, patch, { allowStale: true }).catch((err) => ({ error: err.message }));
+      }
+      // "Nothing to change" on a first attempt means the proposed record is
+      // already in the repository (a staff direct edit beat the queue to it,
+      // most commonly). The contribution is genuinely done: accept it
+      // without a commit instead of leaving it stuck pending forever.
+      if (applied.error && applied.noChange) {
+        applied = { noChange: true, changes: [], entity: { type: patch.entityType, id: patch.entityId, number: null } };
+      }
       if (applied.error && !contribution.commit_sha) {
         await db.updateContribution(contribution.id, {
           sync_state: 'failed', sync_error: applied.error.slice(0, 1000),
@@ -92,19 +106,24 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
         return json({ error: `Archive update failed: ${applied.error}` }, 502);
       }
 
-      if (!applied.error) {
+      if (!applied.error || applied.noChange) {
+        // Already-applied patches have no files to write; the contribution
+        // finalizes below with sync_state 'not_required' and no new commit.
         const message = `archive: accept contribution #${contribution.number} (${applied.entity.type} ${applied.entity.id})\n\nReviewed by ${profile.display_name}.`;
-        commitSha = await github.commit(applied.files, message).catch(async (err) => {
+        commitSha = applied.noChange ? null : await github.commit(applied.files, message).catch(async (err) => {
           await db.updateContribution(contribution.id, {
             sync_state: 'failed', sync_error: String(err.message).slice(0, 1000),
           });
           return null;
         });
-        if (!commitSha) return json({ error: 'The GitHub commit failed — the contribution stays pending and can be retried.' }, 502);
+        if (!commitSha && !applied.noChange) {
+          return json({ error: 'The GitHub commit failed — the contribution stays pending and can be retried.' }, 502);
+        }
         changes = applied.changes;
         entity = applied.entity;
       } else {
-        // "Nothing to change" on a retry: a previous commit already applied it.
+        // "Nothing to change": either a retry after a recorded commit, or the
+        // record was already applied by another path (direct edit / prior accept).
         commitSha = contribution.commit_sha;
         changes = [];
         entity = { type: patch.entityType, id: patch.entityId, number: null };

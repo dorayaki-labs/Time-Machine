@@ -9,6 +9,7 @@ import LoadingState from '@/components/LoadingState.jsx';
 import EmptyState from '@/components/EmptyState.jsx';
 import Avatar from '@/components/Avatar.jsx';
 import Icon from '@/components/Icon.jsx';
+import ContributionModal, { submissionView } from '@/components/ContributionModal.jsx';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { fetchMyContributions, tallyStatuses, STATUS_LABELS } from '@/lib/stats.js';
 import { reviewContribution } from '@/lib/staffApi.js';
@@ -56,10 +57,12 @@ function HistoryRow({ row, onChanged }) {
     finally { setBusy(false); }
   };
 
+  const view = submissionView({ ...row, submitted_at: row.created_at });
+
   return (
     <>
-      <li className="log-item" style={{ cursor: 'pointer' }} onClick={() => setOpen((o) => !o)} role="button" tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && setOpen((o) => !o)}>
+      <li className="log-item log-item--clickable" onClick={() => setOpen(true)} role="button" tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setOpen(true)}>
         <span className="log-item__num">#{row.number}</span>
         <span className="log-item__title">{row.title}</span>
         <span className={`chip chip--${row.status}`}>{STATUS_LABELS[row.status]}</span>
@@ -68,42 +71,35 @@ function HistoryRow({ row, onChanged }) {
         {row.commit_sha ? <span className="log-item__meta mono">{String(row.commit_sha).slice(0, 7)}</span> : null}
       </li>
       {open ? (
-        <li className="submission" style={{ marginTop: '-0.4rem' }}>
-          <dl className="submission__fields">
-            <div className="row"><dt>Type</dt><dd>{row.type}</dd></div>
-            <div className="row"><dt>Entry</dt><dd>{row.entry_id ?? '—'}</dd></div>
-            <div className="row"><dt>Submitted</dt><dd>{fmtTime(row.created_at)}</dd></div>
-            <div className="row"><dt>Status</dt><dd>{STATUS_LABELS[row.status]}</dd></div>
-            {row.reviewed_at ? <div className="row"><dt>Reviewed</dt><dd>{fmtTime(row.reviewed_at)}</dd></div> : null}
-            {row.review_reason ? <div className="row"><dt>Reviewer note</dt><dd>{row.review_reason}</dd></div> : null}
-            {row.commit_sha ? (
-              <div className="row"><dt>Archive commit</dt><dd className="mono">{String(row.commit_sha).slice(0, 7)}</dd></div>
-            ) : null}
-          </dl>
-
-          {pending && !editing ? (
-            <div className="btn-row">
-              <button type="button" className="btn btn--ghost" onClick={startEdit}>
-                <Icon name="edit" size={15} /> Edit this submission
-              </button>
-              <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={withdraw}>
-                <Icon name="trash" size={15} /> Withdraw
-              </button>
-            </div>
-          ) : null}
-          {editing ? (
-            <div className="field">
-              <label>Submission answers <span className="field__opt">(JSON — same shape you submitted)</span></label>
-              <textarea rows={10} className="mono" value={json} spellCheck={false} onChange={(e) => setJson(e.target.value)} />
-              <div className="btn-row" style={{ marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn--primary" disabled={busy} onClick={saveEdit}>Save changes</button>
-                <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing(false)}>Cancel</button>
+        <ContributionModal
+          row={{ ...view, contributor: { name: 'You' } }}
+          onClose={() => { setOpen(false); setEditing(false); setMessage(null); setError(null); }}
+        >
+          <div className="contribution-modal__actions">
+            {pending && !editing ? (
+              <div className="btn-row">
+                <button type="button" className="btn btn--ghost" onClick={startEdit}>
+                  <Icon name="edit" size={15} /> Edit this submission
+                </button>
+                <button type="button" className="btn btn--ghost btn--danger" disabled={busy} onClick={withdraw}>
+                  <Icon name="trash" size={15} /> Withdraw
+                </button>
               </div>
-            </div>
-          ) : null}
-          {message ? <p className="notice" role="status">{message}</p> : null}
-          {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
-        </li>
+            ) : null}
+            {editing ? (
+              <div className="field">
+                <label>Submission answers <span className="field__opt">(JSON — same shape you submitted)</span></label>
+                <textarea rows={10} className="mono" value={json} spellCheck={false} onChange={(e) => setJson(e.target.value)} />
+                <div className="btn-row" style={{ marginTop: '0.5rem' }}>
+                  <button type="button" className="btn btn--primary" disabled={busy} onClick={saveEdit}>Save changes</button>
+                  <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => setEditing(false)}>Cancel</button>
+                </div>
+              </div>
+            ) : null}
+            {message ? <p className="notice" role="status">{message}</p> : null}
+            {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
+          </div>
+        </ContributionModal>
       ) : null}
     </>
   );
@@ -164,6 +160,9 @@ export default function Account() {
       <div className="page-opening">
         <p className="eyebrow">Account</p>
         <h1>My contributions</h1>
+        <p className="page-opening__cta">
+          <Link to="/contribute" className="btn btn--primary btn--sm"><Icon name="plus" size={15} /> Contribute</Link>
+        </p>
         <p className="page-opening__lead page-opening__lead--identity">
           <Avatar name={profile?.display_name} url={profile?.avatar_url} size={40} />
           <span>

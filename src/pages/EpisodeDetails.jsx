@@ -7,6 +7,7 @@ import SourceList from '@/components/SourceList.jsx';
 import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
+import PageContributions from '@/components/PageContributions.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
 import NotFound from './NotFound.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
@@ -50,6 +51,7 @@ export default function EpisodeDetails({ seriesId }) {
       </header>
 
       <EntryActions entry={entry} />
+      <PageContributions entryId={entry.id} />
 
       <div className="detail-columns">
         <div className="detail-columns__media">

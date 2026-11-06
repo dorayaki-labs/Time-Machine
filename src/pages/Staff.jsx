@@ -131,7 +131,9 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
   const changes = useMemo(() => (base && draft ? deepDiff(base, draft) : []), [base, draft]);
   const canCommit = draft && entityId.trim();
 
+  const noteMissing = !reviewNotes.trim();
   const commit = async () => {
+    if (noteMissing) { setError('A review note is required — it is shown in the audit log and to the contributor.'); return; }
     setBusy(true); setError(null);
     try {
       if (deleting) {
@@ -230,19 +232,21 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
           )}
 
           <div className="field" style={{ marginTop: '1rem' }}>
-            <label>Review note <span className="field__opt">(optional, shown in the audit log and to the contributor)</span></label>
-            <textarea rows={2} value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} />
+            <label htmlFor="archive-editor-note">Review note <span className="field__req" aria-hidden="true"> *</span></label>
+            <textarea id="archive-editor-note" rows={2} value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} required
+              placeholder={contribution ? 'e.g. verified against the official episode list' : 'e.g. fixed the broadcast date per the official episode list'} />
+            <p className="field__help">Shown in the audit log and to the contributor.</p>
           </div>
 
           {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
 
           <div className="submission__actions">
             {deleting ? (
-              <button type="button" className="btn btn--danger" disabled={busy || confirmText.trim() !== entityId.trim()} onClick={commit}>
+              <button type="button" className="btn btn--danger" disabled={busy || confirmText.trim() !== entityId.trim() || noteMissing} onClick={commit}>
                 {busy ? 'Working…' : `Delete ${entityId} permanently`}
               </button>
             ) : (
-              <button type="button" className="btn btn--primary" disabled={busy || !canCommit || (base && changes.length === 0)} onClick={commit}>
+              <button type="button" className="btn btn--primary" disabled={busy || !canCommit || noteMissing || (base && changes.length === 0)} onClick={commit}>
                 {busy ? 'Working…' : base ? (contribution ? 'Accept & commit to the archive' : 'Commit direct edit') : 'Create the record'}
               </button>
             )}
@@ -296,7 +300,10 @@ function SubmissionDetail({ row, onAcceptApplied, onRefresh, canReview, canDelet
           <div>
             <h3 className="submission__title">#{row.number} · {row.title}</h3>
             <p className="submission__meta">
-              {categoryLabel(row.type)} · by <strong>{row.profiles?.display_name ?? 'unknown'}</strong>
+              {categoryLabel(row.type)} · Contributor: <strong>{row.profiles?.display_name ?? 'unknown'}</strong>
+              {(row.status === 'accepted' || row.status === 'declined') && row.reviewer_profile
+                ? <> · {row.status === 'accepted' ? 'Accepted' : 'Reviewed'} by: <strong>{row.reviewer_profile.display_name ?? 'unknown'}</strong></>
+                : null}
               {row.entry_id ? <> · <span className="mono">{row.entry_id}</span>{link ? <> <Link to={link}>view entry →</Link></> : null}</> : null}
               <br />submitted {fmtTime(row.created_at)}
             </p>

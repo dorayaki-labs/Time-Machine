@@ -31,22 +31,25 @@ export function GadgetsSection({ ids = [] }) {
   );
 }
 
-export function VoiceActorsSection({ voiceActors = [] }) {
+export function VoiceActorsSection({ voiceActors }) {
+  const rows = Array.isArray(voiceActors) ? voiceActors : [];
   return (
     <MetadataSection id="voice-actors" title="Voice actors">
-      {voiceActors.length ? (
+      {rows.length ? (
         <div className="table-wrap">
+          {/* Episodes and movies do not carry a `version` on voice actors —
+              each entry IS a version — so the table is character, actor,
+              language, with the character linking to its page. */}
           <table className="data-table">
-            <thead><tr><th scope="col">Character</th><th scope="col">Voice actor</th><th scope="col">Language</th><th scope="col">Version</th></tr></thead>
+            <thead><tr><th scope="col">Character</th><th scope="col">Voice actor</th><th scope="col">Language</th></tr></thead>
             <tbody>
-              {voiceActors.map((v, i) => {
+              {rows.map((v, i) => {
                 const c = getCharacter(v.characterId);
                 return (
-                  <tr key={`${v.characterId}-${v.name?.en}-${i}`}>
-                    <td>{c ? <Link to={`/characters/${c.id}`}>{c.name.en}</Link> : v.characterId}</td>
+                  <tr key={`${v.characterId ?? 'unknown'}-${v.name?.en}-${i}`}>
+                    <td>{c ? <Link to={`/characters/${c.id}`}>{c.name.en}</Link> : (v.characterId ?? '—')}</td>
                     <td>{v.name?.en}{v.name?.ja ? <span className="muted" lang="ja"> {v.name.ja}</span> : null}</td>
                     <td>{languageName(v.language)}</td>
-                    <td>{v.version ?? '—'}</td>
                   </tr>
                 );
               })}
@@ -80,13 +83,13 @@ export function PrevNext({ previous, next, label }) {
   return (
     <nav className="prev-next" aria-label={`Previous and next ${label}`}>
       {previous ? (
-        <Link to={previous.url} className="prev-next__link prev-next__link--prev" rel="prev">
+        <Link to={previous.url} state={{ preserveScroll: true }} className="prev-next__link prev-next__link--prev" rel="prev">
           <span className="prev-next__dir">Previous {label}</span>
           <span className="prev-next__title">{label === 'movie' ? 'No.' : '#'}{previous.number} {displayTitle(previous)}</span>
         </Link>
       ) : <span />}
       {next ? (
-        <Link to={next.url} className="prev-next__link prev-next__link--next" rel="next">
+        <Link to={next.url} state={{ preserveScroll: true }} className="prev-next__link prev-next__link--next" rel="next">
           <span className="prev-next__dir">Next {label}</span>
           <span className="prev-next__title">{label === 'movie' ? 'No.' : '#'}{next.number} {displayTitle(next)}</span>
         </Link>

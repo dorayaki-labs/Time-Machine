@@ -70,9 +70,21 @@ export function resolvePaths(entityType, entityId) {
 
 /**
  * Applies a patch to the current repository state.
- * Returns { files: [{path, content}], changes, entity, indexChanged, error }.
+ * Returns { files: [{path, content}], changes, entity, indexChanged, current, stale, error }.
+ *
+ * `current` is the file content the patch was applied against (the real
+ * before-state), `stale` is true when the caller's baseRecord no longer
+ * matched the repository but `opts.allowStale` let the patch through.
+ * With `opts.allowStale` the optimistic-concurrency check degrades to a
+ * no-op: the proposed record is still fully validated, and the change list
+ * is computed against the CURRENT file, so a stale base can never silently
+ * hide what actually changed. Callers that need strict freshness (member
+ * submissions) leave allowStale off and retry; callers acting on an
+ * explicit human decision (accepting a reviewed contribution) turn it on
+ * so a commit landing between review and accept cannot wedge the queue.
  */
-export async function applyArchivePatch(github, patch) {
+export async function applyArchivePatch(github, patch, opts = {}) {
+  const allowStale = opts.allowStale === true;
   if (!patch || typeof patch !== 'object') return { error: 'patch must be an object.' };
   const { entityType, mode } = patch;
   if (!ENTITY_TYPES.includes(entityType)) return { error: `entityType must be one of ${ENTITY_TYPES.join(', ')}.` };
@@ -91,7 +103,7 @@ export async function applyArchivePatch(github, patch) {
       if (currentFile.missing) return { error: `${patch.entityId} does not exist in the archive.` };
       if (patch.baseRecord !== undefined
           && deepDiff(patch.baseRecord, currentFile.content).length > 0) {
-        return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
+        if (!allowStale) return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
       }
       const indexFile = await github.getJsonFile(paths.indexPath);
       if (indexFile.missing) return { error: `Index file ${paths.indexPath} not found.` };
@@ -116,8 +128,9 @@ export async function applyArchivePatch(github, patch) {
     }
     // Optimistic concurrency: when the caller states which version it based
     // the edit on, refuse to overwrite a record that changed since.
-    if (mode === 'update' && patch.baseRecord !== undefined
-        && deepDiff(patch.baseRecord, currentFile.content).length > 0) {
+    const stale = mode === 'update' && patch.baseRecord !== undefined
+      && deepDiff(patch.baseRecord, currentFile.content).length > 0;
+    if (stale && !allowStale) {
       return { error: `${patch.entityId} changed since it was loaded — reopen the editor with the latest version and reapply your changes.` };
     }
     if (mode === 'create' && !currentFile.missing) {
@@ -153,9 +166,9 @@ export async function applyArchivePatch(github, patch) {
       ? deepDiff(currentFile.content, record)
       : [{ field: '(new entry)', before: null, after: `${record.id} — ${record.title?.en ?? record.title?.ja ?? ''}`.trim() }];
     if (mode === 'update' && changes.length === 0) {
-      return { error: 'The proposed values are identical to the current record — nothing to change.' };
+      return { error: 'The proposed values are identical to the current record — nothing to change.', noChange: true, current: currentFile.content, entity: { type: entityType, id: paths.entityId, number: paths.number } };
     }
-    return { files, changes, indexChanged, entity: { type: entityType, id: paths.entityId, number: paths.number } };
+    return { files, changes, indexChanged, stale, current: currentFile.content, entity: { type: entityType, id: paths.entityId, number: paths.number } };
   }
 
   // ---- entities stored inside an array file (characters, gadgets) ---------
@@ -165,7 +178,7 @@ export async function applyArchivePatch(github, patch) {
   const index = list.findIndex((r) => r?.id === patch.entityId);
   if (mode === 'delete') {
     if (index === -1) return { error: `${patch.entityId} does not exist in the archive.` };
-    if (patch.baseRecord !== undefined && deepDiff(patch.baseRecord, list[index]).length > 0) {
+    if (patch.baseRecord !== undefined && deepDiff(patch.baseRecord, list[index]).length > 0 && !allowStale) {
       return { error: `${patch.entityId} changed since it was loaded — reopen the editor and recheck the deletion.` };
     }
     const nextList = list.filter((_, i) => i !== index);
@@ -182,8 +195,9 @@ export async function applyArchivePatch(github, patch) {
   if (mode === 'update' && index === -1) {
     return { error: `${patch.entityId} does not exist — use "create" mode.` };
   }
-  if (mode === 'update' && patch.baseRecord !== undefined
-      && deepDiff(patch.baseRecord, list[index]).length > 0) {
+  const stale = mode === 'update' && patch.baseRecord !== undefined
+    && deepDiff(patch.baseRecord, list[index]).length > 0;
+  if (stale && !allowStale) {
     return { error: `${patch.entityId} changed since it was loaded — reopen the editor with the latest version and reapply your changes.` };
   }
   if (mode === 'create' && index !== -1) {
@@ -206,11 +220,11 @@ export async function applyArchivePatch(github, patch) {
     : [{ field: '(new record)', before: null, after: record.name?.en ?? record.name?.ja ?? record.id }];
 
   if (mode === 'update' && changes.length === 0) {
-    return { error: 'The proposed values are identical to the current record — nothing to change.' };
+    return { error: 'The proposed values are identical to the current record — nothing to change.', noChange: true, current: list[index], entity: { type: entityType, id: patch.entityId, number: null } };
   }
   return {
     files: [{ path: paths.arrayPath, content: serialize(nextList) }],
-    changes, indexChanged: false,
+    changes, indexChanged: false, stale, current: mode === 'update' ? list[index] : null,
     entity: { type: entityType, id: patch.entityId, number: null },
   };
 }

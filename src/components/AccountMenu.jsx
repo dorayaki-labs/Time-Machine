@@ -62,10 +62,10 @@ export default function AccountMenu() {
             <li><Link role="menuitem" to="/account" onClick={() => setOpen(false)}><Icon name="user" size={15} /> My contributions</Link></li>
             <li><Link role="menuitem" to="/stats" onClick={() => setOpen(false)}><Icon name="stats" size={15} /> Statistics</Link></li>
             {['checker', 'admin', 'owner'].includes(role)
-              ? <li><Link role="menuitem" to="/staff" onClick={() => setOpen(false)}><Icon name="check" size={15} /> Moderation panel</Link></li>
+              ? <li><Link role="menuitem" to="/staff" onClick={() => setOpen(false)}><Icon name="shield" size={15} /> Moderation panel</Link></li>
               : null}
             <li role="separator" />
-            <li><button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}><Icon name="close" size={15} /> Sign out</button></li>
+            <li><button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}><Icon name="logout" size={15} /> Sign out</button></li>
           </ul>
         </div>
       ) : null}

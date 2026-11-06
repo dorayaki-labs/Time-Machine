@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageContainer from '@/components/PageContainer.jsx';
 import CharacterCard from '@/components/CharacterCard.jsx';
@@ -6,9 +7,87 @@ import Icon from '@/components/Icon.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
 import { getCharacters, getGadgets, getRecentlyAdded, getSeries, SERIES_IDS } from '@/lib/catalog.js';
 import { getArchiveStats } from '@/lib/statistics.js';
+import { fetchPublicLog, fetchPublicEdits } from '@/lib/stats.js';
+import { useAuth } from '@/hooks/useAuth.jsx';
+import { SUBMISSION_EVENT, EDIT_EVENT, entryPath } from '@/lib/activity.js';
 import { DOOR_ART } from '@/config.js';
 
-function RecentList() {
+/* The homepage feed: the latest community contributions and staff edits,
+   newest first, each linking to the page it changed. Falls back to the
+   "recently added" archive list whenever the backend is not configured,
+   has no activity yet, or fails — the section is never empty or broken. */
+function RecentContributions() {
+  const { backendConfigured } = useAuth();
+  const [events, setEvents] = useState(null);
+
+  useEffect(() => {
+    if (!backendConfigured) return undefined;
+    let active = true;
+    Promise.all([fetchPublicLog({ limit: 40 }), fetchPublicEdits({ limit: 40 })])
+      .then(([subs, edits]) => {
+        if (!active) return;
+        const merged = [
+          ...(subs ?? []).map((row) => ({ key: `c-${row.number}`, at: row.reviewed_at ?? row.submitted_at, row })),
+          ...(edits ?? []).map((row) => ({ key: `e-${row.id}`, at: row.created_at, row })),
+        ].sort((a, b) => String(b.at ?? '').localeCompare(String(a.at ?? '')));
+        setEvents(merged.slice(0, 10));
+      })
+      .catch(() => active && setEvents([]));
+    return () => { active = false; };
+  }, [backendConfigured]);
+
+  if (backendConfigured && events === null) {
+    return <ul className="recent-list"><li className="recent-row muted">Loading recent contributions…</li></ul>;
+  }
+  if (!backendConfigured || (events && events.length === 0)) {
+    return <ArchiveRecentList />;
+  }
+  return (
+    <ul className="recent-list">
+      {events.map(({ key, row }) => {
+        if (row.id !== undefined && row.action) {
+          const meta = EDIT_EVENT[row.action?.replace(/\./g, '_')] ?? { label: 'edited the archive', icon: 'edit' };
+          const path = entryPath(row.entity_id);
+          const body = (
+            <>
+              <span className="recent-row__type mono"><Icon name={meta.icon} size={13} /></span>
+              <span className="recent-row__num mono">{String(row.commit_sha ?? '').slice(0, 7)}</span>
+              <span className="recent-row__title">{row.editor_name ?? 'A staff member'} {meta.label} <span className="mono">{row.entity_id}</span></span>
+              <span className="recent-row__catalogue" />
+              <span className="recent-row__date">{new Date(row.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+            </>
+          );
+          return (
+            <li key={key}>
+              {path ? <Link to={path} className="recent-row">{body}</Link> : <div className="recent-row">{body}</div>}
+            </li>
+          );
+        }
+        const meta = SUBMISSION_EVENT[row.status] ?? SUBMISSION_EVENT.pending;
+        const path = entryPath(row.entry_id);
+        const body = (
+          <>
+            <span className={`recent-row__type mono recent-row__type--${meta.tone}`}>{meta.label}</span>
+            <span className="recent-row__num mono">#{row.number}</span>
+            <span className="recent-row__title">
+              {row.contributor_name ?? 'A community member'}: {row.title}
+            </span>
+            <span className="recent-row__catalogue">{row.reviewer_name && row.status === 'accepted' ? `accepted by ${row.reviewer_name}` : ''}</span>
+            <span className="recent-row__date">{new Date(row.at ?? row.submitted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+          </>
+        );
+        return (
+          <li key={key}>
+            {path ? <Link to={path} className="recent-row">{body}</Link> : <div className="recent-row">{body}</div>}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/* Fallback feed for archive-only mode: the newest records in the catalogues. */
+function ArchiveRecentList() {
   const recent = getRecentlyAdded(10);
   return (
     <ul className="recent-list">
@@ -20,7 +99,6 @@ function RecentList() {
             </span>
             <span className="recent-row__num mono">{e.kind === 'movie' ? `No.${e.number}` : `#${e.number}`}</span>
             <span className="recent-row__title">{e.title.en || <span lang="ja">{e.title.ja}</span>}</span>
-            <span className="recent-row__catalogue">{getSeries(e.seriesId).label}</span>
             <span className="recent-row__date">{e.release?.date ?? ''}</span>
           </Link>
         </li>
@@ -82,12 +160,12 @@ export default function Home() {
       <PageContainer className="home-section" as="section">
         <header className="section-head section-head--row">
           <div>
-            <h2>Recently added</h2>
-            <p>Newest and latest records, mixed across the catalogues.</p>
+            <h2>Recent contributions</h2>
+            <p>What the community changed lately — every row opens the page it touched.</p>
           </div>
-          <Link to="/contribute" className="btn btn--ghost btn--sm">Add an entry</Link>
+          <Link to="/log" className="btn btn--ghost btn--sm">Full contribution log</Link>
         </header>
-        <RecentList />
+        <RecentContributions />
       </PageContainer>
 
       <PageContainer className="home-section" as="section">

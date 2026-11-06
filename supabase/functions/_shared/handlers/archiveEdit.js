@@ -46,7 +46,10 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
   if (!ID_PATTERNS[entityType].test(id)) {
     return json({ error: `"${entityId}" is not a valid ${entityType} id.` }, 400);
   }
-  if (typeof note === 'string' && note.length > 2000) {
+  if (typeof note !== 'string' || !note.trim()) {
+    return json({ error: 'A short note explaining what you changed and why is required.' }, 400);
+  }
+  if (note.length > 2000) {
     return json({ error: 'The note is too long (2000 characters max).' }, 400);
   }
 
@@ -60,7 +63,16 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
     record: record ?? null,
     ...(baseRecord !== undefined ? { baseRecord } : {}),
   };
-  const applied = await applyArchivePatch(github, proposedPatch).catch((err) => ({ error: err.message }));
+  // The proposal is validated against the CURRENT repository state without
+  // committing. If the caller's baseRecord is stale (any commit lands between
+  // the page load and this submit — including the visitor's own accepted
+  // edit minutes ago), retry against the live file: the proposed record is
+  // complete and validated either way, and the stored baseRecord below is
+  // the REAL current file, so the review queue always shows a true diff.
+  let applied = await applyArchivePatch(github, proposedPatch).catch((err) => ({ error: err.message }));
+  if (applied.error && /changed since it was loaded/.test(applied.error)) {
+    applied = await applyArchivePatch(github, proposedPatch, { allowStale: true }).catch((err) => ({ error: err.message }));
+  }
   if (applied.error) return json({ error: applied.error }, 422);
 
   // Same spam guards as regular submissions (pending cap + daily cap), but
@@ -92,10 +104,13 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
     title,
     entry_id: id,
     entry_series: SERIES_FOR[entityType]?.(id) ?? null,
-    // The full edited record and the version it was based on, so the queue
-    // can show a real before/after diff without re-deriving anything.
-    payload: { record: cleanRecord, baseRecord: baseRecord ?? null, note: typeof note === 'string' ? note : null },
-    proposed_patch: { ...proposedPatch, record: cleanRecord },
+    // The full edited record plus the file it was ACTUALLY applied against
+    // (the live repository state, not the possibly-stale copy the editor
+    // loaded), so the queue can show a real before/after diff. The stored
+    // patch omits baseRecord: accepting re-applies against whatever the
+    // repository looks like then, without a wedge-prone freshness check.
+    payload: { record: cleanRecord, baseRecord: applied.current ?? baseRecord ?? null, note: note.trim() },
+    proposed_patch: { entityType, entityId: id, mode: 'update', record: cleanRecord },
     status: 'pending',
   });
 
@@ -105,13 +120,13 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
   await db.insertAudit({
     contribution_id: inserted.id, contribution_number: inserted.number,
     action: 'contribution.submitted', actor_id: profile.id, actor_display_name: profile.display_name,
-    entity_id: id, review_notes: typeof note === 'string' ? note : null,
+    entity_id: id, review_notes: note.trim(),
   });
   await notify(db, webhookUrl, `contribution.${inserted.id}.submitted`, 'submitted', {
     number: inserted.number, title, type: 'archive-edit',
     contributor: profile.display_name,
     entry: id,
-    notes: typeof note === 'string' ? note : null,
+    notes: note.trim(),
   });
   await flushOutbox(db, webhookUrl);
   return json({ ok: true, number: inserted.number, changes: applied.changes.length });

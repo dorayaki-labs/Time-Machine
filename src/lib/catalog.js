@@ -152,6 +152,10 @@ const state = {
 let loadPromise = null;
 let reloadPromise = null;
 
+/** Public URL for a commit in the archive repository (for log links). */
+export const commitUrl = (sha) => (sha
+  ? `https://github.com/${ARCHIVE_REPO}/commit/${String(sha).slice(0, 40)}` : null);
+
 /**
  * Merges a record file over its roster entry. The record wins on every field
  * it defines; the roster only supplies identity (id, number, path) and the
@@ -170,6 +174,7 @@ function mergeEntry(rosterEntry, record, seriesId, meta) {
   const entry = { ...base, ...(record ?? {}) };
   entry.characters = Array.isArray(entry.characters) ? entry.characters : [];
   entry.gadgets = Array.isArray(entry.gadgets) ? entry.gadgets : [];
+  entry.voiceActors = Array.isArray(entry.voiceActors) ? entry.voiceActors : [];
   entry.languages = Array.isArray(entry.languages) ? entry.languages : [];
   entry.alternateTitles = Array.isArray(entry.alternateTitles) ? entry.alternateTitles : [];
   entry.image = entry.image && typeof entry.image === 'object'
