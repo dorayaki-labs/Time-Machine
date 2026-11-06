@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 3,
+  "id": "movie-0061",
+  "type": "movie",
+  "seriesId": "movies",
+  "number": 61,
+  "title": {
+    "en": "Stand By Me Doraemon",
+    "ja": "STAND BY ME ドラえもん"
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2014-08-08",
+    "precision": "day",
+    "region": "Japan"
+  },
+  "summary": "Doraemon, a robotic cat from the future, arrives to help Nobita become a success and a happy person, changing his life forever. Together they have endless adventures with futuristic toys. As Nobita gets closer to Shizuka, he also has to learn to be independent and face life challenges before Doraemon’s time in the past runs out.",
+  "image": {
+    "url": "https://images.fanart.tv/fanart/stand-by-me-doraemon-62d6a344e2f91.jpg",
+    "alt": "Stand By Me Cover Art"
+  },
+  "screenshots": [
+    {
+      "url": "https://i.postimg.cc/9Qscnf1M/1.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/g0RGFPBY/2.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/yN974zrx/3.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/nL7nbtwC/4.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/W4rsLPft/5.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/CKDwTV6Z/6.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/yN974zrS/7.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/TPmTMXHn/8.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/cJYdyN5Q/9.png",
+      "alt": null
+    }
+  ],
+  "characters": [
+    "char-doraemon",
+    "char-nobita",
+    "char-shizuka",
+    "char-gian",
+    "char-suneo",
+    "char-dekisugi"
+  ],
+  "gadgets": [
+    "gadget-anywhere-door",
+    "gadget-bamboo-copter",
+    "gadget-time-machine",
+    "gadget-memory-bread"
+  ],
+  "voiceActors": [
+    {
+      "name": {
+        "en": "Wasabi Mizuta",
+        "ja": "水田わさび"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Megumi Ōhara",
+        "ja": "大原めぐみ"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Satoshi Tsumabuki",
+        "ja": "妻夫木聡"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Yumi Kakazu",
+        "ja": "かかずゆみ"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Tomokazu Seki",
+        "ja": "関智一"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Subaru Kimura",
+        "ja": "木村昴"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Sachi Matsumoto",
+        "ja": "松本さち"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Vanilla Yamazaki",
+        "ja": "山崎バニラ"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Shihoko Hagino",
+        "ja": "萩野志保子"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Wataru Takagi",
+        "ja": "高木渉"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Kotono Mitsuishi",
+        "ja": "三石琴乃"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Yasunori Matsumoto",
+        "ja": "松本保典"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Miyako Takeuchi",
+        "ja": "竹内都子"
+      },
+      "language": "ja",
+      "version": null
+    },
+    {
+      "name": {
+        "en": "Aruno Tahara",
+        "ja": "田原アルノ"
+      },
+      "language": "ja",
+      "version": null
+    }
+  ],
+  "sources": [
+    {
+      "type": "embed",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/s-2/69882/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto Sub",
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": "HQ",
+      "notes": null
+    },
+    {
+      "type": "embed",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/s-2/69882/dub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto Dub",
+      "language": "en",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": "HQ",
+      "notes": null
+    }
+  ],
+  "durationMinutes": 95,
+  "director": {
+    "en": "Takashi Yamazaki, Ryūichi Yagi",
+    "ja": "山崎貴、八木竜一"
+  }
+}
