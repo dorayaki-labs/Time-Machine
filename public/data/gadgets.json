@@ -116,14 +116,14 @@
   {
     "id": "gadget-small-light",
     "name": {
-      "en": "Gadget 7",
-      "ja": null
+      "en": "Small Light",
+      "ja": "スモールライト"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Small Light is a gadget that can shrink almost anything it shines on. It can turn large objects, animals, and even people into much smaller versions of themselves.",
+    "howItWorks": "Point the Small Light at the object or person you want to shrink and press the button. The light will reduce their size instantly",
     "image": {
-      "url": null,
+      "url": "https://vlitzz.store/gadgets/shinylight.png",
       "alt": null
     },
     "firstAppearance": {
