@@ -78,14 +78,14 @@
   {
     "id": "gadget-memory-bread",
     "name": {
-      "en": "Gadget 5",
-      "ja": null
+      "en": "Copying Toast",
+      "ja": "暗記 パン"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Copying Toast is a gadget that lets you memorize anything written on a piece of paper. Just press it against the text, and the writing gets copied onto the toast.",
+    "howItWorks": "Place a slice of Copying Toast over the text you want to copy, press it gently, and then eat it to memorize everything written on it.",
     "image": {
-      "url": null,
+      "url": "https://vlitzz.store/gadgets/copyToast.png",
       "alt": null
     },
     "firstAppearance": {
