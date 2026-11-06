@@ -70,4 +70,3 @@ npm run build      # production build into dist/
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The primary way to contribute is the
 website's forms — no GitHub account needed, just Discord.
-:trollface::trollface::trollface::trollface:
