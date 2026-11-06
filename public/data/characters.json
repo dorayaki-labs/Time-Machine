@@ -21,8 +21,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": "Doraemon first appeared as a character in the Doraemon manga series (1969), published in Japan by Shogakukan."
-    },
-    "references": []
+    }
   },
   {
     "id": "char-nobita",
@@ -45,8 +44,7 @@
     "firstAppearance": {
       "entryId": null,
       "note": "Nobita first appeared in the 1969 manga debut under Shogakukan."
-    },
-    "references": []
+    }
   },
   {
     "id": "char-shizuka",
@@ -224,15 +222,15 @@
   {
     "id": "char-jaiko",
     "name": {
-      "en": "Character 7",
-      "ja": null
+      "en": "Jaiko Gouda",
+      "ja": "ジャイ子"
     },
     "aliases": [],
-    "description": null,
+    "description": "A creative yet determined young girl who really loves drawing manga and hopes to become a professional manga artist someday.",
     "category": "family",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://vlitzz.store/char/jaikogouda.png",
+      "alt": "Jaiko Gouda's Appearance"
     },
     "voiceActors": [],
     "firstAppearance": {
