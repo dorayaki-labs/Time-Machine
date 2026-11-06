@@ -127,7 +127,7 @@
         "ja": "松本さち"
       },
       "language": "ja",
-      "characterId": null
+      "characterId": "Sewashi Nobi"
     },
     {
       "name": {
@@ -135,7 +135,7 @@
         "ja": "山崎バニラ"
       },
       "language": "ja",
-      "characterId": null
+      "characterId": "Jaiko Gouda"
     },
     {
       "name": {
@@ -151,35 +151,39 @@
         "ja": "高木渉"
       },
       "language": "ja",
-      "characterId": "sensei"
+      "characterId": "Sensei"
     },
     {
       "name": {
         "en": "Kotono Mitsuishi",
         "ja": "三石琴乃"
       },
-      "language": "ja"
+      "language": "ja",
+      "characterId": "Tamako Nobi"
     },
     {
       "name": {
         "en": "Yasunori Matsumoto",
         "ja": "松本保典"
       },
-      "language": "ja"
+      "language": "ja",
+      "characterId": "Nobisuke Nobi"
     },
     {
       "name": {
         "en": "Miyako Takeuchi",
         "ja": "竹内都子"
       },
-      "language": "ja"
+      "language": "ja",
+      "characterId": "Gians Mother"
     },
     {
       "name": {
         "en": "Aruno Tahara",
         "ja": "田原アルノ"
       },
-      "language": "ja"
+      "language": "ja",
+      "characterId": "Yoshio Minamoto"
     }
   ],
   "sources": [
