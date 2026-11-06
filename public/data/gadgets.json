@@ -97,14 +97,14 @@
   {
     "id": "gadget-translation-konjac",
     "name": {
-      "en": "Gadget 6",
-      "ja": null
+      "en": "Translation Gummy",
+      "ja": "ほんやくコンニャク - Translation Konjac"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Translation Gummy is a special candy that lets you understand and speak any language. Once eaten, it allows you to communicate with people who speak languages you don't know.",
+    "howItWorks": "Simply eat the Translation Gummy and you'll be able to understand and speak other languages for a limited time.",
     "image": {
-      "url": null,
+      "url": "https://vlitzz.store/gadgets/translationgum.png",
       "alt": null
     },
     "firstAppearance": {
