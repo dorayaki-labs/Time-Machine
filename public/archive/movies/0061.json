@@ -79,7 +79,7 @@
         "ja": "水田わさび"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-doraemon"
     },
     {
       "name": {
@@ -87,7 +87,7 @@
         "ja": "大原めぐみ"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-nobita"
     },
     {
       "name": {
@@ -95,7 +95,7 @@
         "ja": "妻夫木聡"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-nobita"
     },
     {
       "name": {
@@ -103,7 +103,7 @@
         "ja": "かかずゆみ"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-shizuka"
     },
     {
       "name": {
@@ -111,7 +111,7 @@
         "ja": "関智一"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-suneo"
     },
     {
       "name": {
@@ -119,7 +119,7 @@
         "ja": "木村昴"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-gian"
     },
     {
       "name": {
@@ -127,7 +127,7 @@
         "ja": "松本さち"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Sewashi Nobi"
     },
     {
       "name": {
@@ -135,7 +135,7 @@
         "ja": "山崎バニラ"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Jaiko Gouda"
     },
     {
       "name": {
@@ -143,7 +143,7 @@
         "ja": "萩野志保子"
       },
       "language": "ja",
-      "version": null
+      "characterId": "char-dekisugi"
     },
     {
       "name": {
@@ -151,7 +151,7 @@
         "ja": "高木渉"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Sensei"
     },
     {
       "name": {
@@ -159,7 +159,7 @@
         "ja": "三石琴乃"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Tamako Nobi"
     },
     {
       "name": {
@@ -167,7 +167,7 @@
         "ja": "松本保典"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Nobisuke Nobi"
     },
     {
       "name": {
@@ -175,7 +175,7 @@
         "ja": "竹内都子"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Gians Mother"
     },
     {
       "name": {
@@ -183,7 +183,7 @@
         "ja": "田原アルノ"
       },
       "language": "ja",
-      "version": null
+      "characterId": "Yoshio Minamoto"
     }
   ],
   "sources": [
