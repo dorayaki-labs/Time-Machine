@@ -196,15 +196,15 @@
       "ja": null
     },
     "aliases": [],
-    "description": null,
+    "description": "The Spy Set is a collection of gadgets designed to help you secretly observe people, gather information, and investigate places without being noticed.",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://vlitzz.store/gadgets/spyset.png",
+      "alt": "Spy Set"
     },
     "firstAppearance": {
       "entryId": null,
       "note": null
     },
-    "howItWorks": null
+    "howItWorks": "Use the different tools included in the set to watch your surroundings, listen from a distance, and collect information while staying hidden."
   }
 ]
