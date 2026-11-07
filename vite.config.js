@@ -22,8 +22,7 @@ const r = (p) => fileURLToPath(new URL(p, import.meta.url));
 // right base even when CI vars are missing) → "/" for dev and root hosting.
 export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), '');
-  const basePath = process.env.VITE_BASE_PATH || fileEnv.VITE_BASE_PATH || '/';
-
+const basePath = process.env.VITE_BASE_PATH || '/';
   return {
     base: basePath,
     plugins: [react(), baseUrlPlugin(basePath)],
