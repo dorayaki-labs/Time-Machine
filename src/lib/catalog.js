@@ -30,7 +30,7 @@ const BASE = import.meta.env.BASE_URL || '/';
 // In dev the site copy is used directly (edits show up instantly, no GitHub
 // round trip). VITE_ARCHIVE_REPO / VITE_ARCHIVE_BRANCH override the defaults
 // for forks.
-const ARCHIVE_REPO = import.meta.env.VITE_ARCHIVE_REPO || 'karizzmaa/time-machine';
+const ARCHIVE_REPO = import.meta.env.VITE_ARCHIVE_REPO || 'dorayaki-labs/time-machine';
 const ARCHIVE_BRANCH = import.meta.env.VITE_ARCHIVE_BRANCH || 'main';
 const SHA_CACHE_KEY = 'tm-archive-head';
 // Short on purpose: the HEAD lookup is one tiny unauthenticated API request,
