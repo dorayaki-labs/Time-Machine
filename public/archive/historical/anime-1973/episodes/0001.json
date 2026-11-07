@@ -1,30 +1,30 @@
 {
-  "schemaVersion": 3,
   "id": "anime-1973-0001",
   "type": "episode",
-  "seriesId": "anime-1973",
-  "number": 1,
-  "title": {
-    "en": "Doraemon Came Out! , The Bow-Bow Grasshopper Riot ",
-    "ja": "出た!!ドラえもん , ペコペコバッタ大騒動"
+  "image": {
+    "alt": null,
+    "url": null
   },
-  "alternateTitles": [],
-  "originalLanguage": "ja",
+  "title": {
+    "en": "Doraemon Came Out!",
+    "ja": "出た!!ドラえもん"
+  },
+  "number": 1,
+  "gadgets": [],
   "release": {
     "date": "1973-04-01",
-    "precision": "day",
-    "region": "JP"
+    "region": "JP",
+    "precision": "day"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [],
+  "summary": null,
+  "seriesId": "anime-1973",
+  "updatedAt": "2026-11-02",
+  "characters": [],
+  "screenshots": [],
+  "voiceActors": [],
   "preservation": null,
-  "updatedAt": "2026-11-02"
+  "schemaVersion": 3,
+  "alternateTitles": [],
+  "originalLanguage": "ja"
 }
