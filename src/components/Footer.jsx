@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="container site-footer__inner">
         <div className="site-footer__brand">
           <Link to="/" aria-label="Time Machine — home"><img src={LOGO} alt="Time Machine" width="132" height="36" loading="lazy" /></Link>
-          <p>A free, community-driven archive documenting Doraemon's episodes, movies, characters, and history, so none of it is forgotten.</p>
+          <p>A community-run archive of Doraemon’s episodes, movies, characters and gadgets — free, and open to everyone.</p>
           <p className="site-footer__tagline">{TAGLINE}</p>
         </div>
 
@@ -27,7 +27,9 @@ export default function Footer() {
           <h2>Project</h2>
           <ul>
             <li><Link to="/about">About</Link></li>
+            <li><Link to="/credits">Credits</Link></li>
             <li><Link to="/contribute">Contribute</Link></li>
+            <li><Link to="/customize">Customize</Link></li>
             <li><Link to="/search">Search</Link></li>
             <li><Link to="/stats">Statistics</Link></li>
             <li><Link to="/log">Contribution log</Link></li>

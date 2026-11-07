@@ -28,17 +28,24 @@ export default function ContributionLog() {
   useEffect(() => {
     let active = true;
     if (!backendConfigured) return undefined;
-    Promise.all([fetchPublicLog({ limit: 80 }), fetchPublicEdits({ limit: 80 })])
+    // The two feeds are fetched independently: if one endpoint hiccups, the
+    // other still renders instead of taking the whole page down with it.
+    Promise.allSettled([fetchPublicLog({ limit: 80 }), fetchPublicEdits({ limit: 80 })])
       .then(([submissions, edits]) => {
         if (!active) return;
+        const failed = [submissions, edits].filter((r) => r.status === 'rejected');
+        if (failed.length === 2) {
+          setError(String(failed[1].reason?.message ?? failed[0].reason?.message ?? 'network error'));
+          return;
+        }
         const events = [
-          ...(submissions ?? []).map((row) => ({
+          ...(submissions.status === 'fulfilled' ? submissions.value ?? [] : []).map((row) => ({
             key: `c-${row.number}`,
             kind: 'submission',
             at: row.reviewed_at ?? row.submitted_at,
             submission: row,
           })),
-          ...(edits ?? []).map((row) => ({
+          ...(edits.status === 'fulfilled' ? edits.value ?? [] : []).map((row) => ({
             key: `e-${row.id}`,
             kind: 'edit',
             at: row.created_at,
@@ -46,8 +53,8 @@ export default function ContributionLog() {
           })),
         ].sort((a, b) => String(b.at ?? '').localeCompare(String(a.at ?? '')));
         setRows(events);
-      })
-      .catch((err) => active && setError(err.message));
+        setError(failed.length ? `Part of the log did not load (${failed[0].reason?.message ?? 'network error'}).` : null);
+      });
     return () => { active = false; };
   }, [backendConfigured]);
 
@@ -64,10 +71,8 @@ export default function ContributionLog() {
         <p className="eyebrow">Community project</p>
         <h1>Contribution log</h1>
         <p className="page-opening__lead">
-          Everything the community does to the archive, newest first: new submissions, review
-          decisions, and direct edits by the staff. Select any entry to see who contributed, who
-          accepted it, and when it happened. Review notes and submission details stay private to
-          the people involved.
+          Every change to the archive, newest first — submissions, review decisions, staff edits.
+          Open any entry for the details; review notes stay between the people involved.
         </p>
       </div>
 
@@ -75,7 +80,7 @@ export default function ContributionLog() {
         <EmptyState icon="archive" title="The contribution backend is not connected yet">
           <p>Contributions will appear here once the backend is configured.</p>
         </EmptyState>
-      ) : error ? (
+      ) : error && rows === null ? (
         <p className="notice notice--warn">
           The log could not be loaded right now ({error}). If this mentions a missing table or
           view, the 0002_public_activity.sql migration still needs to be run in the Supabase
@@ -89,6 +94,7 @@ export default function ContributionLog() {
         </EmptyState>
       ) : (
         <>
+          {error ? <p className="notice notice--warn" role="status">{error} What did load is shown below.</p> : null}
           <div className="panel-tabs" role="tablist" aria-label="Filter activity">
             {[['all', 'All activity'], ['submissions', 'Submissions'], ['approved', 'Approved'], ['edits', 'Staff edits']].map(([id, label]) => (
               <button key={id} type="button" className={filter === id ? 'is-active' : ''}

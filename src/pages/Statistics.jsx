@@ -49,8 +49,8 @@ export default function Statistics() {
         <p className="eyebrow">Community project</p>
         <h1>Statistics</h1>
         <p className="page-opening__lead">
-          Archive coverage and community activity, calculated live from the archive data and the
-          contribution database. Every number on this page reflects real records — nothing is hardcoded.
+          How far the archive reaches, and what the community has been doing — computed live
+          from the records.
         </p>
       </div>
 
@@ -86,7 +86,7 @@ export default function Statistics() {
             <StatCard value={community.contributions_pending} label="pending review" hint="waiting for a checker" />
             <StatCard value={community.contributors} label="contributors" hint="accounts with at least one accepted contribution" />
           </div>
-          <p className="muted small">Deleted submissions are not counted anywhere on this page.</p>
+          <p className="muted small">Withdrawn and deleted submissions are left out of these counts.</p>
         </>
       )}
     </PageContainer>

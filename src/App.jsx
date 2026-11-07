@@ -22,6 +22,8 @@ import Gadgets from '@/pages/Gadgets.jsx';
 import GadgetDetails from '@/pages/GadgetDetails.jsx';
 import Search from '@/pages/Search.jsx';
 import About from '@/pages/About.jsx';
+import Credits from '@/pages/Credits.jsx';
+import Customize from '@/pages/Customize.jsx';
 import Contribute from '@/pages/Contribute.jsx';
 import Statistics from '@/pages/Statistics.jsx';
 import ContributionLog from '@/pages/ContributionLog.jsx';
@@ -39,7 +41,15 @@ function ScrollToTop() {
     // Prev/next navigation from the bottom of an episode or movie page passes
     // preserveScroll so the reader stays where they were instead of being
     // thrown back to the top of every new page.
-    if (!state?.preserveScroll) window.scrollTo(0, 0);
+    if (state?.preserveScroll) return;
+    // html { scroll-behavior: smooth } would turn this into a long animated
+    // scroll while the new page is already fading in — which reads as the
+    // background glitching. Navigation jumps are always instant.
+    const root = document.documentElement;
+    const restore = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    root.style.scrollBehavior = restore;
   }, [pathname, state]);
   return null;
 }
@@ -77,6 +87,8 @@ function Routed() {
         <Route path="/gadgets/:id" element={<GadgetDetails />} />
         <Route path="/search" element={<Search />} />
         <Route path="/about" element={<About />} />
+        <Route path="/credits" element={<Credits />} />
+        <Route path="/customize" element={<Customize />} />
         <Route path="/contribute" element={<Contribute />} />
         <Route path="/stats" element={<Statistics />} />
         <Route path="/log" element={<ContributionLog />} />

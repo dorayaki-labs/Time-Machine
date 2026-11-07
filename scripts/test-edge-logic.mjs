@@ -123,10 +123,15 @@ test('every FORM_SPECS type is one the frontend submits', () => {
 
 // ---------------------------------------------------------------- discord.js
 test('embed sanitizes user text and never allows mentions', () => {
-  const embed = buildEmbed('submitted', { number: 12, title: '@everyone <@123> hi', contributor: 'bob', type: 'source' });
-  const field = embed.embeds[0].fields.find((f) => f.name === 'Name');
-  assert.ok(!field.value.includes('@everyone'));
-  assert.ok(field.value.includes('[mention]'));
+  const embed = buildEmbed('submitted', {
+    number: 12, title: '@everyone <@123> hi', contributor: 'bob', type: 'source', notes: 'ping @here',
+  });
+  const body = embed.embeds[0];
+  // The summary line and the notes field both go through sanitize().
+  assert.ok(!JSON.stringify(body).includes('@everyone'));
+  assert.ok(!JSON.stringify(body).includes('@here'));
+  assert.ok(body.description.includes('[mention]'));
+  assert.ok(body.fields.find((f) => f.name === 'Notes').value.includes('@\u200bhere'));
   assert.deepEqual(embed.allowed_mentions, { parse: [] });
 });
 
@@ -135,8 +140,18 @@ test('accepted embed includes changes and commit', () => {
     number: 12, title: 'Fix title', contributor: 'bob', reviewer: 'checker',
     changes: '• title.en: Old → New', commit: 'abc1234',
   });
-  const text = JSON.stringify(embed);
-  assert.ok(text.includes('abc1234') && text.includes('title.en'));
+  const body = embed.embeds[0];
+  assert.ok(body.description.includes('abc1234'));
+  assert.ok(body.fields.find((f) => f.name === 'Changed fields').value.includes('title.en'));
+});
+
+test('embed summaries stay compact and human', () => {
+  const submitted = buildEmbed('submitted', { number: 9, title: 'Add source', contributor: 'alice', type: 'source', entry: 'movie-0001' });
+  assert.ok(submitted.embeds[0].description.includes('**alice**'));
+  assert.ok(submitted.embeds[0].description.includes('a viewing source'));
+  assert.ok(submitted.embeds[0].description.includes('`movie-0001`'));
+  const role = buildEmbed('role', { target: 'bob', role: 'checker', action: 'grant', actor: 'owner' });
+  assert.ok(role.embeds[0].description.includes('granted the **checker** role'));
 });
 
 // ---------------------------------------------------------------- rbac.js

@@ -24,8 +24,11 @@
     <link rel="preload" href="%BASE_URL%fonts/NotoSansJP-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <script>
       // Apply the saved theme (or the OS setting) before first paint to avoid a flash.
-      // Keep this list in sync with THEMES in src/hooks/useTheme.js and the
-      // :root[data-theme] blocks in src/styles/variables.css.
+      // 'tm-theme' holds either a built-in palette id or 'custom:<uuid>' pointing
+      // into the 'tm-themes' registry. Before React boots only the page background
+      // is visible, so for custom themes it is enough to apply the base palette
+      // plus the background colour override; the full token set is applied by
+      // applySavedThemeToDocument() in main.jsx before the first render.
       (function () {
         var THEMES = ['light', 'dark', 'midnight', 'sakura', 'ocean', 'forest', 'amethyst'];
         var COLORS = {
@@ -34,10 +37,28 @@
         };
         try {
           var stored = localStorage.getItem('tm-theme');
-          var theme = stored && COLORS[stored] ? stored
-            : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          var theme = null;
+          var bgOverride = null;
+          if (stored && stored.indexOf('custom:') === 0) {
+            try {
+              var saved = JSON.parse(localStorage.getItem('tm-themes') || '[]');
+              var custom = (saved || []).filter(function (t) {
+                return t && t.id === stored && THEMES.indexOf(t.baseTheme) !== -1;
+              })[0];
+              if (custom) {
+                theme = custom.baseTheme;
+                var bg = custom.settings && custom.settings.colors && custom.settings.colors.bg;
+                if (bg && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(bg)) bgOverride = bg;
+              }
+            } catch (e) { /* unreadable registry: fall back below */ }
+          }
+          if (!theme) {
+            theme = stored && COLORS[stored] ? stored
+              : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
           document.documentElement.dataset.theme = theme;
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', COLORS[theme]);
+          if (bgOverride) document.documentElement.style.setProperty('--bg', bgOverride);
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', bgOverride || COLORS[theme]);
         } catch (e) { /* private mode: light theme is the default */ }
       })();
     </script>

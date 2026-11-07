@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import ThemePicker from './ThemePicker.jsx';
+import Icon from './Icon.jsx';
 import { NAV_ITEMS } from './navItems.js';
 
 export default function MobileNavigation({ open, onNavigate }) {
@@ -15,7 +15,9 @@ export default function MobileNavigation({ open, onNavigate }) {
         ))}
       </ul>
       <div className="mobile-nav__foot">
-        <ThemePicker />
+        <NavLink to="/customize" onClick={onNavigate} className="mobile-nav__customize">
+          <Icon name="palette" size={16} /> Customize
+        </NavLink>
       </div>
     </nav>
   );

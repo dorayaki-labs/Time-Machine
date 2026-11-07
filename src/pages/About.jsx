@@ -1,67 +1,55 @@
+// About. Written as an editorial page: a short lead, then numbered
+// chapters with the heading beside the text, not a wall of identical cards.
+
 import { Link } from 'react-router-dom';
 import PageContainer from '@/components/PageContainer.jsx';
-import Icon from '@/components/Icon.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
 import { DOOR_ART } from '@/config.js';
 
-const SECTIONS = [
+const CHAPTERS = [
   {
-    id: 'worth-preserving',
-    icon: 'film',
-    title: 'A franchise worth preserving',
+    id: 'idea',
+    kicker: 'The idea',
+    title: 'Why this exists',
     body: [
-      'Doraemon has been broadcast since 1979, across two long-running television series, more than forty theatrical films, and thousands of stories. It is one of the most watched animated franchises on Earth.',
-      'Yet finding and exploring its history is surprisingly difficult. Its content is scattered across databases, fan sites, and regional releases, many of them incomplete or out of date.',
-      'Time Machine exists to document what is known, organize what can be found, and keep the archive easy to explore and to contribute to.',
+      'Doraemon has been on the air almost continuously since 1979 — two television series, forty-plus theatrical films, thousands of individual stories. Few cartoons can match that. Now try looking up one episode’s original broadcast date.',
+      'The information is out there, but it is scattered across databases, fan wikis and regional releases, much of it incomplete or contradicting itself. Time Machine gathers it in one place: what is known, where it came from, and where you can watch it.',
     ],
   },
   {
-    id: 'disappearing',
-    icon: 'alert',
-    title: 'Preventing history from disappearing',
+    id: 'lost',
+    kicker: 'Why it matters',
+    title: 'The 1973 series',
     body: [
-      'The original 1973 anime is the warning. Of its 52 stories, only a fraction survive today, and much of what remains does so in fragments.',
-      'The historical section of this archive tracks the preservation status of every 1973 story: what survives, what survives only in part, and what is still lost.',
-      'The same care is applied to everything else in the archive. Broadcast dates, titles, and credits are recorded with their sources, so the record stays checkable.',
+      'The first Doraemon anime, from 1973, is the cautionary tale. Of its 52 stories only a fraction survives today, most of that in fragments. When something drops out of circulation for that long, it tends to stay lost.',
+      'That series gets its own historical section here, tracking story by story what survives, what survives only in part, and what is gone. Everything else gets the same care: broadcast dates, titles and credits are recorded with their sources, so the record stays checkable.',
     ],
   },
   {
-    id: 'independent',
-    icon: 'check',
-    title: 'Independent and non-commercial',
+    id: 'rules',
+    kicker: 'The rules',
+    title: 'What this is',
     body: [
-      'Time Machine is an independent, non-commercial project maintained by the community.',
-      'It is not a streaming platform. Nothing copyrighted is hosted here: the archive records facts, sources, and links to places where content can be watched.',
-      'Doraemon, its characters, artwork, and media belong to their respective rights holders. This is an unofficial fan project with no affiliation or endorsement.',
+      'An archive, not a streaming site. Nothing copyrighted is hosted here — the archive records facts and sources, and links to places where something can legally be watched. No ads, no subscriptions, no account needed to browse.',
+      'It is also an unofficial fan project. Doraemon, its characters and artwork belong to their rights holders; there is no affiliation or endorsement, and there never will be.',
     ],
   },
   {
-    id: 'free',
-    icon: 'play',
-    title: 'Always free',
+    id: 'contributions',
+    kicker: 'Contributions',
+    title: 'How it grows',
     body: [
-      'The archive is completely free to use, and it always will be.',
-      'There is no subscription, no paid tier, and no advertising. The goal is simply to make Doraemon\'s history accessible to anyone who wants to explore it.',
+      'Most of what fills the gaps comes from the community. People document episodes, verify titles and broadcast dates, write synopses, identify characters and gadgets, and submit viewing sources.',
+      // eslint-disable-next-line react/jsx-key -- keyed by index in the map below
+      <>Sign in with Discord, fill in a form — or press <em>Edit this entry</em> on any page — and a checker looks at it before anything is published. You can follow each of your submissions, pending or decided, in your own contribution history. Accepted changes land in the public log and on the statistics page.</>,
     ],
   },
   {
-    id: 'community',
-    icon: 'user',
-    title: 'Community preservation',
-    body: [
-      'An archive of this size cannot be completed by one person alone.',
-      'People help by documenting episodes, verifying titles and broadcast dates, writing synopses, identifying characters and gadgets, and submitting viewing sources.',
-      'Contributions go through the site: sign in with Discord, fill in a form, and a checker reviews it before anything is published. You can follow every submission — accepted, declined, pending — in your own contribution history.',
-      'Every checked contribution makes the archive a little more complete, and every accepted one appears in the public contribution log and on the Statistics page.',
-    ],
-  },
-  {
-    id: 'open-data',
-    icon: 'archive',
+    id: 'open',
+    kicker: 'The records',
     title: 'Open by design',
     body: [
-      'The entire archive lives in a public GitHub repository. Every episode file, every correction, and every review decision is visible in the commit history — nothing happens behind a curtain.',
-      'That openness is also what keeps the record honest: anyone can check where a piece of information came from, and anyone can propose a better version of it.',
+      'The whole archive lives in a public GitHub repository. Every episode file, every correction, every review decision is visible in the commit history — nothing happens behind a curtain. Anyone can check where a piece of information came from, and anyone can propose a better version of it.',
     ],
   },
 ];
@@ -74,9 +62,9 @@ export default function About() {
         <div className="about__intro">
           <p className="eyebrow">About the project</p>
           <h1>Why Time Machine exists.</h1>
-          <p className="page-opening__lead">
-            A free, community-maintained archive of the Doraemon franchise — every episode, movie,
-            character, and gadget, documented carefully and checked by people who care about it.
+          <p className="about__lead">
+            A community-maintained record of the whole Doraemon franchise — episodes, movies,
+            characters, gadgets — free to browse and open to anyone who wants to help.
           </p>
           <ul className="about__facts" aria-label="The archive at a glance">
             <li><strong>3</strong><span>TV series covered</span></li>
@@ -87,22 +75,27 @@ export default function About() {
         <img className="about__art" src={DOOR_ART} alt="" width="260" height="260" loading="lazy" />
       </header>
 
-      <div className="about__grid">
-        {SECTIONS.map((s) => (
-          <section key={s.id} className="about-card" aria-labelledby={`${s.id}-t`}>
-            <span className="about-card__icon"><Icon name={s.icon} size={20} /></span>
-            <h2 id={`${s.id}-t`}>{s.title}</h2>
-            <div className="about-card__text">{s.body.map((p) => <p key={p.slice(0, 24)}>{p}</p>)}</div>
+      <div className="about__chapters">
+        {CHAPTERS.map((chapter, i) => (
+          <section key={chapter.id} className="about-chapter" aria-labelledby={`${chapter.id}-t`}>
+            <div className="about-chapter__side">
+              <span className="about-chapter__num mono" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <span className="about-chapter__kicker">{chapter.kicker}</span>
+            </div>
+            <div className="about-chapter__body">
+              <h2 id={`${chapter.id}-t`}>{chapter.title}</h2>
+              {chapter.body.map((paragraph, j) => <p key={j}>{paragraph}</p>)}
+            </div>
           </section>
         ))}
       </div>
 
       <section className="about-closing" aria-label="Closing statement">
-        <p className="about-closing__line">Stories shouldn't disappear simply because they're difficult to find.</p>
-        <p className="about-closing__line about-closing__line--strong">Let's keep them in time.</p>
+        <p className="about-closing__line">Stories shouldn’t disappear just because they’re hard to find.</p>
+        <p className="about-closing__line about-closing__line--strong">Let’s keep them in time.</p>
         <div className="btn-row about-closing__actions">
           <Link to="/contribute" className="btn btn--primary">Help build the archive</Link>
-          <Link to="/log" className="btn btn--ghost">See recent contributions</Link>
+          <Link to="/credits" className="btn btn--ghost">Credits</Link>
           <Link to="/historical/1973" className="btn btn--ghost">Browse the 1973 archive</Link>
         </div>
       </section>

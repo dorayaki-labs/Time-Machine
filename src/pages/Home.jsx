@@ -23,16 +23,19 @@ function RecentContributions() {
   useEffect(() => {
     if (!backendConfigured) return undefined;
     let active = true;
-    Promise.all([fetchPublicLog({ limit: 40 }), fetchPublicEdits({ limit: 40 })])
+    Promise.allSettled([fetchPublicLog({ limit: 40 }), fetchPublicEdits({ limit: 40 })])
       .then(([subs, edits]) => {
         if (!active) return;
+        if (subs.status === 'rejected' && edits.status === 'rejected') {
+          setEvents([]);
+          return;
+        }
         const merged = [
-          ...(subs ?? []).map((row) => ({ key: `c-${row.number}`, at: row.reviewed_at ?? row.submitted_at, row })),
-          ...(edits ?? []).map((row) => ({ key: `e-${row.id}`, at: row.created_at, row })),
+          ...(subs.status === 'fulfilled' ? subs.value ?? [] : []).map((row) => ({ key: `c-${row.number}`, at: row.reviewed_at ?? row.submitted_at, row })),
+          ...(edits.status === 'fulfilled' ? edits.value ?? [] : []).map((row) => ({ key: `e-${row.id}`, at: row.created_at, row })),
         ].sort((a, b) => String(b.at ?? '').localeCompare(String(a.at ?? '')));
         setEvents(merged.slice(0, 10));
-      })
-      .catch(() => active && setEvents([]));
+      });
     return () => { active = false; };
   }, [backendConfigured]);
 
@@ -119,9 +122,9 @@ export default function Home() {
         <PageContainer className="hero__inner">
           <div className="hero__copy">
             <p className="eyebrow">The Doraemon community archive</p>
-            <h1 className="hero__slogan">By the community, for the community.</h1>
+            <h1 className="hero__slogan">Every episode. Every movie. Every gadget.</h1>
             <p className="hero__lead">
-              Every documented episode, movie, character, and gadget of Doraemon, in one free and open archive.
+              A free, open record of the Doraemon franchise, kept by the people who use it.
               {' '}{stats.episodes + stats.movies} entries and counting.
             </p>
             <div className="btn-row">
@@ -138,7 +141,7 @@ export default function Home() {
       <PageContainer className="home-section" as="section" id="archives">
         <header className="section-head">
           <h2>The catalogues</h2>
-          <p>Each catalogue is stored separately, so one can grow without disturbing the others.</p>
+          <p>Start anywhere — everything links together.</p>
         </header>
         <ul className="catalogue-index">
           {SERIES_IDS.map((id) => {

@@ -15,17 +15,26 @@ import './styles/global.css';
 import './styles/navigation.css';
 import './styles/cards.css';
 import './styles/pages.css';
+import './styles/studio.css';
 import './styles/responsive.css';
 import './styles/backend.css';
 import App from './App.jsx';
+import { ThemeProvider, applySavedThemeToDocument } from '@/hooks/useTheme.jsx';
+
+// The saved theme's full token set (custom colours, density, radius, …) goes
+// on the document before the first render — the inline script in index.html
+// already handled the base palette and background, so nothing flashes.
+applySavedThemeToDocument();
 
 // The router must know the deploy prefix — import.meta.env.BASE_URL is
 // "/time-machine/" on GitHub Pages project sites. Without it, every URL
 // (including the site root) falls through to the 404 page.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/+$/, '') || '/'}>
-      <App />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/+$/, '') || '/'}>
+        <App />
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>,
 );

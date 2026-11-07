@@ -29,8 +29,6 @@
   font-family: var(--mono); font-size: 0.72rem; border: 1px solid var(--border);
   border-radius: 5px; padding: 0 5px; color: var(--text-3);
 }
-.theme-toggle { color: var(--text-2); }
-.theme-toggle:hover { color: var(--text); transform: translatey(-1px); }
 
 .mobile-nav {
   display: none; border-bottom: 1px solid var(--border); background: var(--surface);
@@ -48,8 +46,8 @@
 /* ---------- search overlay ---------- */
 .search-overlay {
   position: fixed; inset: 0; z-index: 90; display: grid; place-items: start center;
-  padding: min(14vh, 120px) var(--s-4) var(--s-4); background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(10px); animation: fade-in 0.18s var(--ease);
+  padding: min(14vh, 120px) var(--s-4) var(--s-4); background: var(--search-tint);
+  backdrop-filter: blur(var(--glass-blur, 10px)); animation: fade-in 0.18s var(--ease);
 }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .search-dialog {

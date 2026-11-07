@@ -47,27 +47,41 @@
   --font: 'Space Grotesk', 'Noto Sans JP', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-ja: 'Noto Sans JP', 'Space Grotesk', system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* --fs-base and --font are user-customizable in the Customization Studio;
+     the values here are the defaults every theme starts from. */
+  --fs-base: 16px;
 
   /* Radii */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 18px;
 
-  /* Spacing scale */
-  --s-1: 4px;
-  --s-2: 8px;
-  --s-3: 12px;
-  --s-4: 16px;
-  --s-5: 24px;
-  --s-6: 32px;
-  --s-7: 48px;
-  --s-8: 72px;
+  /* Spacing scale. The density multiplier (Compact / Comfortable / Spacious
+     in the Customization Studio) rescales the whole ladder at once. */
+  --density: 1;
+  --s-1: calc(4px * var(--density));
+  --s-2: calc(8px * var(--density));
+  --s-3: calc(12px * var(--density));
+  --s-4: calc(16px * var(--density));
+  --s-5: calc(24px * var(--density));
+  --s-6: calc(32px * var(--density));
+  --s-7: calc(48px * var(--density));
+  --s-8: calc(72px * var(--density));
 
   --shadow-soft: 0 10px 34px rgba(38, 35, 29, 0.1);
   --shadow-card: 0 5px 18px rgba(38, 35, 29, 0.07);
   --max: 1200px;
   --header-gap: 14px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Studio-controlled presentation tokens (defaults = the classic look). */
+  --card-min: 230px;          /* smallest episode/movie card in the grids */
+  --glass-blur: 10px;         /* frosted-glass blur behind the search overlay */
+  --overlay-tint: color-mix(in srgb, var(--bg) 55%, rgba(0, 0, 0, 0.45));
+  --search-tint: color-mix(in srgb, var(--bg) 72%, transparent);
+  --grain-opacity: 0.5;       /* paper grain behind everything */
+  --lift: translatey(-2px);   /* hover lift on cards and rows */
+  --lift-sm: translatey(-1px);/* hover lift on buttons */
 
   --scrollbar-thumb: #c2bba8;
   --scrollbar-thumb-hover: #a89f8a;

@@ -26,7 +26,7 @@
   transition: transform 0.18s var(--ease), border-color 0.18s, background 0.18s, box-shadow 0.18s;
 }
 .media-card:hover {
-  transform: translatey(-3px); border-color: var(--border-strong); background: var(--surface-2);
+  transform: var(--lift); border-color: var(--border-strong); background: var(--surface-2);
   box-shadow: var(--shadow-soft);
 }
 .media-card__link { display: block; color: inherit; }
@@ -53,7 +53,7 @@
   transition: border-color 0.16s, background 0.16s, transform 0.16s var(--ease), box-shadow 0.16s;
 }
 .catalogue-row:hover {
-  border-color: var(--accent-line); background: var(--surface-2); transform: translatey(-2px);
+  border-color: var(--accent-line); background: var(--surface-2); transform: var(--lift);
   box-shadow: var(--shadow-card);
 }
 .catalogue-row:hover .catalogue-row__arrow { color: var(--accent); transform: translateX(3px); }

@@ -85,17 +85,10 @@ export default function Contribute() {
         </p>
         <ul className="contribute-assurances" aria-label="What contributing involves">
           <li><Icon name="check" size={14} /> Discord sign-in</li>
-          <li><Icon name="check" size={14} /> Nothing is published without review</li>
-          <li><Icon name="check" size={14} /> A person checks every submission</li>
-          <li><Icon name="check" size={14} /> Follow your submission in “My contributions”</li>
+          <li><Icon name="check" size={14} /> Everything is reviewed before publishing</li>
+          <li><Icon name="check" size={14} /> Follow your submissions in “My contributions”</li>
         </ul>
       </header>
-
-      <div className="notice contribute-direct-hint">
-        <strong>Tip:</strong> to fix a detail on an existing episode, movie, character or gadget,
-        open its page and press <em>Edit this entry</em> — you edit the actual record and a checker
-        accepts it in one click. No form needed.
-      </div>
 
       <section className="contribute-quick" aria-label="Common contributions">
         {QUICK_START.map((q) => (

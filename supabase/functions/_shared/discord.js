@@ -30,82 +30,109 @@ export function truncate(text, n = 1000) {
   return s.length > n ? `${s.slice(0, n)}…` : s;
 }
 
-/** Builds the embed for an event. Payload keys vary per event type. */
+// Human words for the contribution type ids (the same ids the forms submit).
+const TYPE_LABELS = {
+  'missing-entry': 'new entry',
+  'metadata-correction': 'a correction',
+  character: 'a character',
+  gadget: 'a gadget',
+  images: 'images',
+  source: 'a viewing source',
+  'broken-source': 'a broken source',
+  'archive-edit': 'a record edit',
+};
+
+/**
+ * Builds the embed for an event.
+ *
+ * Layout: the description carries the one-glance summary — bold title, who
+ * did what, which entry, which commit — as short markdown lines. Only the
+ * long-form content (a reason, a field-by-field change list) goes into
+ * named fields below it. This keeps a busy channel readable: the summary is
+ * always the same shape, and the detail is clearly separated underneath.
+ */
 export function buildEmbed(event, data) {
   const fields = [];
-  const push = (name, value, inline = false) => {
+  const push = (name, value) => {
     if (value !== undefined && value !== null && value !== '') {
-      fields.push({ name, value: truncate(String(value), 1000), inline });
+      fields.push({ name, value: truncate(String(value), 1000), inline: false });
     }
   };
+  const who = (name) => sanitize(name ?? 'unknown');
+  const line = (...parts) => parts.filter((p) => p !== undefined && p !== null && p !== '').join(' · ');
+  const entryPart = data.entry ? `\`${data.entry}\`` : '';
 
   let title = '';
+  let description = '';
   switch (event) {
     case 'submitted':
-      title = `📝 New contribution #${data.number}`;
-      push('Name', sanitize(data.title));
-      push('Type', data.type);
-      push('Contributor', sanitize(data.contributor));
-      push('Entry', data.entry);
-      push('Notes', sanitize(data.notes), false);
+      title = `📝 Contribution #${data.number} submitted`;
+      description = [
+        `**${sanitize(data.title)}**`,
+        line(`by **${who(data.contributor)}**`, TYPE_LABELS[data.type] ?? data.type ?? 'contribution', entryPart),
+      ].join('\n');
+      push('Notes', sanitize(data.notes));
       break;
     case 'accepted':
       title = `✅ Contribution #${data.number} accepted`;
-      push('Name', sanitize(data.title));
-      push('Contributor', sanitize(data.contributor));
-      push('Reviewer', sanitize(data.reviewer));
-      push('Entry', data.entry);
+      description = [
+        `**${sanitize(data.title)}**`,
+        line(`by **${who(data.contributor)}**`, `accepted by **${who(data.reviewer)}**`, entryPart, data.commit ? `commit \`${data.commit}\`` : null),
+      ].join('\n');
       push('Changed fields', data.changes);
-      push('Commit', data.commit);
       break;
     case 'declined':
       title = `❌ Contribution #${data.number} declined`;
-      push('Name', sanitize(data.title));
-      push('Contributor', sanitize(data.contributor));
-      push('Reviewer', sanitize(data.reviewer));
+      description = [
+        `**${sanitize(data.title)}**`,
+        line(`by **${who(data.contributor)}**`, `declined by **${who(data.reviewer)}**`, entryPart),
+      ].join('\n');
       push('Reason', sanitize(data.reason));
       break;
     case 'deleted':
       title = `🗑️ Contribution #${data.number} deleted`;
-      push('Name', sanitize(data.title));
-      push('Contributor', sanitize(data.contributor));
-      push('Staff', sanitize(data.reviewer));
+      description = [
+        `**${sanitize(data.title)}**`,
+        line(`by **${who(data.contributor)}**`, `deleted by **${who(data.reviewer)}**`, entryPart),
+      ].join('\n');
       push('Reason', sanitize(data.reason));
       break;
     case 'direct_edit':
       title = `✏️ Direct archive edit`;
-      push('Editor', sanitize(data.reviewer));
-      push('Entry', data.entry);
+      description = [
+        `**${who(data.reviewer)}** edited ${entryPart || 'an archive record'}`,
+        line(data.commit ? `commit \`${data.commit}\`` : null),
+      ].join('\n');
       push('Changed fields', data.changes);
-      push('Commit', data.commit);
       break;
     case 'entry_deleted':
       title = `🗑️ Archive entry deleted`;
-      push('Editor', sanitize(data.reviewer));
-      push('Entry', data.entry);
-      push('Commit', data.commit);
+      description = [
+        `**${who(data.reviewer)}** deleted ${entryPart || 'an archive record'}`,
+        line(data.commit ? `commit \`${data.commit}\`` : null),
+      ].join('\n');
       break;
     case 'edited':
       title = `🛠️ Contribution #${data.number} edited`;
-      push('Name', sanitize(data.title));
-      push('Editor', sanitize(data.reviewer));
-      push('Original author', sanitize(data.contributor));
+      description = [
+        `**${sanitize(data.title)}**`,
+        line(`draft edited by **${who(data.reviewer)}**`, `original author **${who(data.contributor)}**`),
+      ].join('\n');
       break;
     case 'role':
       title = `🔐 Role updated`;
-      push('User', sanitize(data.target));
-      push('Role', data.role);
-      push('Action', data.action);
-      push('By', sanitize(data.actor));
+      description = `**${who(data.actor)}** ${data.action === 'revoke' ? 'revoked' : 'granted'} the **${data.role}** role for **${who(data.target)}**`;
       break;
     default:
       title = `Time Machine: ${event}`;
+      description = line(who(data.reviewer), who(data.contributor), entryPart);
   }
 
   return {
     username: 'Time Machine',
     embeds: [{
       title: truncate(title, 250),
+      description: truncate(description, 3500) || undefined,
       color: EMBED_COLOR[event.split('.')[0]] ?? EMBED_COLOR.submitted,
       fields,
       footer: { text: 'Time Machine archive' },
