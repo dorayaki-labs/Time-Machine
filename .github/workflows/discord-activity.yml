@@ -15,7 +15,6 @@ jobs:
       - name: Send commit notifications
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
           node <<'NODE'
