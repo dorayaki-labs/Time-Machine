@@ -51,9 +51,11 @@ export function buildEmbed(event, data) {
   const fields = [];
   const push = (name, value) => {
     if (value !== undefined && value !== null && value !== '') {
-      // Format multi-line / changed fields cleanly
-      const formattedValue = typeof value === 'string' 
-        ? value.split('\n').map(line => `• ${line}`).join('\n')
+      // Format multi-line / changed fields cleanly. Lines that arrive already
+      // bulleted (the change summaries from diff.js start with "•") are kept
+      // as-is, so they don't end up with double bullets.
+      const formattedValue = typeof value === 'string'
+        ? value.split('\n').map((ln) => (ln.trimStart().startsWith('•') ? ln : `• ${ln}`)).join('\n')
         : String(value);
       
       fields.push({ name, value: truncate(formattedValue, 1000), inline: false });

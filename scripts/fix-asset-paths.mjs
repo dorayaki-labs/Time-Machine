@@ -13,8 +13,20 @@ import { join, extname } from 'node:path';
 
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
 
-// Default to the Pages target: the repo name segment. An env var always wins.
-const base = (process.env.VITE_BASE_PATH || '/time-machine/').replace(/\/+$/, '') + '/';
+// The base is read off the built index.html — vite always bakes the real base
+// into its asset URLs there, and that artifact is the ground truth: a build
+// that came out root-relative must not be re-prefixed, no matter what any
+// environment variable claims. The env var is only a fallback for the (not
+// expected) case that index.html cannot be read. Deriving from the artifact
+// matters because npm scripts apply an inline assignment
+// (`VAR=x a && b`) only to the immediately following command — the chained
+// `b` used to silently fall back to the Pages default and re-prefix a
+// root-domain build, which is the Cloudflare white page.
+const INDEX_HTML = await readFile(join(DIST, 'index.html'), 'utf8').catch(() => null);
+const fromBuild = INDEX_HTML?.match(/(?:src|href)="\/([^"]+?)\/assets\//);
+const base = fromBuild
+  ? `/${fromBuild[1]}/`
+  : (process.env.VITE_BASE_PATH || '/').replace(/\/+$/, '') + '/';
 if (base === '/') {
   console.log('fix-asset-paths: base is "/" — nothing to rewrite.');
   process.exit(0);

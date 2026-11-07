@@ -4,15 +4,15 @@
   "description": "Time Machine — a community-driven archive of the Doraemon franchise.",
   "private": true,
   "type": "module",
-"scripts": {
-  "dev": "vite",
-  "build": "VITE_BASE_PATH=/time-machine/ vite build && node scripts/fix-asset-paths.mjs && node scripts/make-spa-fallback.mjs",
-  "build:cloudflare": "VITE_BASE_PATH=/ vite build && node scripts/fix-asset-paths.mjs",
-  "preview": "vite preview",
-  "validate": "node scripts/validate-catalog.js",
-  "build:surge": "VITE_BASE_PATH=/ vite build && node scripts/make-spa-fallback.mjs",
-  "test:edge-logic": "node scripts/test-edge-logic.mjs"
-},
+  "scripts": {
+    "dev": "vite",
+    "build": "VITE_BASE_PATH=/time-machine/ vite build && node scripts/fix-asset-paths.mjs && node scripts/make-spa-fallback.mjs",
+    "build:cloudflare": "VITE_BASE_PATH=/ vite build && node scripts/fix-asset-paths.mjs && node scripts/make-spa-fallback.mjs",
+    "preview": "vite preview",
+    "validate": "node scripts/validate-catalog.js",
+    "build:surge": "VITE_BASE_PATH=/ vite build && node scripts/make-spa-fallback.mjs",
+    "test:edge-logic": "node scripts/test-edge-logic.mjs"
+  },
   "license": "MIT",
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",

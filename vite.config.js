@@ -17,12 +17,18 @@ function baseUrlPlugin(basePath) {
 const r = (p) => fileURLToPath(new URL(p, import.meta.url));
 
 // GitHub Pages serves project sites under /<repo>/ — the build must know that
-// prefix or every asset URL lands at the domain root. Resolution order: real
-// environment variable (CI) → .env.production file (so any build gets the
-// right base even when CI vars are missing) → "/" for dev and root hosting.
+// prefix or every asset URL lands at the domain root. Cloudflare Pages (and
+// any other root-domain host) must instead build with base "/". Resolution
+// order: an explicit VITE_BASE_PATH (set by the build scripts and CI) →
+// Cloudflare Pages builds always serve at the domain root, and CF_PAGES is
+// set in every Pages build, so a plain `npm run build` is safe there too →
+// .env.production (the GitHub Pages default) → "/" for dev.
 export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), '');
-const basePath = process.env.VITE_BASE_PATH || '/';
+  const basePath = process.env.VITE_BASE_PATH
+    || (process.env.CF_PAGES ? '/' : undefined)
+    || fileEnv.VITE_BASE_PATH
+    || '/';
   return {
     base: basePath,
     plugins: [react(), baseUrlPlugin(basePath)],

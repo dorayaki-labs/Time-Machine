@@ -142,7 +142,10 @@ test('accepted embed includes changes and commit', () => {
   });
   const body = embed.embeds[0];
   assert.ok(body.description.includes('abc1234'));
-  assert.ok(body.fields.find((f) => f.name === 'Changed fields').value.includes('title.en'));
+  // The change list keeps its original bullets — no double "• •".
+  const changes = body.fields.find((f) => f.name === 'Changed Fields');
+  assert.ok(changes && changes.value.includes('title.en'));
+  assert.ok(!changes.value.includes('• •'));
 });
 
 test('embed summaries stay compact and human', () => {
