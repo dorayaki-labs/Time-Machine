@@ -241,15 +241,17 @@
   {
     "id": "char-dorami",
     "name": {
-      "en": "Character 8",
-      "ja": null
+      "en": "Dorami",
+      "ja": "ドラミ"
     },
-    "aliases": [],
-    "description": null,
+    "aliases": [
+      "Dorami-Chan"
+    ],
+    "description": "Dorami is Doraemon’s younger sister, a kind and intelligent robot cat from the 22nd century who helps Nobita and his friends.",
     "category": "future",
     "image": {
-      "url": null,
-      "alt": null
+      "url": "https://i.postimg.cc/rmfct2sC/dorami.png",
+      "alt": "Dorami"
     },
     "voiceActors": [],
     "firstAppearance": {
