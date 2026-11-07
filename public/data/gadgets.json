@@ -188,23 +188,5 @@
       "note": null
     },
     "voiceActors": []
-  },
-  {
-    "id": "gadget-spy-pet",
-    "name": {
-      "en": "Spy Pet",
-      "ja": null
-    },
-    "aliases": [],
-    "description": null,
-    "image": {
-      "url": null,
-      "alt": null
-    },
-    "firstAppearance": {
-      "entryId": null,
-      "note": null
-    },
-    "howItWorks": null
   }
 ]
