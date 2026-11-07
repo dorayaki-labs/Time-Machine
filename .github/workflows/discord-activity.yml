@@ -15,32 +15,45 @@ jobs:
       - name: Send commit notifications
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          EVENT_PATH: ${{ github.event_path }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
           node <<'NODE'
           const fs = require('fs');
 
           async function main() {
+            const eventPath = process.env.GITHUB_EVENT_PATH;
+
+            if (!eventPath) {
+              throw new Error('GITHUB_EVENT_PATH is missing');
+            }
+
             const event = JSON.parse(
-              fs.readFileSync(process.env.EVENT_PATH, 'utf8')
+              fs.readFileSync(eventPath, 'utf8')
             );
+
+            const webhook = process.env.DISCORD_WEBHOOK;
+
+            if (!webhook) {
+              throw new Error('DISCORD_WEBHOOK secret is missing');
+            }
 
             for (const commit of event.commits || []) {
               const files = [
                 ...(commit.added || []).map(f => `＋ ${f}`),
                 ...(commit.modified || []).map(f => `✎ ${f}`),
                 ...(commit.removed || []).map(f => `－ ${f}`)
-              ].filter(file => !/\.json$/i.test(file.replace(/^[＋✎－] /, '')));
+              ].filter(file =>
+                !/\.json$/i.test(file.replace(/^[＋✎－] /, ''))
+              );
 
               if (!files.length) continue;
-
-              const description = files.join('\n').slice(0, 4000);
 
               const payload = {
                 username: 'GitHub Activity',
                 embeds: [{
                   title: 'New commit pushed',
-                  description,
+                  description: files.join('\n').slice(0, 4000),
                   color: 5793266,
                   fields: [
                     {
@@ -65,14 +78,11 @@ jobs:
                 }]
               };
 
-              const response = await fetch(
-                process.env.DISCORD_WEBHOOK,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
-                }
-              );
+              const response = await fetch(webhook, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
 
               if (!response.ok) {
                 throw new Error(`Discord error: ${response.status}`);
