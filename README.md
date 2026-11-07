@@ -54,7 +54,7 @@ docs/                deployment, backup and security documentation
 ## Run the frontend locally
 
 ```bash
-npm install
+npm install 
 npm run dev        # http://localhost:5173 — the archive works with no backend
 npm run validate   # checks every archive JSON file
 npm run build      # production build into dist/
