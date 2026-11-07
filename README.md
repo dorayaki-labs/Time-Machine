@@ -9,7 +9,7 @@ Discord account can contribute through the website's forms; trusted checkers
 review every submission before it reaches the archive.
  
 ## What the project does
-
+ 
 - **The archive** — episodes (1979, 2005 series and the historical 1973
   series), movies, characters and gadgets, each with titles (English and
   Japanese), release data, summaries, screenshots and viewing sources.
