@@ -135,14 +135,14 @@
   {
     "id": "gadget-big-light",
     "name": {
-      "en": "Gadget 8",
-      "ja": null
+      "en": "Big Light",
+      "ja": "ビッグライト"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Big Light is a gadget that can enlarge almost anything it shines on, making objects, animals, and people grow much bigger than their original size.",
+    "howItWorks": "Point the Big Light at the object or person you want to enlarge and press the button. The light will increase their size instantly.",
     "image": {
-      "url": null,
+      "url": "https://vlitzz.store/gadgets/biglight.png",
       "alt": null
     },
     "firstAppearance": {
