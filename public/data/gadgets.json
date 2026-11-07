@@ -188,5 +188,23 @@
       "note": null
     },
     "voiceActors": []
+  },
+  {
+    "id": "gadget-spy-set",
+    "name": {
+      "en": "Spy Set",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "howItWorks": null
   }
 ]
