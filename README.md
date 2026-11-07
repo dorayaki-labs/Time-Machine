@@ -7,7 +7,7 @@ sources, metadata, and full change tracking.
 **By the community, for the community.** Anyone can browse; anyone with a
 Discord account can contribute through the website's forms; trusted checkers
 review every submission before it reaches the archive.
-
+ 
 ## What the project does
 
 - **The archive** — episodes (1979, 2005 series and the historical 1973
