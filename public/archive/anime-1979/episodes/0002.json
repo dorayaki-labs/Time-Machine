@@ -5,8 +5,8 @@
   "seriesId": "anime-1979",
   "number": 2,
   "title": {
-    "en": "Episode 2",
-    "ja": null
+    "en": "Transformation Biscuits",
+    "ja": "変身ビスケット"
   },
   "alternateTitles": [],
   "originalLanguage": "ja",
@@ -15,15 +15,52 @@
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
+  "summary": "Nobita accidentally serves Doraemon's mysterious transformation biscuits to a houseguest, causing hilarious chaos as everyone begins turning into different animals. With transformations spreading throughout the household, Nobita and Doraemon desperately try to contain the situation before things get worse.",
   "image": {
-    "url": null,
+    "url": "https://image.tmdb.org/t/p/original/gheDIaMsooae4LrbY2Rsm0gxW0l.jpg",
     "alt": null
   },
-  "screenshots": [],
+  "screenshots": [
+    {
+      "url": "https://image.tmdb.org/t/p/original/jtqNXLFIubCzIOWZwUup1KbVzrs.jpg",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/CM87Wv4C/image.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/NjCRyTxZ/image.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/HW05wF25/image.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/brLs7cVY/image.png",
+      "alt": null
+    }
+  ],
   "characters": [],
   "gadgets": [],
   "voiceActors": [],
-  "sources": [],
+  "sources": [
+    {
+      "type": "embed",
+      "data": "<iframe src=\"https://megavid.buzz/ani/2471/2/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen></iframe>",
+      "label": "MegaVid",
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": "SD",
+      "notes": "subtitles arent very accurate"
+    }
+  ],
   "updatedAt": "2026-11-02"
 }
