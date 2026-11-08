@@ -17,10 +17,15 @@
   },
   "summary": null,
   "image": {
-    "url": null,
+    "url": "https://i.postimg.cc/wv98V9bB/ep03.png",
     "alt": null
   },
-  "screenshots": [],
+  "screenshots": [
+    {
+      "url": "https://i.postimg.cc/wv98V9bB/ep03.png",
+      "alt": null
+    }
+  ],
   "characters": [],
   "gadgets": [],
   "voiceActors": [],
