@@ -5,8 +5,8 @@
   "seriesId": "anime-1979",
   "number": 1,
   "title": {
-    "en": "Episode 1",
-    "ja": null
+    "en": "The City of Dreams, Nobita Land",
+    "ja": "ゆめの町ノビタランド"
   },
   "alternateTitles": [],
   "originalLanguage": "ja",
@@ -15,15 +15,37 @@
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
+  "summary": "Nobita and his friends struggle to find a place to play, so Doraemon uses the Instant Miniature-Making Camera to create a miniature city where they can do whatever they want. However, their fun doesn't last long when an unexpected visitor threatens to destroy their tiny world.",
   "image": {
-    "url": null,
-    "alt": null
+    "url": "https://image.tmdb.org/t/p/original/mRgIvtHe5uG6SArY1UwAe7hbA5T.jpg",
+    "alt": "Episode 1 Image"
   },
   "screenshots": [],
-  "characters": [],
+  "characters": [
+    "char-doraemon",
+    "char-shizuka",
+    "char-suneo",
+    "char-gian",
+    "char-nobita"
+  ],
   "gadgets": [],
   "voiceActors": [],
-  "sources": [],
+  "sources": [
+    {
+      "type": "embed",
+      "data": "<iframe class=\"embed-responsive-item\" scrolling=\"no\" allowfullscreen=\"\" allowtransparency=\"\" data-ruffle-polyfilled=\"\" src=\"https://kwik.cx/e/dhFzpesPJz0E\"></iframe>",
+      "label": "Animepahe",
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": null,
+      "notes": null
+    }
+  ],
   "updatedAt": "2026-11-02"
 }
