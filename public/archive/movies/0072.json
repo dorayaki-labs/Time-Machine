@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 3,
+  "id": "movie-0072",
+  "type": "movie",
+  "seriesId": "movies",
+  "number": 72,
+  "title": {
+    "en": "Stand By Me Doraemon 2",
+    "ja": " STAND BY ME ドラえもん 2"
+  },
+  "alternateTitles": [],
+  "originalLanguage": "ja",
+  "release": {
+    "date": "2020-11-20",
+    "precision": "day",
+    "region": "Japan"
+  },
+  "summary": "When Nobita travels back in time to visit his beloved grandmother, he accidentally reveals his future and promises to introduce her to his bride. As his wedding to Shizuka approaches, unexpected events and doubts threaten to change their future forever.",
+  "image": {
+    "url": "https://i.postimg.cc/D70tW6jf/stand-by-me-doraemon-2-62d6a57746fae.jpg",
+    "alt": "Stand By Me 2 Cover Art"
+  },
+  "screenshots": [
+    {
+      "url": "https://i.postimg.cc/pTPtbbMs/1.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/63BNJJxm/2.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/RFGxvsvP/3.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/tTDG9S9S/4.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/Pxdkssn0/5.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/G2znb7b6/6.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/TwQvT7RM/7.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/KzQhmqZF/8.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/mDVWTXbL/9.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/ZRjzJ7Tq/10.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/gjJFjVJY/11.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/3NR5NXRJ/12.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/fyLnycLb/13.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/Gt2wtF24/14.png",
+      "alt": null
+    }
+  ],
+  "characters": [],
+  "gadgets": [],
+  "voiceActors": [],
+  "sources": [
+    {
+      "type": "embed",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/s-2/69881/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto Sub",
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": "HQ",
+      "notes": null
+    }
+  ],
+  "durationMinutes": 96,
+  "director": {
+    "en": "Ryūichi Yagi, Takashi Yamazaki",
+    "ja": "八木竜一, 山崎貴"
+  }
+}
