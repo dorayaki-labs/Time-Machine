@@ -20,16 +20,92 @@
     "url": "https://image.tmdb.org/t/p/original/mRgIvtHe5uG6SArY1UwAe7hbA5T.jpg",
     "alt": "Episode 1 Image"
   },
-  "screenshots": [],
-  "characters": [
-    "char-doraemon",
-    "char-shizuka",
-    "char-suneo",
-    "char-gian",
-    "char-nobita"
+  "screenshots": [
+    {
+      "url": "https://i.postimg.cc/90L2BW0s/image.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/mkgfk0j3/image.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/rpXBxdgD/image.png",
+      "alt": null
+    },
+    {
+      "url": "https://i.postimg.cc/nznNS6yH/image.png",
+      "alt": null
+    }
   ],
+  "characters": [],
   "gadgets": [],
-  "voiceActors": [],
+  "voiceActors": [
+    {
+      "name": {
+        "en": "Nobuyo Ōyama",
+        "ja": "大山のぶ代"
+      },
+      "characterId": "char-doraemon",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Noriko Ohara",
+        "ja": "小原乃梨子"
+      },
+      "characterId": "char-nobita",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Sachiko Chijimatsu",
+        "ja": "千々松幸子"
+      },
+      "characterId": "Tamako Nobi",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Michiko Nomura",
+        "ja": "野村道子"
+      },
+      "characterId": "char-shizuka",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Kaneta Kimotsuki",
+        "ja": "肝付兼太"
+      },
+      "characterId": "char-suneo",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Kazuya Tatekabe",
+        "ja": "たてかべ和也"
+      },
+      "characterId": "char-gian",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Sachiko Chijimatsu",
+        "ja": "千々松幸子"
+      },
+      "characterId": "Yasuo Tanaka",
+      "language": "ja"
+    },
+    {
+      "name": {
+        "en": "Kazuya Tatekabe",
+        "ja": "たてかべ和也"
+      },
+      "characterId": "Unnamed Truck Driver",
+      "language": "ja"
+    }
+  ],
   "sources": [
     {
       "type": "embed",
