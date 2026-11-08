@@ -5,7 +5,7 @@
   "seriesId": "movies",
   "number": 1,
   "title": {
-    "en": "Doraemon: Nobita's Dinosaur",
+    "en": "Doraemon: Nobita's Dinosaur ",
     "ja": "ドラえもん のび太の恐竜"
   },
   "alternateTitles": [],
@@ -45,6 +45,5 @@
       "notes": null
     }
   ],
-  "references": [],
   "updatedAt": "2026-11-02"
 }
