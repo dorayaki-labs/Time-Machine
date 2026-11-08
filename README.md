@@ -1,72 +1,197 @@
-# Time Machine
- 
-A free, community-driven archive documenting the Doraemon franchise: every
-episode, movie, character, and gadget in one open catalogue — with viewing
-sources, metadata, and full change tracking.
+ <div align="center">
 
-**By the community, for the community.** Anyone can browse; anyone with a
-Discord account can contribute through the website's forms; trusted checkers
-review every submission before it reaches the archive.
- 
-## What the project does
- 
-- **The archive** — episodes (1979, 2005 series and the historical 1973
-  series), movies, characters and gadgets, each with titles (English and
-  Japanese), release data, summaries, screenshots and viewing sources.
-- **The contribution system** — account holders edit any entry directly
-  ("Edit this entry" on its page, reviewed before it goes live) or submit
-  corrections, missing entries, images and viewing sources through in-site
-  forms. Submissions are rate-limited, validated server-side, reviewed by
-  human checkers, and every accepted change is committed to the archive's
-  JSON files on GitHub with a
-  complete before/after change record.
-- **The public record** — the Statistics page and the public Contribution log
-  show real numbers and every accepted contribution. Nothing is hardcoded.
+<img src=/readme-assets/banner.png>
 
-## Architecture
+**By the community, For the community.**
 
-| Piece | Technology | Cost |
-| --- | --- | --- |
-| Frontend | React + Vite static site, hosted on GitHub Pages and Surge | free |
-| Archive data | JSON files in this GitHub repository (single source of truth) | free |
-| Auth | Discord OAuth via Supabase Auth (free tier) | free |
-| Database | Supabase Postgres — accounts, roles, contributions, audit log | free |
-| Backend logic | Supabase Edge Functions (Deno) — validation, moderation, GitHub commits, Discord notifications | free |
-| Notifications | Discord webhook via a server-side function only | free |
+A community-driven archive dedicated to preserving the world of Doraemon, one episode, movie and detail at a time.
 
-The site is fully static. The public archive keeps working even if the
-backend is temporarily unavailable; account/contribution features degrade to
-friendly notices instead of errors.
+[![Website](https://img.shields.io/badge/Website-Time%20Machine-8B7355?style=for-the-badge)](https://timemachine.website)
+[![React](https://img.shields.io/badge/React-2026-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 
-Key directories:
+</div>
 
-```
-src/                 React frontend (pages, components, lib)
-public/archive/      the archive: index.json rosters + one JSON per entry
-public/data/         characters, gadgets, languages, categories
-supabase/
-  migrations/        complete SQL schema + RLS policies (run in SQL Editor)
-  functions/         Edge Functions (contribute, review, direct-edit, manage-role, reconcile-sync)
-scripts/             catalog validator + build/deploy helpers
-docs/                deployment, backup and security documentation
-```
+---
 
-## Run the frontend locally
+## About
+
+**Time Machine** is a community-driven archive dedicated to documenting and preserving the world of [Doraemon](https://en.wikipedia.org/wiki/Doraemon).
+
+With decades of episodes, movies, characters, gadgets and stories, Doraemon has an enormous history worth preserving. Time Machine aims to bring all of that information together in one organised, accessible place.
+
+Our goal is to document as much of Doraemon as possible, including detailed information about individual episodes, movies, characters and more.
+
+This is not something one person can accomplish alone.
+
+**Time Machine is built entirely around community contributions.** Whether you know an episode's original broadcast date, have information about a character, can correct an existing entry or simply want to help document something missing, every contribution helps.
+
+## What we're archiving
+
+Time Machine currently focuses on three main catalogues:
+
+| Catalogue | Description |
+| --- | --- |
+| **Doraemon (1979)** | Episodes and information from the 1979 anime adaptation. |
+| **Doraemon (2005)** | Episodes and information from the 2005 anime adaptation. |
+| **Doraemon Movies** | Doraemon's theatrical movie releases and their details. |
+
+Alongside these catalogues, the archive also documents characters, gadgets and other information connected to the series.
+
+Our aim is to make the archive as complete and accurate as possible, rather than simply collecting episode titles.
+
+## Community contributions
+
+Time Machine depends on its community.
+
+Anyone can create an account and contribute knowledge to the archive. You do not need to be a developer or have a GitHub account to help.
+
+Contributions can include:
+
+- Adding missing episodes or movies.
+- Correcting existing episode and movie information.
+- Providing Japanese and English titles.
+- Adding synopses and other metadata.
+- Documenting characters and gadgets.
+- Providing images and episode screenshots.
+- Suggesting corrections or reporting inaccurate information.
+- Sharing other useful information about Doraemon.
+
+### How it works
+
+1. **Create an account** using Discord authentication.
+2. **Submit a contribution** through the website.
+3. **Wait for review.** Our team of checkers and administrators reviews submissions.
+4. **Get a decision.** Contributions can be accepted or declined.
+5. **Help grow the archive.** Accepted contributions become part of Time Machine.
+
+Contributors can track their submissions and see their contribution history through their account.
+
+### Review and moderation
+
+To maintain the quality and accuracy of the archive, contributions are reviewed by authorised members of the team.
+
+Checkers and administrators can review submissions, make necessary corrections, accept valid information and decline inaccurate or unsuitable contributions.
+
+Changes to the archive are recorded so that contributions and modifications remain accountable.
+
+## How it works
+
+Time Machine uses a relatively simple architecture designed to keep the archive organised and maintainable.
+
+- **Frontend:** The website is built using React, JavaScript, HTML and CSS.
+- **Archive data:** Information about episodes, movies, characters and gadgets is stored in JSON files.
+- **Backend:** Supabase handles authentication, accounts, contribution management and other backend functionality.
+- **Authentication:** Users can connect their Discord accounts to sign in.
+- **Archive updates:** Approved contributions are processed through the backend and reflected in the archive data.
+
+Keeping the archive data in JSON makes it structured, portable and easier to maintain independently of the website itself.
+
+## Technology stack
+
+| Technology | Purpose |
+| --- | --- |
+| JavaScript | Application logic and functionality |
+| React | Frontend interface |
+| HTML | Website structure |
+| CSS | Styling and responsive design |
+| Vite | Frontend development and build tooling |
+| Supabase | Authentication, database and backend services |
+| JSON | Archive data storage |
+| GitHub | Source code and archive repository |
+
+## Getting started
+
+Want to explore the code or work on Time Machine locally?
+
+### Requirements
+
+- [Node.js](https://nodejs.org/)
+- npm
+- Git
+
+### Installation
+
+Clone the repository:
 
 ```bash
-npm install 
-npm run dev        # http://localhost:5173 — the archive works with no backend
-npm run validate   # checks every archive JSON file
-npm run build      # production build into dist/
+git clone https://github.com/karrizzmaa/time-machine.git
+cd time-machine
 ```
 
-## Access
+Install dependencies:
 
-- Live site: GitHub Pages (this repository) and a Surge mirror.
-- The archive JSON files are the data — `public/archive/` — readable by
-  anyone, usable anywhere.
+```bash
+npm install
+```
 
-## Contributing
+Start the development server:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The primary way to contribute is the
-website's forms — no GitHub account needed, just Discord.
+```bash
+npm run dev
+```
+
+Vite will provide a local development URL in your terminal.
+
+### Building for production
+
+To generate a production build:
+
+```bash
+npm run build
+```
+
+The generated website will be available in the `dist` directory.
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+**Backend configuration:** If you are working on authentication or other backend functionality, configure the required Supabase environment variables using the project's `.env.example` file. Never commit real credentials or private secrets.
+
+## Contributing to the project
+
+There are two ways to help Time Machine grow:
+
+**Archive contributions**
+
+If you have information about Doraemon, use the contribution forms on the website. You can submit information without modifying the source code or opening a GitHub pull request.
+
+**Development contributions**
+
+If you want to improve the website itself, work on the source code and submit your proposed code changes through the repository's contribution process.
+
+Please keep changes organised, preserve existing archive data structures and avoid introducing unnecessary dependencies.
+
+## Our goal
+
+Doraemon has been around for generations, and its history is far too extensive for a single person to document.
+
+Episodes, movies and information can become difficult to find over time. Time Machine exists to bring that information together and make it easier for everyone to explore, discover and contribute to.
+
+Every correction, every missing detail and every documented episode brings us a little closer to a complete archive.
+
+**By the community, For the community.**
+
+---
+
+## Disclaimer
+
+Time Machine is an independent, non-commercial fan-made archival project. It is not affiliated with, endorsed by or officially associated with Fujiko F. Fujio, Shogakukan, TV Asahi, Shin-Ei Animation, or any other Doraemon rights holders.
+
+Doraemon and all related characters, names, trademarks and copyrighted materials belong to their respective owners.
+
+Time Machine does not claim ownership of third-party media or materials referenced by the archive. External links and resources are provided for informational and archival reference purposes. Their availability and content are controlled by their respective providers.
+
+---
+
+<div align="center">
+
+**Made by the community, for everyone who loves Doraemon.**
+
+[Visit Time Machine](https://timemachine.website)
+
+</div>
