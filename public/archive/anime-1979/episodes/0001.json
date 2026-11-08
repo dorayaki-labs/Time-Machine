@@ -33,8 +33,8 @@
   "sources": [
     {
       "type": "embed",
-      "data": "<iframe class=\"embed-responsive-item\" scrolling=\"no\" allowfullscreen=\"\" allowtransparency=\"\" data-ruffle-polyfilled=\"\" src=\"https://kwik.cx/e/dhFzpesPJz0E\"></iframe>",
-      "label": "Animepahe",
+      "data": "<iframe src=\"https://megavid.buzz/ani/2471/1/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen></iframe>",
+      "label": "MegaVid",
       "language": "ja",
       "subtitles": {
         "has": true,
@@ -43,8 +43,8 @@
           "English"
         ]
       },
-      "quality": null,
-      "notes": null
+      "quality": "SD",
+      "notes": "subtitles arent very accurate"
     }
   ],
   "updatedAt": "2026-11-02"
