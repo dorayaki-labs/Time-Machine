@@ -154,14 +154,14 @@
   {
     "id": "gadget-gourmet-tablecloth",
     "name": {
-      "en": "Gadget 9",
-      "ja": null
+      "en": "Gourmet Tablecloth",
+      "ja": "グルメテーブルかけ"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The Gourmet Tablecloth is a magical tablecloth that can produce almost any food you wish for, turning an ordinary meal into a delicious feast.",
+    "howItWorks": "Spread the tablecloth on a flat surface, sit down, and say the name of the food you want. The requested dish will appear right on the tablecloth.",
     "image": {
-      "url": null,
+      "url": "https://i.postimg.cc/BZw54Xg6/gourmettable.png",
       "alt": null
     },
     "firstAppearance": {
