@@ -1,29 +1,50 @@
 {
-  "schemaVersion": 3,
   "id": "anime-2005-0002",
   "type": "episode",
-  "seriesId": "anime-2005",
-  "number": 2,
+  "image": {
+    "alt": null,
+    "url": "https://vlitzz.store/thumbnail/e02.png"
+  },
   "title": {
-    "en": "Episode 2",
+    "en": "Slow Slow, Quick Quick",
     "ja": null
   },
-  "alternateTitles": [],
-  "originalLanguage": "ja",
+  "number": 2,
+  "gadgets": [],
   "release": {
     "date": "2005-04-15",
-    "precision": "day",
-    "region": "JP"
+    "region": "JP",
+    "precision": "day"
   },
+  "sources": [
+    {
+      "data": "<iframe src=\"https://megaplay.buzz/stream/mal/8687/2/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "type": "embed",
+      "label": "Anikoto",
+      "notes": "This episode contains multiple segments",
+      "quality": null,
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      }
+    }
+  ],
   "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
+  "seriesId": "anime-2005",
+  "updatedAt": "2026-11-02",
   "characters": [],
-  "gadgets": [],
+  "screenshots": [
+    {
+      "alt": null,
+      "url": "https://vlitzz.store/thumbnail/e02.png"
+    }
+  ],
   "voiceActors": [],
-  "sources": [],
-  "updatedAt": "2026-11-02"
+  "schemaVersion": 3,
+  "alternateTitles": [],
+  "originalLanguage": "ja"
 }
