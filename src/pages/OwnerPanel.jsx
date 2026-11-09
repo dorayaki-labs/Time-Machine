@@ -133,7 +133,11 @@ export default function OwnerPanel() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      setUsers(await listUsers({ q: q.trim() || undefined, role: roleFilter || undefined, banned: banFilter === '' ? undefined : banFilter === 'banned' }));
+      const res = await listUsers({ q: q.trim() || undefined, role: roleFilter || undefined, banned: banFilter === '' ? undefined : banFilter === 'banned' });
+      if (res && res.error) throw new Error(res.error);
+      // The list action answers { ok, users: [...] } — unwrap the envelope,
+      // accepting a bare array too, so users state is always a real array.
+      setUsers(Array.isArray(res) ? res : Array.isArray(res?.users) ? res.users : []);
     } catch (err) { setError(err.message); }
   }, [q, roleFilter, banFilter]);
 
@@ -169,7 +173,7 @@ export default function OwnerPanel() {
     `${user.display_name} can contribute again — their previous role is restored.`,
   );
 
-  const filtered = useMemo(() => (users ?? []).filter((u) => {
+  const filtered = useMemo(() => (Array.isArray(users) ? users : []).filter((u) => {
     if (!q.trim()) return true;
     const needle = q.trim().toLowerCase();
     return [u.display_name, u.username, u.discord_id].some((v) => String(v ?? '').toLowerCase().includes(needle));

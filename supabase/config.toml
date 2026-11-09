@@ -24,3 +24,7 @@ entrypoint = "./functions/manage-role/index.js"
 [functions.reconcile-sync]
 verify_jwt = true
 entrypoint = "./functions/reconcile-sync/index.js"
+
+[functions.manage-users]
+verify_jwt = true
+entrypoint = "./functions/manage-users/index.js"

@@ -9,6 +9,13 @@
 # commit that mixes archive JSON with real code still notifies (with the
 # JSON files filtered out of the file list).
 #
+# File lists are derived from `git show --name-status` in a full checkout,
+# NOT from the push-event payload: the payload's per-commit
+# added/modified/removed arrays are capped and can arrive empty, which once
+# made pure-code commits get skipped as "only touches JSON". The payload
+# arrays are kept only as a fallback and are logged on every skip so a
+# misclassification is always diagnosable from the run log.
+#
 # The webhook URL is read from the DISCORD_WEBHOOK repository secret
 # (Settings → Secrets and variables → Actions). If it is missing the run
 # reports it loudly instead of silently sending nothing.
@@ -36,6 +43,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check out full history for exact file lists
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Send commit notifications
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -45,8 +57,38 @@ jobs:
         run: |
           node <<'NODE'
           const fs = require('fs');
+          const { execFileSync } = require('child_process');
 
           const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+          const STATUS_ICON = { A: '＋', M: '✎', D: '－' };
+
+          // Changed files per commit. Authoritative source is git in the
+          // checkout; the event payload's file arrays are only a fallback
+          // for commits missing from it (e.g. force-pushed away), and
+          // renames are decomposed so every entry is a plain CODE + path.
+          function changedFiles(commit) {
+            try {
+              const out = execFileSync('git',
+                ['show', '--name-status', '--format=', '--no-renames', commit.id],
+                { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+              const files = out.split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .map((line) => {
+                  const tab = line.indexOf('\t');
+                  return tab === -1 ? null : { code: line[0], file: line.slice(tab + 1) };
+                })
+                .filter(Boolean);
+              if (files.length) return { files, source: 'git' };
+            } catch (error) { /* commit not in the checkout — fall back */ }
+            const files = [
+              ...(commit.added || []).map((f) => ({ code: 'A', file: f })),
+              ...(commit.modified || []).map((f) => ({ code: 'M', file: f })),
+              ...(commit.removed || []).map((f) => ({ code: 'D', file: f })),
+            ];
+            return { files, source: 'event payload' };
+          }
 
           async function main() {
             const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -74,19 +116,35 @@ jobs:
             }
 
             for (const commit of commits) {
+              const id7 = commit.id.slice(0, 7);
+              const { files: changed, source } = changedFiles(commit);
+              const payloadCounts = `payload arrays: +${(commit.added || []).length} `
+                + `~${(commit.modified || []).length} -${(commit.removed || []).length}`;
+
+              if (!changed.length) {
+                console.log(`Commit ${id7} has no changed files (${source}; ${payloadCounts}) — skipped.`);
+                continue;
+              }
+
               // Defense in depth for mixed commits: archive JSON is excluded
               // here as well as at the trigger (the trigger path filter only
               // skips the workflow when EVERY file in the push is archive JSON).
-              const files = [
-                ...(commit.added || []).map((f) => `＋ ${f}`),
-                ...(commit.modified || []).map((f) => `✎ ${f}`),
-                ...(commit.removed || []).map((f) => `－ ${f}`),
-              ].filter((file) => !/\.json$/i.test(file.replace(/^[＋✎－] /, '')));
+              const jsonCount = changed.filter((e) => /\.json$/i.test(e.file)).length;
+              const files = changed
+                .filter((e) => !/\.json$/i.test(e.file))
+                .map((e) => `${STATUS_ICON[e.code] || '✎'} ${e.file}`);
 
               if (!files.length) {
-                console.log(`Commit ${commit.id.slice(0, 7)} only touches JSON — skipped.`);
+                console.log(
+                  `Commit ${id7} only touches JSON `
+                  + `(${jsonCount} file(s) from ${source}; ${payloadCounts}) — skipped.`,
+                );
                 continue;
               }
+              console.log(
+                `Commit ${id7}: ${files.length} code file(s) from ${source} `
+                + `(${jsonCount} JSON file(s) excluded).`,
+              );
 
               const payload = {
                 username: 'GitHub Activity',
@@ -96,7 +154,7 @@ jobs:
                   color: 5793266,
                   fields: [
                     { name: 'Author', value: commit.author?.name || 'Unknown', inline: true },
-                    { name: 'Commit', value: `[\`${commit.id.slice(0, 7)}\`](${commit.url})`, inline: true },
+                    { name: 'Commit', value: `[\`${id7}\`](${commit.url})`, inline: true },
                     { name: 'Message', value: (commit.message || 'No message').slice(0, 1000) },
                   ],
                   footer: { text: `Branch: ${process.env.GITHUB_REF_NAME}` },
