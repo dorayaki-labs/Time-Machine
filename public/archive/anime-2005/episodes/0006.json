@@ -47,6 +47,26 @@
       "gadgets": [],
       "voiceActors": [],
       "durationMinutes": null
+    },
+    {
+      "id": "anime-2005-0006-02",
+      "segmentNumber": 2,
+      "title": {
+        "en": "Hello, Alien",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
     }
   ],
   "updatedAt": "2026-11-02"
