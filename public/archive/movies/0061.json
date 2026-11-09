@@ -58,20 +58,8 @@
       "alt": null
     }
   ],
-  "characters": [
-    "char-doraemon",
-    "char-nobita",
-    "char-shizuka",
-    "char-gian",
-    "char-suneo",
-    "char-dekisugi"
-  ],
-  "gadgets": [
-    "gadget-anywhere-door",
-    "gadget-bamboo-copter",
-    "gadget-time-machine",
-    "gadget-memory-bread"
-  ],
+  "characters": [],
+  "gadgets": [],
   "voiceActors": [
     {
       "name": {
