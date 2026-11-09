@@ -173,14 +173,14 @@
   {
     "id": "gadget-if-phone-box",
     "name": {
-      "en": "Gadget 10",
-      "ja": null
+      "en": "What-If Phone Booth",
+      "ja": "もしもボックス"
     },
     "aliases": [],
-    "description": null,
-    "howItWorks": null,
+    "description": "The What-If Phone Booth is a gadget that lets you enter an alternate world where reality works according to your wishes. You can imagine a change to the world, and the booth creates a reality where that change has always existed.",
+    "howItWorks": "Enter the booth, pick up the phone, and describe how you want the world to be different. Once activated, the world outside will change to match your scenario.",
     "image": {
-      "url": null,
+      "url": "https://i.postimg.cc/W1vfmn4k/ifphone.png",
       "alt": null
     },
     "firstAppearance": {
