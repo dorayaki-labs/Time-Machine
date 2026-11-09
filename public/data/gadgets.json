@@ -206,5 +206,23 @@
       "note": null
     },
     "howItWorks": "Use the different tools included in the set to watch your surroundings, listen from a distance, and collect information while staying hidden."
+  },
+  {
+    "id": "gadget-slow-pills",
+    "name": {
+      "en": "Slow Pills",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "howItWorks": null
   }
 ]
