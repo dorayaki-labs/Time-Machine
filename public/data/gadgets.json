@@ -211,18 +211,18 @@
     "id": "gadget-slow-pills",
     "name": {
       "en": "Slow Pills",
-      "ja": null
+      "ja": "スローモーション薬"
     },
     "aliases": [],
-    "description": null,
+    "description": "The Slow Pills reduce the body's energy and slow down its activity, making the person who takes them move and react much more slowly.",
     "image": {
-      "url": null,
+      "url": "https://i.postimg.cc/Ssw-8pg2W/slow-Pills.png",
       "alt": null
     },
     "firstAppearance": {
       "entryId": null,
       "note": null
     },
-    "howItWorks": null
+    "howItWorks": "Simply swallow a Slow Pill to slow down your body's energy and activity."
   }
 ]
