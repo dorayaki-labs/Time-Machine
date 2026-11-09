@@ -10,20 +10,36 @@
     "precision": "day",
     "region": "JP"
   },
-  "sources": [],
+  "sources": [
+    {
+      "type": "embed",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/mal/8687/6/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto",
+      "language": "ja",
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": null,
+      "notes": null
+    }
+  ],
   "segments": [
     {
       "id": "anime-2005-0006-01",
       "segmentNumber": 1,
       "title": {
-        "en": "Episode 6",
+        "en": "Top Secret Spy Operation",
         "ja": null
       },
       "alternateTitles": [],
       "summary": null,
       "description": null,
       "image": {
-        "url": null,
+        "url": "https://static.wikia.nocookie.net/doraemon/images/a/a9/%28Secret%29_Spy_Operation_-_2005_version_.png/revision/latest?cb=20251228151500&path-prefix=en",
         "alt": null
       },
       "screenshots": [],
