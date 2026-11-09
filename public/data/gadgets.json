@@ -229,18 +229,18 @@
     "id": "gadget-fast-pills",
     "name": {
       "en": "Fast Pills",
-      "ja": null
+      "ja": "チャカポン"
     },
     "aliases": [],
-    "description": null,
+    "description": "The Fast Pills increase the body's energy and activity, allowing the person who takes them to move and react much faster than usual.",
     "image": {
-      "url": null,
+      "url": "https://i.postimg.cc/qR0SGHxG/fast-Pill.png",
       "alt": null
     },
     "firstAppearance": {
       "entryId": null,
       "note": null
     },
-    "howItWorks": null
+    "howItWorks": "Simply swallow a Fast Pill to boost your body's energy and speed up your movements for a limited time."
   }
 ]
