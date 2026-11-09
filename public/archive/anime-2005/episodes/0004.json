@@ -10,20 +10,36 @@
     "precision": "day",
     "region": "JP"
   },
-  "sources": [],
+  "sources": [
+    {
+      "type": "embed",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/mal/8687/4/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto",
+      "language": null,
+      "subtitles": {
+        "has": true,
+        "type": null,
+        "languages": [
+          "English"
+        ]
+      },
+      "quality": null,
+      "notes": null
+    }
+  ],
   "segments": [
     {
       "id": "anime-2005-0004-01",
       "segmentNumber": 1,
       "title": {
-        "en": "Episode 4",
+        "en": "The Sonic Oscillation Terror Machine",
         "ja": null
       },
       "alternateTitles": [],
       "summary": null,
       "description": null,
       "image": {
-        "url": null,
+        "url": "https://static.wikia.nocookie.net/doraemon/images/a/a5/2005_EP004a_1.png/revision/latest?cb=20230427180458&path-prefix=en",
         "alt": null
       },
       "screenshots": [],
