@@ -49,6 +49,24 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, [loadProfile]);
 
+  // Ban immediacy: the profile (and with it the ban state) is re-read when
+  // the visitor returns to the tab, so a ban issued while they were away
+  // shows the banner without waiting for a page reload. This is display
+  // only — server-side enforcement re-reads the profile on every request.
+  useEffect(() => {
+    if (!backendConfigured || !user) return undefined;
+    const recheck = () => {
+      if (document.visibilityState !== 'visible') return;
+      loadProfile(user).catch(() => { /* keep the current profile */ });
+    };
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', recheck);
+    return () => {
+      window.removeEventListener('focus', recheck);
+      document.removeEventListener('visibilitychange', recheck);
+    };
+  }, [user, loadProfile]);
+
   const signIn = useCallback(async () => {
     if (!supabase) return;
     setAuthError(null);

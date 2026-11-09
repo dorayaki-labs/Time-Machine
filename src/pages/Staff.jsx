@@ -13,7 +13,7 @@ import Avatar from '@/components/Avatar.jsx';
 import StatusChip from '@/components/StatusChip.jsx';
 import { useAuth, isStaff, isAdmin, isOwner } from '@/hooks/useAuth.jsx';
 import { fetchSubmissions, fetchAuditLog, STATUS_LABELS } from '@/lib/stats.js';
-import { reviewContribution, directEditArchive, manageRole, reconcileSync } from '@/lib/staffApi.js';
+import { reviewContribution, directEditArchive, manageRole, reconcileSync, banUserByDiscord, unbanUserByDiscord } from '@/lib/staffApi.js';
 import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
 import { getCharacters, getGadgets, getAllEntries, reloadCatalog } from '@/lib/catalog.js';
 import { CONTRIBUTION_CATEGORIES } from '@/lib/contributionForms.js';
@@ -564,6 +564,15 @@ function AdminTab({ onRefresh }) {
       </div>
       {result ? <p className="notice" role="status">{result}</p> : null}
 
+      <h3 className="section-heading" style={{ marginTop: '2rem' }}>Ban management</h3>
+      <p className="muted small" style={{ maxWidth: '64ch' }}>
+        Ban an account by Discord ID: they immediately lose contributions, edits and staff actions —
+        enforced server-side on every protected request, not by hiding buttons. Their role is kept
+        and comes back when the ban is lifted. Owner accounts are protected; the full directory with
+        avatars and history lives in the owner&rsquo;s User management panel.
+      </p>
+      <BanForm busy={busy} onBusy={setBusy} onResult={setResult} onError={setError} />
+
       <h3 className="section-heading" style={{ marginTop: '2rem' }}>Recover failed archive updates</h3>
       <p className="muted small" style={{ maxWidth: '64ch' }}>
         If a contribution was accepted but the GitHub commit failed, it is marked sync failed and stays retryable.
@@ -580,6 +589,51 @@ function AdminTab({ onRefresh }) {
       ) : null}
       {error ? <p className="notice notice--error" role="alert">{error}</p> : null}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ban management (admins + owner). Bans are enforced server-side by the
+// backend's authenticate() gate on every protected function.
+// ---------------------------------------------------------------------------
+
+function BanForm({ busy, onBusy, onResult, onError }) {
+  const [discordId, setDiscordId] = useState('');
+  const [reason, setReason] = useState('');
+  const [mode, setMode] = useState('ban');
+
+  const submit = async () => {
+    onBusy(true); onResult(null); onError(null);
+    try {
+      const id = discordId.trim();
+      const res = mode === 'ban'
+        ? await banUserByDiscord(id, reason.trim() || null)
+        : await unbanUserByDiscord(id);
+      onResult(res.banned
+        ? `${res.display_name} is banned${mode === 'ban' ? ' — the account keeps its role and can be unbanned at any time' : ''}.`
+        : `${res.display_name} is unbanned and can contribute again.`);
+      setDiscordId(''); setReason('');
+    } catch (err) { onError(err.message); }
+    finally { onBusy(false); }
+  };
+
+  return (
+    <>
+      <div className="filter-row">
+        <input type="text" placeholder="Discord user ID (numbers only)" value={discordId}
+          onChange={(e) => setDiscordId(e.target.value)} style={{ minWidth: '240px' }} />
+        <select value={mode} onChange={(e) => setMode(e.target.value)} aria-label="Ban action">
+          <option value="ban">ban</option>
+          <option value="unban">unban</option>
+        </select>
+        <input type="text" placeholder="Reason (shown to the user; optional)" value={reason}
+          onChange={(e) => setReason(e.target.value)} style={{ minWidth: '260px' }} />
+        <button type="button" className={`btn ${mode === 'ban' ? 'btn--danger' : 'btn--primary'}`}
+          disabled={busy || !/^\d{5,25}$/.test(discordId.trim())} onClick={submit}>
+          {busy ? 'Working…' : mode === 'ban' ? 'Ban account' : 'Lift ban'}
+        </button>
+      </div>
+    </>
   );
 }
 

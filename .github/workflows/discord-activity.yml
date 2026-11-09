@@ -1,11 +1,35 @@
+# Discord notifications for CODE changes pushed to the repository.
+#
+# Scope: only notifications for application code, workflows, docs and config.
+# Archive JSON (episodes, movies, characters, gadgets, indexes, data files)
+# is committed straight to the repository by the backend and has its OWN
+# notification pipeline (the notification_outbox → Discord webhook in the
+# Edge Functions) — those pushes are excluded here at the trigger, so a
+# batch of archive edits never produces a "code change" notification, and a
+# commit that mixes archive JSON with real code still notifies (with the
+# JSON files filtered out of the file list).
+#
+# The webhook URL is read from the DISCORD_WEBHOOK repository secret
+# (Settings → Secrets and variables → Actions). If it is missing the run
+# reports it loudly instead of silently sending nothing.
 
 name: Discord GitHub Activity
 
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      # Archive/data JSON is notified by the backend's own Discord pipeline.
+      - 'public/archive/**'
+      - 'public/data/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: discord-activity
+  cancel-in-progress: false
 
 jobs:
   notify:
@@ -15,81 +39,98 @@ jobs:
       - name: Send commit notifications
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           node <<'NODE'
           const fs = require('fs');
 
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
           async function main() {
             const eventPath = process.env.GITHUB_EVENT_PATH;
+            if (!eventPath) throw new Error('GITHUB_EVENT_PATH is missing');
 
-            if (!eventPath) {
-              throw new Error('GITHUB_EVENT_PATH is missing');
-            }
+            const event = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
 
-            const event = JSON.parse(
-              fs.readFileSync(eventPath, 'utf8')
-            );
-
-            const webhook = process.env.DISCORD_WEBHOOK;
-
+            // The repo convention is DISCORD_WEBHOOK; DISCORD_WEBHOOK_URL is
+            // accepted as an alias because the Edge Functions use that name
+            // and mixing the two up is the classic "workflow never fires" bug.
+            const webhook = process.env.DISCORD_WEBHOOK || process.env.DISCORD_WEBHOOK_URL;
             if (!webhook) {
-              throw new Error('DISCORD_WEBHOOK secret is missing');
+              console.error(
+                '::error::No Discord webhook secret is set. Add DISCORD_WEBHOOK under '
+                + 'Settings → Secrets and variables → Actions (a webhook URL from '
+                + 'Server Settings → Integrations → Webhooks), then re-run.',
+              );
+              return; // do not fail pushes over a missing notification target
             }
 
-            for (const commit of event.commits || []) {
-              const files = [
-                ...(commit.added || []).map(f => `＋ ${f}`),
-                ...(commit.modified || []).map(f => `✎ ${f}`),
-                ...(commit.removed || []).map(f => `－ ${f}`)
-              ].filter(file =>
-                !/\.json$/i.test(file.replace(/^[＋✎－] /, ''))
-              );
+            const commits = event.commits || [];
+            if (!commits.length) {
+              console.log('No commits in this push event — nothing to notify.');
+              return;
+            }
 
-              if (!files.length) continue;
+            for (const commit of commits) {
+              // Defense in depth for mixed commits: archive JSON is excluded
+              // here as well as at the trigger (the trigger path filter only
+              // skips the workflow when EVERY file in the push is archive JSON).
+              const files = [
+                ...(commit.added || []).map((f) => `＋ ${f}`),
+                ...(commit.modified || []).map((f) => `✎ ${f}`),
+                ...(commit.removed || []).map((f) => `－ ${f}`),
+              ].filter((file) => !/\.json$/i.test(file.replace(/^[＋✎－] /, '')));
+
+              if (!files.length) {
+                console.log(`Commit ${commit.id.slice(0, 7)} only touches JSON — skipped.`);
+                continue;
+              }
 
               const payload = {
                 username: 'GitHub Activity',
                 embeds: [{
-                  title: 'New commit pushed',
-                  description: files.join('\n').slice(0, 4000),
+                  title: `New code change pushed to ${process.env.GITHUB_REPOSITORY}`,
+                  description: files.join('\n').slice(0, 3900),
                   color: 5793266,
                   fields: [
-                    {
-                      name: 'Author',
-                      value: commit.author?.name || 'Unknown',
-                      inline: true
-                    },
-                    {
-                      name: 'Commit',
-                      value: `[\`${commit.id.slice(0, 7)}\`](${commit.url})`,
-                      inline: true
-                    },
-                    {
-                      name: 'Message',
-                      value: (commit.message || 'No message').slice(0, 1000)
-                    }
+                    { name: 'Author', value: commit.author?.name || 'Unknown', inline: true },
+                    { name: 'Commit', value: `[\`${commit.id.slice(0, 7)}\`](${commit.url})`, inline: true },
+                    { name: 'Message', value: (commit.message || 'No message').slice(0, 1000) },
                   ],
-                  footer: {
-                    text: `Branch: ${process.env.GITHUB_REF_NAME}`
-                  },
-                  timestamp: new Date().toISOString()
-                }]
+                  footer: { text: `Branch: ${process.env.GITHUB_REF_NAME}` },
+                  timestamp: new Date().toISOString(),
+                }],
               };
 
-              const response = await fetch(webhook, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-              });
-
-              if (!response.ok) {
-                throw new Error(`Discord error: ${response.status}`);
+              // Send with retry + backoff for Discord rate limits (429) and
+              // transient 5xx; other failures fail the step so they are visible.
+              let lastError = null;
+              for (let attempt = 1; attempt <= 3; attempt += 1) {
+                const res = await fetch(webhook, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                });
+                if (res.ok) { lastError = null; break; }
+                lastError = new Error(`Discord webhook responded ${res.status}`);
+                const retryable = res.status === 429 || res.status >= 500;
+                console.error(`Discord delivery attempt ${attempt} failed: ${res.status}`);
+                if (!retryable || attempt === 3) break;
+                const retryAfter = Number(res.headers.get('retry-after'));
+                await sleep(Number.isFinite(retryAfter) && retryAfter > 0
+                  ? Math.min(retryAfter * 1000, 10_000)
+                  : attempt * 2000);
               }
+              if (lastError) throw lastError;
+
+              // Stay well inside the webhook rate limit (≈5 requests / 2 s).
+              await sleep(700);
             }
           }
 
-          main().catch(error => {
+          main().catch((error) => {
             console.error(error);
             process.exit(1);
           });

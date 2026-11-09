@@ -1,6 +1,11 @@
 // Request authentication for Edge Functions: verifies the caller's JWT via
 // the Supabase Auth API and loads their profile (roles are never trusted
-// from the request body).
+// from the request body). Ban enforcement lives HERE, on the one code path
+// every protected function already passes through, so a banned account
+// cannot reach any protected operation — not by hiding buttons, not by
+// calling the functions directly, not by editing frontend JavaScript.
+// The profile (and its ban state) is re-read from the database on every
+// single request, so a ban takes effect immediately for logged-in users.
 
 export async function authenticate({ authApi, db }, req) {
   const header = req.headers.get('Authorization') ?? '';
@@ -25,6 +30,18 @@ export async function authenticate({ authApi, db }, req) {
     await db.insert('profiles', row);
     profile = { ...row, role: 'member' };
   }
+
+  // Ban gate. Server-side only; the message never leaks administrative detail.
+  if (profile.banned) {
+    return {
+      error: {
+        code: 403,
+        message: 'Your account is currently banned from contributing and editing. The banner at the top of the site has details.',
+      },
+      banned: profile,
+    };
+  }
+
   return { user: data.user, profile, token };
 }
 

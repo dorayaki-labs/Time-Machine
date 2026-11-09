@@ -29,6 +29,8 @@ import Statistics from '@/pages/Statistics.jsx';
 import ContributionLog from '@/pages/ContributionLog.jsx';
 import Account from '@/pages/Account.jsx';
 import Staff from '@/pages/Staff.jsx';
+import OwnerPanel from '@/pages/OwnerPanel.jsx';
+import BanBanner from '@/components/BanBanner.jsx';
 import NotFound from '@/pages/NotFound.jsx';
 
 // Pages are imported eagerly, not code-split: the whole app is small, and a
@@ -94,6 +96,7 @@ function Routed() {
         <Route path="/log" element={<ContributionLog />} />
         <Route path="/account" element={<Account />} />
         <Route path="/staff" element={<Staff />} />
+        <Route path="/owner" element={<OwnerPanel />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>
@@ -131,6 +134,7 @@ export default function App() {
     <CatalogProvider>
       <SearchProvider>
         <a href="#main" className="skip-link">Skip to content</a>
+        <BanBanner />
         <Header />
         <ScrollToTop />
         <ErrorBoundary>

@@ -1,29 +1,37 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-1979-0007",
   "type": "episode",
   "seriesId": "anime-1979",
   "number": 7,
-  "title": {
-    "en": "Episode 7",
-    "ja": null
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "1979-04-09",
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [],
+  "segments": [
+    {
+      "id": "anime-1979-0007-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Episode 7",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
+    }
+  ],
   "updatedAt": "2026-11-02"
 }

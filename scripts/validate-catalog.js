@@ -37,8 +37,15 @@ const ids = (list, key = 'id') => (categories?.[list] ?? []).map((x) => x[key]);
 const CHAR_IDS = new Set(characters.map((c) => c.id));
 const GADGET_IDS = new Set(gadgets.map((g) => g.id));
 const PRESERVATION = new Set(['extant', 'partial', 'lost']);
+// Schema 3 = movies and roster indexes. Schema 4 = episode records: a
+// broadcast episode is a container of one or more story segments.
 const SCHEMA = 3;
+const SCHEMA_EPISODE = 4;
 const SOURCE_TYPES = new Set(['direct', 'embed']);
+
+// Story-level fields describe ONE story and belong on a segment.
+const STORY_FIELDS = ['title', 'alternateTitles', 'summary', 'description', 'image',
+  'screenshots', 'characters', 'gadgets', 'voiceActors', 'durationMinutes'];
 
 const DATE = /^\d{4}(-\d{2}(-\d{2})?)?$/;
 const ENTRY_ID = /^(anime-(1979|2005|1973)-\d{4}|movie-\d{4})$/;
@@ -92,28 +99,81 @@ function checkSources(file, record) {
   });
 }
 
+function checkSegmentTitle(file, label, title) {
+  const has = typeof title === 'string' ? Boolean(title.trim()) : Boolean(title?.en || title?.ja);
+  if (!has) err(file, `${label} needs a title (a string, or { en, ja })`);
+}
+
+/** Schema 4: one broadcast episode containing one or more story segments. */
+function checkEpisodeRecord(file, record, cat) {
+  if (record.schemaVersion !== SCHEMA_EPISODE) err(file, `episode schemaVersion must be ${SCHEMA_EPISODE}`);
+  if (!Array.isArray(record.segments) || record.segments.length === 0) {
+    err(file, 'segments must be an array with at least one segment');
+    return;
+  }
+  const seenSegIds = new Set();
+  record.segments.forEach((seg, i) => {
+    const at = `segment ${i + 1}`;
+    if (!seg || typeof seg !== 'object' || Array.isArray(seg)) { err(file, `${at}: must be an object`); return; }
+    // Segment ids are STABLE identities (the position a segment was created
+    // in) and never renumbered on reorder; segmentNumber is the display
+    // order and must match the array position.
+    if (typeof seg.id !== 'string' || !(new RegExp(`^${record.id}-\\d{2}$`)).test(seg.id)) {
+      err(file, `${at}: id "${seg.id}" must look like "${record.id}-01"`);
+    }
+    if (seenSegIds.has(seg.id)) err(file, `${at}: duplicate segment id "${seg.id}"`);
+    seenSegIds.add(seg.id);
+    if (seg.segmentNumber !== i + 1) err(file, `${at}: segmentNumber must be ${i + 1} (array order is the broadcast order)`);
+    checkSegmentTitle(file, at, seg.title);
+    if (seg.durationMinutes !== undefined && seg.durationMinutes !== null
+        && (!Number.isInteger(seg.durationMinutes) || seg.durationMinutes < 1)) {
+      err(file, `${at}: durationMinutes must be a positive integer or null`);
+    }
+    checkImage(file, seg.image);
+    (seg.screenshots ?? []).forEach((s, j) => checkImage(file, s, undefined) || (s && typeof s === 'object' && !Array.isArray(s)) || err(file, `${at}: screenshot ${j + 1} must be an object { url, alt }`));
+    (seg.characters ?? []).forEach((id) => { if (!CHAR_IDS.has(id)) err(file, `${at}: unknown character "${id}"`); });
+    (seg.gadgets ?? []).forEach((id) => { if (!GADGET_IDS.has(id)) err(file, `${at}: unknown gadget "${id}"`); });
+    for (const key of ['alternateTitles', 'screenshots', 'characters', 'gadgets', 'voiceActors']) {
+      if (seg[key] !== undefined && seg[key] !== null && !Array.isArray(seg[key])) err(file, `${at}: "${key}" must be an array`);
+    }
+    for (const key of ['summary', 'description']) {
+      if (seg[key] !== undefined && seg[key] !== null && typeof seg[key] !== 'string') err(file, `${at}: "${key}" must be a string or null`);
+    }
+  });
+  // Story-level fields on the record itself are pre-migration leftovers.
+  for (const f of STORY_FIELDS) {
+    if (f in record) err(file, `"${f}" belongs on a segment now — remove it from the episode record`);
+  }
+}
+
 function checkRecord(file, record, cat) {
-  if (record.schemaVersion !== SCHEMA) err(file, `schemaVersion must be ${SCHEMA}`);
   if (!cat.historical && !ENTRY_ID.test(record.id)) err(file, `id "${record.id}" does not match the entry id pattern`);
   if (seenIds.has(record.id)) err(file, `duplicate id "${record.id}"`);
   seenIds.add(record.id);
   if (record.type !== cat.kind) err(file, `type must be "${cat.kind}"`);
   if (record.seriesId !== cat.id) err(file, `seriesId must be "${cat.id}"`);
   if (!Number.isInteger(record.number)) err(file, 'number must be an integer');
-  const title = record.title;
-  const hasTitle = typeof title === 'string' ? title.trim() : Boolean(title?.en || title?.ja);
-  if (!hasTitle) err(file, 'title needs at least one language (a string, or { en, ja })');
   if ('status' in record) warn(file, 'records no longer carry "status" — the app computes it from the filled fields; remove this field');
   if ('availability' in record || 'sourceCount' in record) warn(file, 'availability/sourceCount are derived from sources — remove them from the record');
   const release = record.release ?? {};
   if (release.date !== null && release.date !== undefined && !DATE.test(release.date)) err(file, `release.date "${release.date}" is not YYYY-MM-DD, YYYY-MM or YYYY`);
   if (release.precision !== undefined && !['day', 'month', 'year'].includes(release.precision)) err(file, `release.precision "${release.precision}" is invalid`);
-  (record.characters ?? []).forEach((id) => { if (!CHAR_IDS.has(id)) err(file, `unknown character "${id}"`); });
-  (record.gadgets ?? []).forEach((id) => { if (!GADGET_IDS.has(id)) err(file, `unknown gadget "${id}"`); });
   if ('category' in record) err(file, 'records carry no category field');
-  checkImage(file, record.image);
   checkSources(file, record);
   if (cat.historical && record.preservation && !PRESERVATION.has(record.preservation)) err(file, `unknown preservation "${record.preservation}"`);
+
+  if (cat.kind === 'episode') {
+    checkEpisodeRecord(file, record, cat);
+  } else {
+    // Movies remain single-story records on schema 3.
+    if (record.schemaVersion !== SCHEMA) err(file, `movie schemaVersion must be ${SCHEMA}`);
+    const title = record.title;
+    const hasTitle = typeof title === 'string' ? title.trim() : Boolean(title?.en || title?.ja);
+    if (!hasTitle) err(file, 'title needs at least one language (a string, or { en, ja })');
+    checkImage(file, record.image);
+    (record.characters ?? []).forEach((id) => { if (!CHAR_IDS.has(id)) err(file, `unknown character "${id}"`); });
+    (record.gadgets ?? []).forEach((id) => { if (!GADGET_IDS.has(id)) err(file, `unknown gadget "${id}"`); });
+  }
   entryCount += 1;
 }
 

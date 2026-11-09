@@ -230,16 +230,131 @@ export function SourceRows({ sources, onChange }) {
 // The structured grid itself
 // ---------------------------------------------------------------------------
 
+/** A blank story segment with the complete schema-4 shape. */
+export function blankSegment(entityId, position) {
+  return {
+    id: `${entityId}-${String(position).padStart(2, '0')}`,
+    segmentNumber: position,
+    title: { en: '', ja: null },
+    alternateTitles: [],
+    summary: null,
+    description: null,
+    image: { url: null, alt: null },
+    screenshots: [],
+    characters: [],
+    gadgets: [],
+    voiceActors: [],
+    durationMinutes: null,
+  };
+}
+
+/** Next free two-digit segment suffix, so ids are never reused or colliding. */
+function nextSegmentSuffix(segments) {
+  const used = new Set((segments ?? []).map((s) => Number(String(s.id ?? '').split('-').pop())).filter(Number.isFinite));
+  let n = 1;
+  while (used.has(n)) n += 1;
+  return String(n).padStart(2, '0');
+}
+
+/** One expandable per-segment editor with its own complete set of story fields. */
+function SegmentEditor({ draft, index, total, setField }) {
+  const seg = draft.segments[index];
+  const removeSegment = (i) => {
+    if ((draft.segments?.length ?? 0) <= 1) return;
+    setField('segments', (draft.segments ?? []).filter((_, j) => j !== i).map((s, j) => ({ ...s, segmentNumber: j + 1 })));
+  };
+  const moveSegment = (i, dir) => {
+    const j = i + dir;
+    if (j < 0 || j >= (draft.segments?.length ?? 0)) return;
+    const next = [...draft.segments];
+    [next[i], next[j]] = [next[j], next[i]];
+    // Display order travels with the array; stable ids do not move.
+    setField('segments', next.map((s, k) => ({ ...s, segmentNumber: k + 1 })));
+  };
+  const segTitle = seg.title?.en || seg.title?.ja || `Segment ${index + 1}`;
+
+  return (
+    <details className="segment-editor" open={index === 0}>
+      <summary className="segment-editor__head">
+        <span className="segment-editor__number mono">Segment {index + 1}</span>
+        <span className="segment-editor__title">{segTitle}</span>
+        <span className="segment-editor__tools" onClick={(e) => e.preventDefault()}>
+          <button type="button" className="btn btn--ghost btn--sm" disabled={index === 0}
+            aria-label={`Move segment ${index + 1} up`} onClick={() => moveSegment(index, -1)}>
+            <Icon name="chevronDown" size={14} className="is-flipped" />
+          </button>
+          <button type="button" className="btn btn--ghost btn--sm" disabled={index === total - 1}
+            aria-label={`Move segment ${index + 1} down`} onClick={() => moveSegment(index, 1)}>
+            <Icon name="chevronDown" size={14} />
+          </button>
+          <button type="button" className="btn btn--ghost btn--sm btn--danger" disabled={total <= 1}
+            title={total <= 1 ? 'An episode always keeps at least one segment' : `Remove segment ${index + 1}`}
+            aria-label={`Remove segment ${index + 1}`} onClick={() => removeSegment(index)}>
+            <Icon name="trash" size={14} />
+          </button>
+        </span>
+      </summary>
+      <div className="segment-editor__body">
+        <RecordField label={`Segment ${index + 1} English title`} value={seg.title?.en} onChange={(v) => setField(`segments.${index}.title.en`, v ?? '')} optional={false} />
+        <RecordField label={`Segment ${index + 1} Japanese title`} value={seg.title?.ja} onChange={(v) => setField(`segments.${index}.title.ja`, v)} />
+        <RecordField label="Alternate titles" placeholder="Comma-separated" value={(seg.alternateTitles ?? []).join(', ')}
+          onChange={(v) => setField(`segments.${index}.alternateTitles`, v ? v.split(',').map((x) => x.trim()).filter(Boolean) : [])} />
+        <RecordField label="Synopsis" multiline rows={4} value={seg.summary} onChange={(v) => setField(`segments.${index}.summary`, v)} />
+        <RecordField label="Description (longer, optional)" multiline rows={4} value={seg.description} onChange={(v) => setField(`segments.${index}.description`, v)} />
+        <RecordField label="Runtime (minutes)" value={seg.durationMinutes} onChange={(v) => setField(`segments.${index}.durationMinutes`, v ? Number(v) : null)} />
+        <RecordField label="Segment artwork URL" value={seg.image?.url} onChange={(v) => setField(`segments.${index}.image.url`, v)} />
+        <RecordField label="Artwork alt text" value={seg.image?.alt} onChange={(v) => setField(`segments.${index}.image.alt`, v)} />
+        <IdListField label="Characters in this segment" ids={seg.characters ?? []} onChange={(list) => setField(`segments.${index}.characters`, list)} kind="character" />
+        <IdListField label="Gadgets in this segment" ids={seg.gadgets ?? []} onChange={(list) => setField(`segments.${index}.gadgets`, list)} kind="gadget" />
+        <VoiceActorRows value={seg.voiceActors ?? []} onChange={(list) => setField(`segments.${index}.voiceActors`, list)} withCharacter />
+        <ScreenshotRows value={seg.screenshots ?? []} onChange={(list) => setField(`segments.${index}.screenshots`, list)} />
+      </div>
+    </details>
+  );
+}
+
 /**
  * Renders the structured editing grid for a draft record. The parent owns
  * `draft` and the setField(path, value) deep-path setter; this component is
  * purely presentational so staff and member flows behave identically.
+ * Episodes separate broadcast-level fields from per-segment story fields.
  */
 export default function RecordEditor({ entityType, draft, setField }) {
   if (!draft) return null;
   const langs = languageOptions();
 
-  if (entityType === 'episode' || entityType === 'movie') {
+  if (entityType === 'episode') {
+    const segments = draft.segments ?? [];
+    return (
+      <div className="contribution-form__grid">
+        <h3 className="section-heading span-2">Broadcast information <span className="muted small">(shared by every segment)</span></h3>
+        <RecordField label="Broadcast date" placeholder="YYYY, YYYY-MM or YYYY-MM-DD" value={draft.release?.date} onChange={(v) => setField('release.date', v)} />
+        <RecordField label="Date precision" value={draft.release?.precision} onChange={(v) => setField('release.precision', v)}
+          options={[{ value: 'day', label: 'Exact day' }, { value: 'month', label: 'Month only' }, { value: 'year', label: 'Year only' }]}
+          help="Used when the full date is not known." />
+        <RecordField label="Original language" value={draft.originalLanguage} onChange={(v) => setField('originalLanguage', v)} options={langs} />
+        <RecordField label="Region" placeholder="e.g. Japan" value={draft.release?.region} onChange={(v) => setField('release.region', v)} />
+        <SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} />
+
+        <h3 className="section-heading span-2">Segments <span className="muted small">({segments.length} — each holds one story)</span></h3>
+        <div className="span-2 segment-list">
+          {segments.map((seg, i) => (
+            <SegmentEditor key={seg.id ?? i} draft={draft} index={i} total={segments.length} setField={setField} />
+          ))}
+          <div className="btn-row">
+            <button type="button" className="btn btn--ghost" onClick={() => {
+              const added = { ...blankSegment(draft.id, segments.length + 1), id: `${draft.id}-${nextSegmentSuffix(segments)}` };
+              setField('segments', [...segments, added].map((s, i) => ({ ...s, segmentNumber: i + 1 })));
+            }}>
+              <Icon name="plus" size={15} /> Add Segment
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (entityType === 'movie') {
     return (
       <div className="contribution-form__grid">
         <RecordField label="English title" value={draft.title?.en} onChange={(v) => setField('title.en', v ?? '')} optional={false} />
@@ -251,9 +366,9 @@ export default function RecordEditor({ entityType, draft, setField }) {
         <RecordField label="Original language" value={draft.originalLanguage} onChange={(v) => setField('originalLanguage', v)} options={langs} />
         <RecordField label="Region" placeholder="e.g. Japan" value={draft.release?.region} onChange={(v) => setField('release.region', v)} />
         <RecordField label="Summary" multiline rows={4} value={draft.summary} onChange={(v) => setField('summary', v)} />
-        {entityType === 'movie' ? <RecordField label="Runtime (minutes)" value={draft.durationMinutes} onChange={(v) => setField('durationMinutes', v ? Number(v) : null)} /> : null}
-        {entityType === 'movie' ? <RecordField label="Director (English)" value={draft.director?.en} onChange={(v) => setField('director.en', v)} /> : null}
-        {entityType === 'movie' ? <RecordField label="Director (Japanese)" value={draft.director?.ja} onChange={(v) => setField('director.ja', v)} /> : null}
+        <RecordField label="Runtime (minutes)" value={draft.durationMinutes} onChange={(v) => setField('durationMinutes', v ? Number(v) : null)} />
+        <RecordField label="Director (English)" value={draft.director?.en} onChange={(v) => setField('director.en', v)} />
+        <RecordField label="Director (Japanese)" value={draft.director?.ja} onChange={(v) => setField('director.ja', v)} />
         <RecordField label="Main image URL" value={draft.image?.url} onChange={(v) => setField('image.url', v)} />
         <RecordField label="Image alt text" value={draft.image?.alt} onChange={(v) => setField('image.alt', v)} />
         <IdListField label="Characters in this entry" ids={draft.characters ?? []} onChange={(list) => setField('characters', list)} kind="character" />
@@ -316,11 +431,21 @@ export function buildNewRecord(entityType, entityId) {
   const isMovie = entityType === 'movie';
   const number = isMovie ? Number(entityId.replace(/^movie-/, '')) : Number(entityId.split('-').pop());
   const seriesId = isMovie ? 'movies' : entityId.split('-').slice(0, 2).join('-');
+  if (isMovie) {
+    return {
+      schemaVersion: 3, id: entityId, type: 'movie', seriesId, number,
+      title: { en: '', ja: null }, alternateTitles: [], originalLanguage: 'ja',
+      release: { date: null, precision: null, region: null }, summary: null,
+      image: { url: null, alt: null }, screenshots: [], characters: [], gadgets: [], voiceActors: [],
+      sources: [], durationMinutes: null, director: { en: null, ja: null },
+    };
+  }
+  // Schema 4: a new episode starts as a broadcast with exactly one segment.
   return {
-    schemaVersion: 3, id: entityId, type: isMovie ? 'movie' : 'episode', seriesId, number,
-    title: { en: '', ja: null }, alternateTitles: [], originalLanguage: 'ja',
-    release: { date: null, precision: null, region: null }, summary: null,
-    image: { url: null, alt: null }, screenshots: [], characters: [], gadgets: [], voiceActors: [],
-    sources: [], ...(isMovie ? { durationMinutes: null, director: { en: null, ja: null } } : {}),
+    schemaVersion: 4, id: entityId, type: 'episode', seriesId, number,
+    originalLanguage: 'ja',
+    release: { date: null, precision: null, region: null },
+    sources: [],
+    segments: [blankSegment(entityId, 1)],
   };
 }

@@ -18,16 +18,19 @@ import {
 import { ColorControl, RangeControl, SegmentControl, ToggleControl, ResetButton } from '@/components/studio/Controls.jsx';
 import StudioPreview from '@/components/studio/Preview.jsx';
 
+// Sections carry a nav group so the studio navigation reads as a hierarchy:
+// getting started → look → behaviour. The labels render as small headings
+// inside the section nav.
 const SECTIONS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'saved', label: 'Saved themes' },
-  { id: 'colors', label: 'Colours' },
-  { id: 'typography', label: 'Typography' },
-  { id: 'layout', label: 'Layout' },
-  { id: 'surfaces', label: 'Surfaces' },
-  { id: 'catalogue', label: 'Catalogue' },
-  { id: 'motion', label: 'Motion' },
-  { id: 'accessibility', label: 'Accessibility' },
+  { id: 'overview', label: 'Overview', group: 'Start' },
+  { id: 'saved', label: 'Saved themes', group: 'Start' },
+  { id: 'colors', label: 'Colours', group: 'The look' },
+  { id: 'typography', label: 'Typography', group: 'The look' },
+  { id: 'layout', label: 'Layout', group: 'The look' },
+  { id: 'surfaces', label: 'Surfaces', group: 'The look' },
+  { id: 'catalogue', label: 'Catalogue', group: 'The look' },
+  { id: 'motion', label: 'Motion', group: 'Behaviour' },
+  { id: 'accessibility', label: 'Accessibility', group: 'Behaviour' },
 ];
 const EDITOR_SECTIONS = new Set(['colors', 'typography', 'layout', 'surfaces', 'catalogue', 'motion', 'accessibility']);
 
@@ -276,19 +279,31 @@ export default function Customize() {
       <div className="studio">
         {/* -------- section navigation -------- */}
         <nav className="studio-nav" aria-label="Studio sections">
-          {SECTIONS.filter((s) => !EDITOR_SECTIONS.has(s.id) || draft).map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className={section === s.id ? 'is-active' : ''}
-              aria-current={section === s.id ? 'true' : undefined}
-              onClick={() => {
-                if (EDITOR_SECTIONS.has(s.id) && !draft) return;
-                setSection(s.id);
-              }}
-              disabled={EDITOR_SECTIONS.has(s.id) && !draft}
-            >{s.label}</button>
-          ))}
+          {(() => {
+            const visible = SECTIONS.filter((s) => !EDITOR_SECTIONS.has(s.id) || draft);
+            const out = [];
+            let lastGroup = null;
+            for (const s of visible) {
+              if (s.group !== lastGroup) {
+                lastGroup = s.group;
+                out.push(<p key={`group-${s.group}`} className="studio-nav__group" aria-hidden="true">{s.group}</p>);
+              }
+              out.push(
+                <button
+                  key={s.id}
+                  type="button"
+                  className={section === s.id ? 'is-active' : ''}
+                  aria-current={section === s.id ? 'true' : undefined}
+                  onClick={() => {
+                    if (EDITOR_SECTIONS.has(s.id) && !draft) return;
+                    setSection(s.id);
+                  }}
+                  disabled={EDITOR_SECTIONS.has(s.id) && !draft}
+                >{s.label}</button>,
+              );
+            }
+            return out;
+          })()}
         </nav>
 
         {/* -------- controls -------- */}

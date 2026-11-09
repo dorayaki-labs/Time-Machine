@@ -1,18 +1,10 @@
 {
+  "schemaVersion": 4,
   "id": "anime-2005-0001",
   "type": "episode",
-  "image": {
-    "alt": null,
-    "url": "https://vlitzz.store/thumbnail/e01.png"
-  },
-  "title": {
-    "en": "Fishing Pond in the Study Room",
-    "ja": "勉強べやの釣り堀"
-  },
+  "seriesId": "anime-2005",
   "number": 1,
-  "gadgets": [
-    "gadget-anywhere-door"
-  ],
+  "originalLanguage": "ja",
   "release": {
     "date": "2005-04-15",
     "region": "JP",
@@ -35,20 +27,36 @@
       "notes": null
     }
   ],
-  "summary": null,
-  "seriesId": "anime-2005",
-  "updatedAt": "2026-11-02",
-  "characters": [
-    "char-nobita"
-  ],
-  "screenshots": [
+  "segments": [
     {
-      "alt": "fish",
-      "url": "https://vlitzz.store/thumbnail/e01.png"
+      "id": "anime-2005-0001-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Fishing Pond in the Study Room",
+        "ja": "勉強べやの釣り堀"
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "alt": null,
+        "url": "https://vlitzz.store/thumbnail/e01.png"
+      },
+      "screenshots": [
+        {
+          "alt": "fish",
+          "url": "https://vlitzz.store/thumbnail/e01.png"
+        }
+      ],
+      "characters": [
+        "char-nobita"
+      ],
+      "gadgets": [
+        "gadget-anywhere-door"
+      ],
+      "voiceActors": [],
+      "durationMinutes": null
     }
   ],
-  "voiceActors": [],
-  "schemaVersion": 3,
-  "alternateTitles": [],
-  "originalLanguage": "ja"
+  "updatedAt": "2026-11-02"
 }

@@ -1,50 +1,15 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-1979-0002",
   "type": "episode",
   "seriesId": "anime-1979",
   "number": 2,
-  "title": {
-    "en": "Transformation Biscuits",
-    "ja": "変身ビスケット"
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "1979-04-03",
     "precision": "day",
     "region": "JP"
   },
-  "summary": "Nobita accidentally serves Doraemon's mysterious transformation biscuits to a houseguest, causing hilarious chaos as everyone begins turning into different animals. With transformations spreading throughout the household, Nobita and Doraemon desperately try to contain the situation before things get worse.",
-  "image": {
-    "url": "https://image.tmdb.org/t/p/original/gheDIaMsooae4LrbY2Rsm0gxW0l.jpg",
-    "alt": null
-  },
-  "screenshots": [
-    {
-      "url": "https://image.tmdb.org/t/p/original/jtqNXLFIubCzIOWZwUup1KbVzrs.jpg",
-      "alt": null
-    },
-    {
-      "url": "https://i.postimg.cc/CM87Wv4C/image.png",
-      "alt": null
-    },
-    {
-      "url": "https://i.postimg.cc/NjCRyTxZ/image.png",
-      "alt": null
-    },
-    {
-      "url": "https://i.postimg.cc/HW05wF25/image.png",
-      "alt": null
-    },
-    {
-      "url": "https://i.postimg.cc/brLs7cVY/image.png",
-      "alt": null
-    }
-  ],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [
     {
       "type": "embed",
@@ -60,6 +25,49 @@
       },
       "quality": "SD",
       "notes": "subtitles arent very accurate"
+    }
+  ],
+  "segments": [
+    {
+      "id": "anime-1979-0002-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Transformation Biscuits",
+        "ja": "変身ビスケット"
+      },
+      "alternateTitles": [],
+      "summary": "Nobita accidentally serves Doraemon's mysterious transformation biscuits to a houseguest, causing hilarious chaos as everyone begins turning into different animals. With transformations spreading throughout the household, Nobita and Doraemon desperately try to contain the situation before things get worse.",
+      "description": null,
+      "image": {
+        "url": "https://image.tmdb.org/t/p/original/gheDIaMsooae4LrbY2Rsm0gxW0l.jpg",
+        "alt": null
+      },
+      "screenshots": [
+        {
+          "url": "https://image.tmdb.org/t/p/original/jtqNXLFIubCzIOWZwUup1KbVzrs.jpg",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/CM87Wv4C/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/NjCRyTxZ/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/HW05wF25/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/brLs7cVY/image.png",
+          "alt": null
+        }
+      ],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
     }
   ],
   "updatedAt": "2026-11-02"

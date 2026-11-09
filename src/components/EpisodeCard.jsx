@@ -1,4 +1,5 @@
 import MediaCard from './MediaCard.jsx';
+import SegmentCover from './SegmentCover.jsx';
 import StatusIndicator from './StatusIndicator.jsx';
 import { displayTitle, secondaryTitle, SERIES } from '@/lib/catalog.js';
 import { formatRelease } from '@/lib/dates.js';
@@ -6,6 +7,12 @@ import { formatRelease } from '@/lib/dates.js';
 const pad = (n) => String(n).padStart(3, '0');
 
 export default function EpisodeCard({ entry, showSeries = false, showPreservation = false }) {
+  const segments = Array.isArray(entry.segments) ? entry.segments : [];
+  // The hover animation only makes sense when at least two segments carry art.
+  const coverMedia = segments.filter((s) => s.image?.url).length > 1
+    ? <SegmentCover images={segments.map((s) => s.image)} seed={entry.id} label={`EP ${pad(entry.number)}`} />
+    : null;
+  const segmentCount = segments.length || 1;
   return (
     <MediaCard
       to={entry.url}
@@ -17,10 +24,14 @@ export default function EpisodeCard({ entry, showSeries = false, showPreservatio
       title={displayTitle(entry)}
       subtitle={secondaryTitle(entry)}
       badge={<span className="chip chip--mono">#{entry.number}</span>}
+      media={coverMedia}
     >
       <p className="media-card__meta">
         {showSeries ? <>{SERIES[entry.seriesId].label}<span className="sep" aria-hidden="true"> / </span></> : null}
         {formatRelease(entry.release)}
+      </p>
+      <p className="media-card__meta media-card__meta--segments">
+        <span className="chip chip--mono chip--segments">{segmentCount} {segmentCount === 1 ? 'Segment' : 'Segments'}</span>
       </p>
       <div className="media-card__row">
         <StatusIndicator kind="availability" value={entry.availability} compact />

@@ -1,34 +1,15 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-2005-0003",
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 3,
-  "title": {
-    "en": "The Dictator Switch",
-    "ja": "独裁者のスイッチ"
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "2005-04-15",
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
-  "image": {
-    "url": "https://i.postimg.cc/wv98V9bB/ep03.png",
-    "alt": null
-  },
-  "screenshots": [
-    {
-      "url": "https://i.postimg.cc/wv98V9bB/ep03.png",
-      "alt": null
-    }
-  ],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [
     {
       "type": "embed",
@@ -38,6 +19,33 @@
       "subtitles": "none",
       "quality": null,
       "notes": null
+    }
+  ],
+  "segments": [
+    {
+      "id": "anime-2005-0003-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "The Dictator Switch",
+        "ja": "独裁者のスイッチ"
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": "https://i.postimg.cc/wv98V9bB/ep03.png",
+        "alt": null
+      },
+      "screenshots": [
+        {
+          "url": "https://i.postimg.cc/wv98V9bB/ep03.png",
+          "alt": null
+        }
+      ],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
     }
   ],
   "updatedAt": "2026-11-02"

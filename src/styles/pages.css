@@ -407,3 +407,149 @@
 .credits-gold__text { margin: 0; max-width: 62ch; color: rgba(36, 28, 4, 0.85); font-size: 1.02rem; }
 
 .credits-legal { margin-top: var(--s-5); font-size: 0.85rem; color: var(--text-3); }
+
+/* ---------------------------------------------------------------------------
+   Episode detail: segment tabs + per-segment heading
+   ------------------------------------------------------------------------- */
+
+.segment-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-block: var(--s-4) var(--s-2);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--s-3);
+}
+.segment-tabs__tab {
+  appearance: none;
+  background: var(--surface);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md, 10px);
+  padding: 0.42rem 0.95rem;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 160ms var(--ease, ease), color 160ms var(--ease, ease), border-color 160ms var(--ease, ease);
+}
+.segment-tabs__tab:hover { color: var(--text); border-color: var(--border-strong, var(--border)); }
+.segment-tabs__tab.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.segment-heading { margin-block: var(--s-5) var(--s-2); }
+.segment-heading h2 { margin: 0 0 var(--s-1); font-size: 1.35rem; }
+.prose--secondary { color: var(--text-2); margin-top: var(--s-3); }
+
+/* ---------------------------------------------------------------------------
+   Record editor: broadcast vs segments split
+   ------------------------------------------------------------------------- */
+
+.segment-list { display: grid; gap: var(--s-3); }
+.segment-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md, 10px);
+  background: var(--surface);
+  overflow: hidden;
+}
+.segment-editor__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface-2);
+}
+.segment-editor__head::marker { content: ''; }
+.segment-editor__number {
+  font-size: 0.8rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.segment-editor__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.segment-editor__tools { display: flex; gap: 4px; }
+.segment-editor__tools .btn { padding-inline: 0.45rem; }
+.segment-editor__body {
+  padding: var(--s-3) 0.85rem var(--s-4);
+  display: grid;
+  gap: var(--s-2);
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------------------
+   Ban notification strip
+   ------------------------------------------------------------------------- */
+
+.ban-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0.55rem max(var(--s-4), calc((100% - var(--max, 1200px)) / 2));
+  background: var(--bad, #a34141);
+  color: #fff;
+}
+.ban-banner__icon { display: inline-flex; flex: none; }
+.ban-banner__text { margin: 0; font-size: 0.9rem; line-height: 1.45; }
+.ban-banner__text em { font-style: normal; opacity: 0.92; }
+.ban-banner__hide {
+  margin-left: auto;
+  flex: none;
+  appearance: none;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--r-sm, 7px);
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.ban-banner__hide:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* ---------------------------------------------------------------------------
+   Owner-only user management panel
+   ------------------------------------------------------------------------- */
+
+.owner-filters { margin-block: var(--s-4); }
+.owner-list { display: grid; gap: var(--s-3); }
+.owner-user {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) auto auto;
+  gap: var(--s-3);
+  align-items: center;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md, 10px);
+  background: var(--surface);
+}
+.owner-user--banned { border-color: var(--bad); }
+.owner-user__who { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.owner-user__name { margin: 0; font-weight: 600; display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.owner-user__meta { margin: 2px 0 0; }
+.owner-user__chip-banned { background: var(--bad); color: #fff; border-color: transparent; }
+.owner-user__stats {
+  display: flex;
+  gap: var(--s-4);
+  color: var(--text-2);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.owner-user__stats strong { color: var(--text); font-family: var(--mono); }
+.owner-user__actions { display: flex; align-items: center; gap: var(--s-2); justify-self: end; }
+.owner-user__reason { grid-column: 1 / -1; margin: 0; }
+
+@media (max-width: 820px) {
+  .owner-user { grid-template-columns: 1fr; }
+  .owner-user__actions { justify-self: start; flex-wrap: wrap; }
+}

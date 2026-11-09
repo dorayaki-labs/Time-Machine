@@ -1,30 +1,38 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-1973-0036",
   "type": "episode",
   "seriesId": "anime-1973",
   "number": 36,
-  "title": {
-    "en": "Episode 36",
-    "ja": null
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "1973-08-05",
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
+  "preservation": null,
   "sources": [],
-  "updatedAt": "2026-11-02",
-  "preservation": null
+  "segments": [
+    {
+      "id": "anime-1973-0036-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Episode 36",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
+    }
+  ],
+  "updatedAt": "2026-11-02"
 }

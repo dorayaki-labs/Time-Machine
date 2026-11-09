@@ -1,5 +1,7 @@
 // Modular global search. Builds one lightweight document per searchable thing and scores matches.
-import { getAllEntries, getCharacters, getGadgets, SERIES, displayTitle } from './catalog.js';
+import {
+  getAllEntries, getCharacters, getGadgets, SERIES, displayTitle, entrySearchTerms, isMultiSegment,
+} from './catalog.js';
 import { normalize } from './filters.js';
 
 let docs = null;
@@ -17,12 +19,31 @@ function buildDocs() {
       url: e.url,
       number: e.number,
       numberLabel: isMovie ? 'movie' : 'ep',
-      terms: [
-        ...(typeof e.title === 'string' ? [e.title] : [e.title?.en, e.title?.ja]),
-        ...e.alternateTitles.map((t) => (typeof t === 'string' ? t : t?.title)),
-        e.id,
-      ].filter(Boolean).map(normalize),
+      // Segment titles/synopses are indexed on the episode too, so browsing
+      // "which episode was that story in?" works from the episode results.
+      terms: [...entrySearchTerms(e), e.id].filter(Boolean).map(normalize),
     });
+    // Individual segments of multi-segment broadcasts are independently
+    // discoverable: the result opens the parent episode with that segment
+    // pre-selected. Single-segment episodes need no separate document —
+    // their episode entry already carries the story.
+    if (!isMovie && isMultiSegment(e)) {
+      e.segments.forEach((seg, i) => {
+        list.push({
+          key: seg.id,
+          group: 'segments',
+          title: (typeof seg.title === 'string' ? seg.title : seg.title?.en || seg.title?.ja) || `Segment ${i + 1}`,
+          subtitle: `Segment ${i + 1} · Episode ${e.number} · ${SERIES[e.seriesId].label}`,
+          url: `${e.url}?segment=${i + 1}`,
+          number: e.number,
+          terms: [
+            typeof seg.title === 'string' ? seg.title : seg.title?.en, seg.title?.ja,
+            ...seg.alternateTitles.map((t) => (typeof t === 'string' ? t : t?.title)),
+            seg.summary, seg.description, e.id,
+          ].filter(Boolean).map(normalize),
+        });
+      });
+    }
   }
   for (const c of getCharacters()) {
     list.push({
@@ -42,6 +63,7 @@ function buildDocs() {
 
 export const GROUPS = [
   { id: 'episodes', label: 'Episodes' },
+  { id: 'segments', label: 'Episode segments' },
   { id: 'movies', label: 'Movies' },
   { id: 'characters', label: 'Characters' },
   { id: 'gadgets', label: 'Gadgets' },

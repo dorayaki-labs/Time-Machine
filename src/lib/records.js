@@ -4,16 +4,23 @@
 /**
  * Which fields of a full record are filled in. Drives both the completeness
  * indicator on detail pages and the automatic status, so they can never drift
- * apart.
+ * apart. Works on merged catalogue entries: for schema-4 episodes the story
+ * fields live on segments, and the entry carries the unions plus derived
+ * cover/synopsis fallbacks (see catalog.js mergeEntry).
  */
 export function metadataChecklist(record) {
   if (!record) return [];
   const isEpisode = record.type === 'episode';
+  const segments = Array.isArray(record.segments) && record.segments.length ? record.segments : null;
+  const segProp = (pick) => (segments ? segments.some(pick) : undefined);
+  const title = segments
+    ? { en: segments.some((s) => s.title?.en), ja: segments.some((s) => s.title?.ja) }
+    : record.title;
   return [
-    { label: 'English title', done: Boolean(typeof record.title === 'string' ? record.title : record.title?.en) },
-    { label: 'Japanese title', done: Boolean(typeof record.title === 'string' ? record.title : record.title?.ja) },
+    { label: 'English title', done: Boolean(typeof title === 'string' ? title : title?.en) },
+    { label: 'Japanese title', done: Boolean(typeof title === 'string' ? title : title?.ja) },
     { label: 'Release date', done: Boolean(record.release?.date) },
-    { label: 'Summary', done: Boolean(record.summary) },
+    { label: 'Summary', done: segments ? segProp((s) => s.summary || s.description) : Boolean(record.summary) },
     { label: 'Main image', done: Boolean(record.image?.url) },
     { label: 'Characters', done: (record.characters?.length ?? 0) > 0 },
     { label: 'Gadgets', done: (record.gadgets?.length ?? 0) > 0 },

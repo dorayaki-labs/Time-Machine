@@ -64,6 +64,9 @@ export default function AccountMenu() {
             {['checker', 'admin', 'owner'].includes(role)
               ? <li><Link role="menuitem" to="/staff" onClick={() => setOpen(false)}><Icon name="shield" size={15} /> Moderation panel</Link></li>
               : null}
+            {role === 'owner'
+              ? <li><Link role="menuitem" to="/owner" onClick={() => setOpen(false)}><Icon name="user" size={15} /> User management</Link></li>
+              : null}
             <li role="separator" />
             <li><button type="button" role="menuitem" onClick={() => { setOpen(false); signOut(); }}><Icon name="logout" size={15} /> Sign out</button></li>
           </ul>

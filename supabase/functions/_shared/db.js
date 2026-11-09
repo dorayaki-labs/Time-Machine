@@ -14,6 +14,35 @@ export function makeDb(admin) {
     setProfileRole: (id, role) =>
       admin.from('profiles').update({ role, updated_at: new Date().toISOString() }).eq('id', id),
 
+    // ---- user management (owner panel) --------------------------------------
+    /** Lists accounts with optional search / role / ban filters. */
+    listProfiles: ({ q, role, banned, limit = 200 } = {}) => {
+      let query = admin.from('profiles').select('*').order('created_at', { ascending: true }).limit(limit);
+      if (role) query = query.eq('role', role);
+      if (banned === true) query = query.eq('banned', true);
+      if (banned === false) query = query.eq('banned', false);
+      if (q) {
+        const like = `%${String(q).replace(/[,()]/g, '')}%`;
+        query = query.or(`display_name.ilike.${like},username.ilike.${like},discord_id.ilike.${like}`);
+      }
+      return query.then((r) => r.data ?? []);
+    },
+
+    /** Accepted/pending/total submission counts per account (contribution_counts view). */
+    contributionCounts: () =>
+      admin.from('contribution_counts').select('profile_id, total_submitted, accepted, pending')
+        .then((r) => r.data ?? []),
+
+    setBanState: (id, { banned, reason = null, bannedBy = null, liftedAt = null }) =>
+      admin.from('profiles').update({
+        banned,
+        ban_reason: banned ? reason : null,
+        banned_by: banned ? bannedBy : null,
+        banned_at: banned ? new Date().toISOString() : null,
+        ban_lifted_at: banned ? null : (liftedAt ?? new Date().toISOString()),
+        updated_at: new Date().toISOString(),
+      }).eq('id', id),
+
     // ---- config ------------------------------------------------------------
     configAll: () =>
       admin.from('app_config').select('key, value').then((r) =>

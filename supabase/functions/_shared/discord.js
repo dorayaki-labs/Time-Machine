@@ -140,6 +140,21 @@ export function buildEmbed(event, data) {
         `🕒 Happened ${timeTag}`
       ].join('\n');
       break;
+    case 'banned':
+      title = `Time Machine Logs: ⛔ User banned`;
+      description = [
+        `**${who(data.actor)}** banned **${who(data.target)}** from contributing and editing`,
+        `🕒 Happened ${timeTag}`
+      ].join('\n');
+      push('Reason', sanitize(data.reason));
+      break;
+    case 'unbanned':
+      title = `Time Machine Logs: ✅ Ban lifted`;
+      description = [
+        `**${who(data.actor)}** lifted the ban on **${who(data.target)}**`,
+        `🕒 Happened ${timeTag}`
+      ].join('\n');
+      break;
     default:
       title = `Time Machine Logs: ${event}`;
       description = [

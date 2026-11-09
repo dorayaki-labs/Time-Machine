@@ -1,29 +1,37 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-2005-0039",
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 39,
-  "title": {
-    "en": "Episode 39",
-    "ja": null
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "2005-09-02",
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [],
+  "segments": [
+    {
+      "id": "anime-2005-0039-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Episode 39",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
+    }
+  ],
   "updatedAt": "2026-11-02"
 }

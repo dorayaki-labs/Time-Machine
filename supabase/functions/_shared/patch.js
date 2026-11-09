@@ -20,6 +20,15 @@ const serialize = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
 export const ENTITY_TYPES = ['episode', 'movie', 'character', 'gadget'];
 
+/** Human label for a record: movies carry their title; schema-4 episodes
+ *  label themselves by their first story segment. */
+function recordLabel(record) {
+  if (!record || typeof record !== 'object') return null;
+  return record.title?.en ?? record.title?.ja
+    ?? record.segments?.[0]?.title?.en ?? record.segments?.[0]?.title?.ja
+    ?? null;
+}
+
 /** Returns the record without `references` (removed from the schema). */
 function stripReferences(record) {
   if (!record || typeof record !== 'object' || Array.isArray(record)) return record;
@@ -118,7 +127,7 @@ export async function applyArchivePatch(github, patch, opts = {}) {
       const gone = currentFile.content;
       return {
         files,
-        changes: [{ field: '(entry deleted)', before: gone?.title?.en ?? gone?.title?.ja ?? paths.entityId, after: null }],
+        changes: [{ field: '(entry deleted)', before: recordLabel(gone) ?? paths.entityId, after: null }],
         indexChanged: true,
         entity: { type: entityType, id: paths.entityId, number: paths.number },
       };
@@ -164,7 +173,7 @@ export async function applyArchivePatch(github, patch, opts = {}) {
 
     const changes = mode === 'update'
       ? deepDiff(currentFile.content, record)
-      : [{ field: '(new entry)', before: null, after: `${record.id} — ${record.title?.en ?? record.title?.ja ?? ''}`.trim() }];
+      : [{ field: '(new entry)', before: null, after: `${record.id} — ${recordLabel(record) ?? ''}`.replace(/ — $/, '').trim() }];
     if (mode === 'update' && changes.length === 0) {
       return { error: 'The proposed values are identical to the current record — nothing to change.', noChange: true, current: currentFile.content, entity: { type: entityType, id: paths.entityId, number: paths.number } };
     }

@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
 import MediaImage from './MediaImage.jsx';
 
-/** The base card. Episode, movie, character and gadget cards are thin wrappers around it. */
-export default function MediaCard({ to, image, imageAlt, kind, seed, label, title, subtitle, children, footer, badge, className = '' }) {
+/** The base card. Episode, movie, character and gadget cards are thin wrappers around it.
+ *  `media` optionally replaces the standard artwork (used by multi-segment covers). */
+export default function MediaCard({ to, image, imageAlt, kind, seed, label, title, subtitle, children, footer, badge, className = '', media = null }) {
   return (
     <article className={`media-card media-card--${kind} ${className}`}>
       <Link to={to} className="media-card__link" aria-label={title}>
         <div className="media-card__art">
-          <MediaImage src={image} alt={imageAlt ?? ''} kind={kind} seed={seed ?? title} label={label} />
+          {media ?? <MediaImage src={image} alt={imageAlt ?? ''} kind={kind} seed={seed ?? title} label={label} />}
           {badge ? <span className="media-card__badge">{badge}</span> : null}
         </div>
         <div className="media-card__body">

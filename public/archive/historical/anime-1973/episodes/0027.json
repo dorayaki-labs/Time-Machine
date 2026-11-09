@@ -1,30 +1,38 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-1973-0027",
   "type": "episode",
   "seriesId": "anime-1973",
   "number": 27,
-  "title": {
-    "en": "Episode 27",
-    "ja": null
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "1973-07-01",
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
-  "sources": [],
   "preservation": null,
+  "sources": [],
+  "segments": [
+    {
+      "id": "anime-1973-0027-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Episode 27",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
+    }
+  ],
   "updatedAt": "2026-11-02"
 }

@@ -157,10 +157,61 @@ export const commitUrl = (sha) => (sha
   ? `https://github.com/${ARCHIVE_REPO}/commit/${String(sha).slice(0, 40)}` : null);
 
 /**
+ * Normalizes the segments of an episode entry (schema 4). Legacy schema-3
+ * episode records carried the single story directly on the record — those are
+ * synthesized into one segment so the whole app can rely on the same shape.
+ * Movies have no segments (they are single stories) and return undefined.
+ */
+function normalizeSegments(entry) {
+  if (entry.kind !== 'episode') return undefined;
+  const raw = Array.isArray(entry.segments) && entry.segments.length ? entry.segments : [{
+    title: entry.title, alternateTitles: entry.alternateTitles, summary: entry.summary,
+    description: entry.description, image: entry.image, screenshots: entry.screenshots,
+    characters: entry.characters, gadgets: entry.gadgets, voiceActors: entry.voiceActors,
+    durationMinutes: entry.durationMinutes,
+  }];
+  const segments = raw.map((s, i) => {
+    const image = s?.image && typeof s?.image === 'object'
+      ? s.image
+      : typeof s?.image === 'string' ? { url: s.image, alt: null } : { url: null, alt: null };
+    return {
+      id: typeof s?.id === 'string' && s.id ? s.id : `${entry.id}-${String(i + 1).padStart(2, '0')}`,
+      segmentNumber: Number.isInteger(s?.segmentNumber) ? s.segmentNumber : i + 1,
+      title: s?.title && typeof s?.title === 'object' ? s.title
+        : typeof s?.title === 'string' ? { en: s.title, ja: null } : { en: '', ja: null },
+      alternateTitles: Array.isArray(s?.alternateTitles) ? s.alternateTitles : [],
+      summary: typeof s?.summary === 'string' ? s.summary : null,
+      description: typeof s?.description === 'string' ? s.description : null,
+      image,
+      screenshots: Array.isArray(s?.screenshots)
+        ? s.screenshots.filter((shot) => shot && typeof shot === 'object' && (shot.url || shot.data))
+        : [],
+      characters: Array.isArray(s?.characters) ? s.characters : [],
+      gadgets: Array.isArray(s?.gadgets) ? s.gadgets : [],
+      voiceActors: Array.isArray(s?.voiceActors) ? s.voiceActors : [],
+      durationMinutes: Number.isInteger(s?.durationMinutes) ? s.durationMinutes : null,
+    };
+  });
+  // Story fields live on the segments; the merged entry carries the unions so
+  // filters, relations and statistics keep working without segment plumbing.
+  entry.characters = [...new Set(segments.flatMap((s) => s.characters))];
+  entry.gadgets = [...new Set(segments.flatMap((s) => s.gadgets))];
+  entry.voiceActors = segments.flatMap((s) => s.voiceActors);
+  entry.screenshots = segments.flatMap((s) => s.screenshots);
+  entry.alternateTitles = [...new Set(segments.flatMap((s) => s.alternateTitles))];
+  // Episode cover and synopsis fallback: the first segment that has one.
+  entry.image = segments.find((s) => s.image?.url)?.image ?? segments[0]?.image ?? { url: null, alt: null };
+  entry.summary = segments.find((s) => s.summary)?.summary ?? null;
+  entry.segmentCount = segments.length;
+  return segments;
+}
+
+/**
  * Merges a record file over its roster entry. The record wins on every field
  * it defines; the roster only supplies identity (id, number, path) and the
- * routing the UI needs. Derived fields (normalized sources, availability,
- * status) are computed here so no component ever sees raw editor input.
+ * routing the UI needs. Derived fields (normalized segments, sources,
+ * availability, status) are computed here so no component ever sees raw
+ * editor input.
  */
 function mergeEntry(rosterEntry, record, seriesId, meta) {
   const base = {
@@ -183,6 +234,7 @@ function mergeEntry(rosterEntry, record, seriesId, meta) {
   entry.screenshots = Array.isArray(entry.screenshots)
     ? entry.screenshots.filter((shot) => shot && typeof shot === 'object' && (shot.url || shot.data))
     : [];
+  entry.segments = normalizeSegments(entry);
   entry.sources = normalizeSources(entry.sources);
   entry.availability = availabilityFor(entry.sources);
   entry.status = computeStatus(entry);
@@ -445,14 +497,44 @@ export function getRelatedMovies(movieEntry, limit = 4) {
 // ---------- titles ----------
 const titleText = (t) => (typeof t === 'string' ? t : t?.en || t?.ja || '');
 
-/** The title to display: English first, Japanese as the fallback. Tolerates a plain-string title. */
+/** True when the entry is a multi-segment broadcast episode. */
+export const isMultiSegment = (entry) => Array.isArray(entry?.segments) && entry.segments.length > 1;
+
+/**
+ * The title to display: English first, Japanese as the fallback. A
+ * multi-segment broadcast episode is titled by its broadcast number — the
+ * individual story titles belong to the segments, never to the master record.
+ */
 export function displayTitle(entry) {
-  return titleText(entry?.title) || 'Untitled entry';
+  if (isMultiSegment(entry)) return `Episode #${entry.number}`;
+  return titleText(entry?.title)
+    || titleText(entry?.segments?.[0]?.title)
+    || 'Untitled entry';
 }
 
 /** The Japanese title as a secondary line, or null when there is nothing distinct to show. */
 export function secondaryTitle(entry) {
-  const t = entry?.title;
+  if (isMultiSegment(entry)) return null;
+  const t = entry?.title ?? entry?.segments?.[0]?.title;
   if (!t || typeof t === 'string') return null;
   return t.en && t.ja ? t.ja : null;
+}
+
+/**
+ * All text a catalogue search should match for this entry: the display title
+ * plus every segment's titles and synopses, so searching for one story inside
+ * a multi-segment broadcast still finds the episode.
+ */
+export function entrySearchTerms(entry) {
+  const titles = [titleText(entry?.title), ...entry?.alternateTitles ?? []];
+  for (const seg of entry?.segments ?? []) {
+    titles.push(titleText(seg.title), ...seg.alternateTitles ?? [], seg.summary ?? '', seg.description ?? '');
+  }
+  return titles;
+}
+
+/** The display title of one segment (falls back to a generic label). */
+export function segmentTitle(entry, index) {
+  const seg = entry?.segments?.[index];
+  return (seg && titleText(seg.title)) || `Segment ${(seg?.segmentNumber ?? index + 1)}`;
 }

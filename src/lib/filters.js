@@ -44,7 +44,16 @@ export function sortEntries(entries, sort = 'number-asc') {
 
 function matchesText(entry, q) {
   if (!q) return true;
-  const hay = [entry.title?.en, entry.title?.ja, ...(entry.alternateTitles ?? []).map((t) => (typeof t === 'string' ? t : t?.title)), String(entry.number)]
+  // The haystack covers the display title plus every segment's titles and
+  // synopses, so searching for one story inside a multi-segment broadcast
+  // still finds the episode.
+  const titleBits = typeof entry.title === 'string' ? [entry.title] : [entry.title?.en, entry.title?.ja];
+  const hay = [
+    ...titleBits,
+    ...(entry.alternateTitles ?? []).map((t) => (typeof t === 'string' ? t : t?.title)),
+    ...(entry.segments ?? []).flatMap((s) => [s.title?.en, s.title?.ja, s.summary, s.description]),
+    String(entry.number),
+  ]
     .map(normalize)
     .join(' | ');
   return hay.includes(normalize(q).replace(/^#/, ''));

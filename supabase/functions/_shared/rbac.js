@@ -57,3 +57,35 @@ export function checkRoleAction(actor, action, targetRole) {
   }
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Ban management (used by manage-users; the owner panel and the staff admin
+// tab are convenience UIs — every rule here is enforced again server-side).
+// ---------------------------------------------------------------------------
+
+/** Admins and the owner may ban; the owner may never be banned. */
+export function canBanUser(actorRole, targetProfile) {
+  if (!isAdmin(actorRole)) return false;
+  if (!targetProfile || isOwner(targetProfile.role)) return false;
+  return true;
+}
+
+/** Same authority as banning: admins lift bans on members/checkers, the owner on anyone but an owner. */
+export const canUnbanUser = canBanUser;
+
+/**
+ * Role changes through the owner panel: owner-only, by explicit target user,
+ * never on an owner row and never on yourself — the owner cannot accidentally
+ * remove their own ownership, and privilege escalation via self-edit is
+ * structurally impossible. Target roles stay inside the existing ladder.
+ */
+export function checkSetRoleAction(actor, targetProfile, nextRole) {
+  if (!isOwner(actor.role)) return { ok: false, code: 403, message: 'Only the owner can change roles from the user panel.' };
+  if (!['member', 'checker', 'admin'].includes(nextRole)) {
+    return { ok: false, code: 400, message: 'role must be member, checker or admin.' };
+  }
+  if (!targetProfile) return { ok: false, code: 404, message: 'Target user not found.' };
+  if (isOwner(targetProfile.role)) return { ok: false, code: 403, message: 'The owner role cannot be changed here.' };
+  if (targetProfile.id === actor.id) return { ok: false, code: 403, message: 'You cannot change your own role.' };
+  return { ok: true };
+}

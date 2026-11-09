@@ -1,29 +1,37 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "anime-2005-0059",
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 59,
-  "title": {
-    "en": "Episode 59",
-    "ja": null
-  },
-  "alternateTitles": [],
   "originalLanguage": "ja",
   "release": {
     "date": "2005-12-02",
     "precision": "day",
     "region": "JP"
   },
-  "summary": null,
-  "image": {
-    "url": null,
-    "alt": null
-  },
-  "screenshots": [],
-  "characters": [],
-  "gadgets": [],
-  "voiceActors": [],
   "sources": [],
+  "segments": [
+    {
+      "id": "anime-2005-0059-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Episode 59",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
+    }
+  ],
   "updatedAt": "2026-11-02"
 }

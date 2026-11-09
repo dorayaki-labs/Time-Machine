@@ -2,8 +2,12 @@
 // so that anything committed through the backend also passes `npm run
 // validate` locally. Every check is defensive: unknown shapes produce clear
 // error messages instead of exceptions.
+//
+// Schema 4 (episodes): a broadcast episode is a container of one or more
+// story segments. Schema 3 (movies, unchanged): one story per record.
 
-export const SCHEMA_VERSION = 3;
+export const EPISODE_SCHEMA_VERSION = 4;
+export const MOVIE_SCHEMA_VERSION = 3;
 
 export const SERIES = {
   'anime-1979': { kind: 'episode', dir: 'archive/anime-1979' },
@@ -117,11 +121,61 @@ function checkIdList(errors, list, pattern, label) {
   });
 }
 
+/** Story-level fields belong on a segment, never on the episode record. */
+const STORY_FIELDS = ['title', 'alternateTitles', 'summary', 'description', 'image',
+  'screenshots', 'characters', 'gadgets', 'voiceActors', 'durationMinutes'];
+
+function checkVoiceActors(errors, rows, label) {
+  if (rows === undefined || rows === null) return;
+  if (!Array.isArray(rows)) { add(errors, `${label} must be an array.`); return; }
+  rows.forEach((v, i) => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) { add(errors, `${label} ${i + 1} must be an object.`); return; }
+    if (v.name !== undefined && v.name !== null) checkTitle(errors, v.name, `${label} ${i + 1} name`);
+    for (const key of ['characterId', 'language', 'version']) {
+      if (v[key] !== undefined && v[key] !== null && typeof v[key] !== 'string') {
+        add(errors, `${label} ${i + 1}: "${key}" must be a string or null.`);
+      }
+    }
+  });
+}
+
+/** Validates one story segment of an episode (schema 4). */
+export function validateSegment(segment, episodeId, index, errors) {
+  const at = `segment ${index + 1}`;
+  if (!segment || typeof segment !== 'object' || Array.isArray(segment)) {
+    add(errors, `${at} must be an object.`);
+    return;
+  }
+  // Segment ids are stable identities (never renumbered on reorder);
+  // segmentNumber is the display order and must match the array position.
+  if (typeof segment.id !== 'string' || !(new RegExp(`^${episodeId}-\\d{2}$`)).test(segment.id)) {
+    add(errors, `${at}: id "${segment.id}" must look like "${episodeId}-01".`);
+  }
+  if (segment.segmentNumber !== index + 1) add(errors, `${at}: segmentNumber must be ${index + 1}.`);
+  checkTitle(errors, segment.title, `${at} title`);
+  if (segment.alternateTitles !== undefined && segment.alternateTitles !== null && !Array.isArray(segment.alternateTitles)) {
+    add(errors, `${at}: alternateTitles must be an array.`);
+  }
+  checkText(errors, segment.summary, `${at} summary`, { max: 8000 });
+  checkText(errors, segment.description, `${at} description`, { max: 12000 });
+  if (segment.durationMinutes !== undefined && segment.durationMinutes !== null
+      && (!Number.isInteger(segment.durationMinutes) || segment.durationMinutes < 1)) {
+    add(errors, `${at}: durationMinutes must be a positive integer (minutes) or null.`);
+  }
+  checkImage(errors, segment.image, `${at} image`);
+  if (segment.screenshots !== undefined && segment.screenshots !== null) {
+    if (!Array.isArray(segment.screenshots)) add(errors, `${at}: screenshots must be an array.`);
+    else segment.screenshots.forEach((s, i) => checkImage(errors, s, `${at} screenshots ${i + 1}`));
+  }
+  checkIdList(errors, segment.characters, CHARACTER_ID, `${at} characters`);
+  checkIdList(errors, segment.gadgets, GADGET_ID, `${at} gadgets`);
+  checkVoiceActors(errors, segment.voiceActors, `${at} voice actors`);
+}
+
 /** Validates an episode or movie record (full replacement value). */
 export function validateEntryRecord(record) {
   const errors = [];
   if (!record || typeof record !== 'object' || Array.isArray(record)) return problems(['record must be a JSON object.']);
-  if (record.schemaVersion !== SCHEMA_VERSION) add(errors, `schemaVersion must be ${SCHEMA_VERSION}.`);
   if (!EPISODE_ID.test(record.id ?? '') && !MOVIE_ID.test(record.id ?? '')) add(errors, `id "${record.id}" is not a valid entry id.`);
   if (record.type !== 'episode' && record.type !== 'movie') add(errors, 'type must be "episode" or "movie".');
   if (!Number.isInteger(record.number) || record.number < 1) add(errors, 'number must be a positive integer.');
@@ -130,11 +184,48 @@ export function validateEntryRecord(record) {
   if (record.seriesId !== expectedSeries) add(errors, `seriesId must be "${expectedSeries}".`);
   if (!SERIES[record.seriesId]) add(errors, `unknown series "${record.seriesId}".`);
 
-  checkTitle(errors, record.title);
-  if (record.alternateTitles !== undefined && record.alternateTitles !== null && !Array.isArray(record.alternateTitles)) {
-    add(errors, 'alternateTitles must be an array.');
+  if (record.type === 'episode') {
+    if (record.schemaVersion !== EPISODE_SCHEMA_VERSION) add(errors, `episode schemaVersion must be ${EPISODE_SCHEMA_VERSION}.`);
+    if (!Array.isArray(record.segments) || record.segments.length === 0) {
+      add(errors, 'segments must be an array with at least one segment.');
+    } else {
+      const ids = new Set();
+      record.segments.forEach((seg, i) => {
+        if (seg && typeof seg === 'object' && !Array.isArray(seg) && ids.has(seg.id)) {
+          add(errors, `duplicate segment id "${seg.id}".`);
+        }
+        ids.add(seg?.id);
+        validateSegment(seg, record.id, i, errors);
+      });
+    }
+    for (const f of STORY_FIELDS) {
+      if (f in record) add(errors, `"${f}" belongs on a segment now — remove it from the episode record.`);
+    }
+  } else {
+    if (record.schemaVersion !== MOVIE_SCHEMA_VERSION) add(errors, `movie schemaVersion must be ${MOVIE_SCHEMA_VERSION}.`);
+    checkTitle(errors, record.title);
+    if (record.alternateTitles !== undefined && record.alternateTitles !== null && !Array.isArray(record.alternateTitles)) {
+      add(errors, 'alternateTitles must be an array.');
+    }
+    if (record.originalLanguage !== undefined && typeof record.originalLanguage !== 'string') {
+      add(errors, 'originalLanguage must be a string.');
+    }
+    checkText(errors, record.summary, 'summary', { max: 8000 });
+    checkImage(errors, record.image);
+    if (record.screenshots !== undefined && record.screenshots !== null) {
+      if (!Array.isArray(record.screenshots)) add(errors, 'screenshots must be an array.');
+      else record.screenshots.forEach((s, i) => checkImage(errors, s, `screenshots ${i + 1}`));
+    }
+    checkIdList(errors, record.characters, CHARACTER_ID, 'characters');
+    checkIdList(errors, record.gadgets, GADGET_ID, 'gadgets');
+    if (record.durationMinutes !== undefined && record.durationMinutes !== null
+        && (!Number.isInteger(record.durationMinutes) || record.durationMinutes < 1)) {
+      add(errors, 'durationMinutes must be a positive integer (minutes).');
+    }
+    if (record.director !== undefined && record.director !== null) checkTitle(errors, record.director, 'director');
   }
-  if (record.originalLanguage !== undefined && typeof record.originalLanguage !== 'string') {
+
+  if (record.originalLanguage !== undefined && record.originalLanguage !== null && typeof record.originalLanguage !== 'string') {
     add(errors, 'originalLanguage must be a string.');
   }
 
@@ -156,22 +247,7 @@ export function validateEntryRecord(record) {
     }
   }
 
-  checkText(errors, record.summary, 'summary', { max: 8000 });
-  checkImage(errors, record.image);
-  if (record.screenshots !== undefined && record.screenshots !== null) {
-    if (!Array.isArray(record.screenshots)) add(errors, 'screenshots must be an array.');
-    else record.screenshots.forEach((s, i) => checkImage(errors, s, `screenshots ${i + 1}`));
-  }
-  checkIdList(errors, record.characters, CHARACTER_ID, 'characters');
-  checkIdList(errors, record.gadgets, GADGET_ID, 'gadgets');
   checkSources(errors, record.sources);
-  if (record.type === 'movie') {
-    if (record.durationMinutes !== undefined && record.durationMinutes !== null
-        && (!Number.isInteger(record.durationMinutes) || record.durationMinutes < 1)) {
-      add(errors, 'durationMinutes must be a positive integer (minutes).');
-    }
-    if (record.director !== undefined && record.director !== null) checkTitle(errors, record.director, 'director');
-  }
   return problems(errors);
 }
 

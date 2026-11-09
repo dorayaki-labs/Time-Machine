@@ -1,16 +1,10 @@
 {
+  "schemaVersion": 4,
   "id": "anime-2005-0002",
   "type": "episode",
-  "image": {
-    "alt": null,
-    "url": "https://vlitzz.store/thumbnail/e02.png"
-  },
-  "title": {
-    "en": "Slow Slow, Quick Quick",
-    "ja": null
-  },
+  "seriesId": "anime-2005",
   "number": 2,
-  "gadgets": [],
+  "originalLanguage": "ja",
   "release": {
     "date": "2005-04-15",
     "region": "JP",
@@ -33,18 +27,32 @@
       }
     }
   ],
-  "summary": null,
-  "seriesId": "anime-2005",
-  "updatedAt": "2026-11-02",
-  "characters": [],
-  "screenshots": [
+  "segments": [
     {
-      "alt": null,
-      "url": "https://vlitzz.store/thumbnail/e02.png"
+      "id": "anime-2005-0002-01",
+      "segmentNumber": 1,
+      "title": {
+        "en": "Slow Slow, Quick Quick",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "alt": null,
+        "url": "https://vlitzz.store/thumbnail/e02.png"
+      },
+      "screenshots": [
+        {
+          "alt": null,
+          "url": "https://vlitzz.store/thumbnail/e02.png"
+        }
+      ],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
     }
   ],
-  "voiceActors": [],
-  "schemaVersion": 3,
-  "alternateTitles": [],
-  "originalLanguage": "ja"
+  "updatedAt": "2026-11-02"
 }
