@@ -224,5 +224,23 @@
       "note": null
     },
     "howItWorks": "Simply swallow a Slow Pill to slow down your body's energy and activity."
+  },
+  {
+    "id": "gadget-fast-pills",
+    "name": {
+      "en": "Fast Pills",
+      "ja": null
+    },
+    "aliases": [],
+    "description": null,
+    "image": {
+      "url": null,
+      "alt": null
+    },
+    "firstAppearance": {
+      "entryId": null,
+      "note": null
+    },
+    "howItWorks": null
   }
 ]
