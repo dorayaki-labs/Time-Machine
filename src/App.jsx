@@ -126,7 +126,7 @@ function RoutedWithCatalog() {
     );
   }
   return <Routed />;
-}
+} 
 
 export default function App() {
   return (
