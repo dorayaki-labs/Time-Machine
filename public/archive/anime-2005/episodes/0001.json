@@ -13,18 +13,18 @@
   "sources": [
     {
       "type": "embed",
-      "data": "https://www.youtube-nocookie.com/embed/ZniA47cptPk",
-      "label": "YouTube",
+      "data": "<iframe src=\"https://megaplay.buzz/stream/s-2/103656/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "label": "Anikoto",
       "language": "ja",
       "subtitles": {
         "has": true,
         "type": null,
         "languages": [
-          "Vietnamese"
+          "English"
         ]
       },
-      "quality": "720p",
-      "notes": null
+      "quality": "HQ",
+      "notes": "All 3 Segments"
     }
   ],
   "segments": [
@@ -32,30 +32,185 @@
       "id": "anime-2005-0001-01",
       "segmentNumber": 1,
       "title": {
-        "en": "Fishing Pond in the Study Room",
+        "en": "The Fishing Pond in My Study Room",
         "ja": "勉強べやの釣り堀"
       },
       "alternateTitles": [],
-      "summary": null,
-      "description": null,
+      "summary": "Nobita and Doraemon use the Mobile Fishing Lake to enjoy fishing from the comfort of their room. However, their adventure takes an unexpected turn as they explore the ocean, encounter dangerous sea creatures, and discover that their magical fishing pond can lead to some rather surprising places.",
+      "description": "Nobita is put in the mood for some fishing of his own on seeing Gian and Suneo come back with a bucket of fish. Tamako will have none of it, putting her foot down about him and Doraemon going to the river for fear Nobita would end up in the water. Doraemon is not about to let that put an end to their plans though; he produces the Mobile Fishing Lake, one of his gadgets which can make any floor into a proper fishing venue linked to whatever body of water they like.\n\nThey set to it in the study room, but it does not take long for the session to get odd: they put a hook on Gian who happens to be in the very same river. A change of location on the gadget and another attempt yields the rather unimpressive result of a small puddle. “Let us put the pond in the ocean,” Nobita says, and so they are off on an underwater adventure of sorts.\n\nArmed with Air Tubes and Deep Sea Cream, the pair go diving and run across all manner of sea life. Doraemon puts his Big Light and Hand Hook to use in an effort to land more than one fish at a time, but before long the expedition has them in a headlong retreat from a shark. They put a sunken ship between them and it and come upon what looks to be a sizeable treasure chest, but a giant octopus is in residence.\n\nOnce they have made good their escape from the octopus and are safe again, the two are too tired to do much but observe the steam coming off the lake. Convinced it is a hot spring close by, they make to jump in and find themselves in Shizuka’s bathtub, an outcome they were not expecting.",
       "image": {
-        "alt": null,
-        "url": "https://vlitzz.store/thumbnail/e01.png"
+        "alt": "cover",
+        "url": "https://i.postimg.cc/8CCRbtYV/image.png"
       },
       "screenshots": [
         {
           "alt": "fish",
           "url": "https://vlitzz.store/thumbnail/e01.png"
+        },
+        {
+          "url": "https://i.postimg.cc/J0hC7w6K/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/nzRwkX2s/image.png",
+          "alt": null
         }
       ],
       "characters": [
-        "char-nobita"
+        "char-nobita",
+        "char-shizuka",
+        "char-doraemon",
+        "char-gian",
+        "char-suneo",
+        "char-tamako"
       ],
-      "gadgets": [
-        "gadget-anywhere-door"
+      "gadgets": [],
+      "voiceActors": [
+        {
+          "name": {
+            "en": "Kotono Mitsuishi",
+            "ja": "三石琴乃"
+          },
+          "characterId": "char-tamako",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Megumi Ōhara",
+            "ja": "大原めぐみ"
+          },
+          "characterId": "char-nobita",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Subaru Kimura",
+            "ja": "木村昴"
+          },
+          "characterId": "char-gian",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Yumi Kakazu",
+            "ja": "かかずゆみ"
+          },
+          "characterId": "char-shizuka",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Wasabi Mizuta",
+            "ja": "水田わさび"
+          },
+          "characterId": "char-doraemon",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Tomokazu Seki",
+            "ja": "関智一"
+          },
+          "characterId": "char-suneo",
+          "language": "ja"
+        }
       ],
+      "durationMinutes": 11
+    },
+    {
+      "id": "anime-2005-0001-02",
+      "segmentNumber": 2,
+      "title": {
+        "en": "The Time Machine Disappeared!!",
+        "ja": "タイムマシンがなくなった！！"
+      },
+      "alternateTitles": [],
+      "summary": "After accidentally losing the Time Machine, Nobita and Doraemon travel into the past using a Time Belt to search for it. Their journey leads them to a village terrorised by a mysterious eight-headed serpent, and the two decide to help the villagers defeat the monster.",
+      "description": "After getting scolded by his mother, Nobita decides to get back at her by using a Monster Ball to summon a monster and scare her away. His plan works at first, but Tamako soon realises that Nobita is behind the whole thing and heads to his room to give him another scolding. Nobita quickly hides inside the Time Machine, managing to avoid being caught. Once his mother leaves, he comes out and laughs about fooling her, much to Doraemon's disapproval. However, things take a turn when Doraemon opens the cabinet to check on the Time Machine and discovers that it is missing. Nobita had forgotten to apply the brakes, causing the machine to travel off on its own. With their only way back to the future gone, Nobita begins to panic, but Doraemon reminds him that crying won't solve anything and comes up with another way to search for it using a Time Belt.\n\nThe two travel into the past and begin looking for the missing machine. After searching for some time without any luck, night falls and they decide to spend the night beside a campfire. While resting, they notice a number of glowing red eyes watching them from a nearby mountain. Doraemon and Nobita try using several of his gadgets to scare whatever is out there, but nothing seems to work. The next morning, they continue their search and eventually come across a village that seems strangely empty. They soon find some of the villagers gathered together, who tell them about an eight-headed serpent that has been terrorising the area.\n\nWanting to help, Nobita and Doraemon decide to take on the serpent themselves. Taking inspiration from the old tale of the eight-headed serpent, they come up with a plan to get it drunk before cutting off its heads. Unfortunately, the plan does not go quite as expected. The serpent is completely unaffected by the drink and soon starts chasing the two around. Even Doraemon's gadgets are no match for it, and things get worse when Nobita ends up being swallowed. While inside the serpent's mouth, however, Nobita accidentally hits the Monster Ball with his head, causing the monster to disappear altogether.\n\nDoraemon rushes to check on Nobita and finds that the missing Time Machine and the Monster Ball have both been recovered, although Nobita has passed out. He then gives Nobita an earful for all the trouble he has caused, especially for frightening the villagers. After Nobita gets out of his costume, the two finally return to their own time using the recovered Time Machine.",
+      "image": {
+        "url": "https://i.postimg.cc/tp8ngCRm/image.png",
+        "alt": "time machine missing cover"
+      },
+      "screenshots": [
+        {
+          "url": "https://i.postimg.cc/rpszKbDP/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/YSvqpWP1/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/hPKDXwwQ/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/RhVYBcsC/image.png",
+          "alt": null
+        }
+      ],
+      "characters": [
+        "char-doraemon",
+        "char-nobita",
+        "char-tamako"
+      ],
+      "gadgets": [],
+      "voiceActors": [
+        {
+          "name": {
+            "en": "Kotono Mitsuishi",
+            "ja": "三石琴乃"
+          },
+          "characterId": "char-tamako",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Wasabi Mizuta",
+            "ja": "水田わさび"
+          },
+          "characterId": "char-doraemon",
+          "language": "ja"
+        },
+        {
+          "name": {
+            "en": "Megumi Ōhara",
+            "ja": "大原めぐみ"
+          },
+          "characterId": "char-nobita",
+          "language": "ja"
+        }
+      ],
+      "durationMinutes": 19
+    },
+    {
+      "id": "anime-2005-0001-03",
+      "segmentNumber": 3,
+      "title": {
+        "en": "Remember! The Excitement of That Day",
+        "ja": "思い出せ!あの日の感動"
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": "https://i.postimg.cc/1zvYsvTp/image.png",
+        "alt": null
+      },
+      "screenshots": [
+        {
+          "url": "https://i.postimg.cc/8k997nCY/image.png",
+          "alt": null
+        },
+        {
+          "url": "https://i.postimg.cc/1zvYsvTp/image.png",
+          "alt": null
+        }
+      ],
+      "characters": [],
+      "gadgets": [],
       "voiceActors": [],
-      "durationMinutes": null
+      "durationMinutes": 11
     }
   ],
   "updatedAt": "2026-11-02"
