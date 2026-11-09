@@ -1,6 +1,6 @@
  <div align="center">
- 
-<img src="/readme-assets/tmBanner.png" height="50%"> <br> <br>
+
+<img src="/readme-assets/tmBanner.png" height="50%"> <br> <br> 
 
 **By the community, For the community.**
 
