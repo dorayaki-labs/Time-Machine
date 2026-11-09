@@ -9,12 +9,18 @@
 # commit that mixes archive JSON with real code still notifies (with the
 # JSON files filtered out of the file list).
 #
-# File lists are derived from `git show --name-status` in a full checkout,
-# NOT from the push-event payload: the payload's per-commit
-# added/modified/removed arrays are capped and can arrive empty, which once
-# made pure-code commits get skipped as "only touches JSON". The payload
-# arrays are kept only as a fallback and are logged on every skip so a
-# misclassification is always diagnosable from the run log.
+# Per-file statistics come from `git show --numstat` in a full checkout —
+# real diff data, not guesses. Counting method (documented, no double
+# counting): "modified" = min(additions, deletions) per file, because a
+# modified line appears once as a deletion and once as an addition; pure
+# insertions or pure deletions therefore never count as modified. Binary
+# files (numstat shows "-") and files without a full diff are reported as
+# such rather than inventing numbers.
+#
+# File lists are derived from git, NOT from the push-event payload: the
+# payload's per-commit file arrays are capped and can arrive empty, which
+# once made pure-code commits get skipped as "only touches JSON". The
+# payload arrays are kept only as a fallback and are logged on every skip.
 #
 # The webhook URL is read from the DISCORD_WEBHOOK repository secret
 # (Settings → Secrets and variables → Actions). If it is missing the run
@@ -61,33 +67,61 @@ jobs:
 
           const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-          const STATUS_ICON = { A: '＋', M: '✎', D: '－' };
+          const MAX_FILES_SHOWN = 8;
 
-          // Changed files per commit. Authoritative source is git in the
-          // checkout; the event payload's file arrays are only a fallback
-          // for commits missing from it (e.g. force-pushed away), and
-          // renames are decomposed so every entry is a plain CODE + path.
-          function changedFiles(commit) {
+          // Per-file diff statistics from git numstat. Lines are
+          // "added<TAB>deleted<TAB>path"; binary files show "-" for both
+          // counters; renames look like "a<TAB>d<TAB>prefix/{old => new}/tail".
+          function fileStats(commitId, commit) {
             try {
               const out = execFileSync('git',
-                ['show', '--name-status', '--format=', '--no-renames', commit.id],
+                ['show', '--numstat', '--format=', commitId],
                 { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
               const files = out.split('\n')
                 .map((line) => line.trim())
                 .filter(Boolean)
                 .map((line) => {
-                  const tab = line.indexOf('\t');
-                  return tab === -1 ? null : { code: line[0], file: line.slice(tab + 1) };
+                  const parts = line.split('\t');
+                  if (parts.length < 3) return null;
+                  const [a, d] = parts;
+                  const displayPath = parts.slice(2).join('\t');
+                  const renameMatch = displayPath.match(/^(.*)\{(.*) => (.*)\}(.*)$/);
+                  return {
+                    path: renameMatch
+                      ? `${renameMatch[1]}${renameMatch[2] || renameMatch[3]}${renameMatch[4]}`
+                      : displayPath,
+                    renameLabel: renameMatch
+                      ? `${renameMatch[1]}${renameMatch[2]}${renameMatch[4]} → ${renameMatch[1]}${renameMatch[3]}${renameMatch[4]}`
+                      : null,
+                    binary: a === '-' || d === '-',
+                    added: a === '-' ? 0 : Number(a),
+                    deleted: d === '-' ? 0 : Number(d),
+                  };
                 })
                 .filter(Boolean);
               if (files.length) return { files, source: 'git' };
             } catch (error) { /* commit not in the checkout — fall back */ }
             const files = [
-              ...(commit.added || []).map((f) => ({ code: 'A', file: f })),
-              ...(commit.modified || []).map((f) => ({ code: 'M', file: f })),
-              ...(commit.removed || []).map((f) => ({ code: 'D', file: f })),
-            ];
+              ...(commit.added || []),
+              ...(commit.modified || []),
+              ...(commit.removed || []),
+            ].map((path) => ({ path, binary: false, added: 0, deleted: 0 }));
             return { files, source: 'event payload' };
+          }
+
+          // One "📄 file" section with its real diff statistics.
+          function fileSection(file) {
+            const name = file.renameLabel
+              ? `${file.path} ♻️ renamed from \`${file.renameLabel}\``
+              : file.path;
+            const head = `**📄 ${name}**`;
+            if (file.binary) {
+              return `${head}\n📦 Binary file — no line statistics available`;
+            }
+            const modified = Math.min(file.added, file.deleted);
+            return `${head}\n- 🟢 Added: ${file.added} line${file.added === 1 ? '' : 's'}`
+              + `\n- 🔴 Deleted: ${file.deleted} line${file.deleted === 1 ? '' : 's'}`
+              + `\n- 🟠 Modified: ${modified} line${modified === 1 ? '' : 's'}`;
           }
 
           async function main() {
@@ -117,7 +151,7 @@ jobs:
 
             for (const commit of commits) {
               const id7 = commit.id.slice(0, 7);
-              const { files: changed, source } = changedFiles(commit);
+              const { files: changed, source } = fileStats(commit.id, commit);
               const payloadCounts = `payload arrays: +${(commit.added || []).length} `
                 + `~${(commit.modified || []).length} -${(commit.removed || []).length}`;
 
@@ -129,12 +163,10 @@ jobs:
               // Defense in depth for mixed commits: archive JSON is excluded
               // here as well as at the trigger (the trigger path filter only
               // skips the workflow when EVERY file in the push is archive JSON).
-              const jsonCount = changed.filter((e) => /\.json$/i.test(e.file)).length;
-              const files = changed
-                .filter((e) => !/\.json$/i.test(e.file))
-                .map((e) => `${STATUS_ICON[e.code] || '✎'} ${e.file}`);
+              const codeFiles = changed.filter((f) => !/\.json$/i.test(f.path));
+              const jsonCount = changed.length - codeFiles.length;
 
-              if (!files.length) {
+              if (!codeFiles.length) {
                 console.log(
                   `Commit ${id7} only touches JSON `
                   + `(${jsonCount} file(s) from ${source}; ${payloadCounts}) — skipped.`,
@@ -142,20 +174,34 @@ jobs:
                 continue;
               }
               console.log(
-                `Commit ${id7}: ${files.length} code file(s) from ${source} `
+                `Commit ${id7}: ${codeFiles.length} code file(s) from ${source} `
                 + `(${jsonCount} JSON file(s) excluded).`,
               );
+
+              const totals = codeFiles.reduce(
+                (acc, f) => ({ added: acc.added + (f.added || 0), deleted: acc.deleted + (f.deleted || 0) }),
+                { added: 0, deleted: 0 },
+              );
+              const shown = codeFiles.slice(0, MAX_FILES_SHOWN);
+              const description = [
+                ...shown.map(fileSection),
+                codeFiles.length > MAX_FILES_SHOWN
+                  ? `*…and ${codeFiles.length - MAX_FILES_SHOWN} more file(s) `
+                    + `(+${totals.added} −${totals.deleted} across all ${codeFiles.length} files)*`
+                  : '',
+              ].filter(Boolean).join('\n\n');
 
               const payload = {
                 username: 'GitHub Activity',
                 embeds: [{
                   title: `New code change pushed to ${process.env.GITHUB_REPOSITORY}`,
-                  description: files.join('\n').slice(0, 3900),
+                  description: description.slice(0, 4000),
                   color: 5793266,
                   fields: [
                     { name: 'Author', value: commit.author?.name || 'Unknown', inline: true },
                     { name: 'Commit', value: `[\`${id7}\`](${commit.url})`, inline: true },
-                    { name: 'Message', value: (commit.message || 'No message').slice(0, 1000) },
+                    { name: 'Files changed', value: `${codeFiles.length} file(s) · +${totals.added} −${totals.deleted}`, inline: true },
+                    { name: 'Message', value: (commit.message || 'No message').split('\n')[0].slice(0, 200) },
                   ],
                   footer: { text: `Branch: ${process.env.GITHUB_REF_NAME}` },
                   timestamp: new Date().toISOString(),

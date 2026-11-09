@@ -84,7 +84,7 @@
 .prev-next__link:hover { border-color: var(--accent-line); background: var(--surface-2); transform: var(--lift); }
 .prev-next__link--next { text-align: right; }
 .prev-next__dir { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); font-family: var(--mono); }
-.prev-next__title { font-weight: 500; font-size: 0.92rem; }
+.prev-next__title { font-weight: 500; font-size: 0.92rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 
 .appearance-group { display: grid; gap: var(--s-2); padding-block: var(--s-3); border-top: 1px solid var(--border); }
 .appearance-group:first-child { border-top: 0; padding-top: 0; }
@@ -114,10 +114,11 @@
 .no-source__title { font-weight: 500; margin: 0; }
 .no-source__text { color: var(--text-2); margin: 0 0 var(--s-2); max-width: 60ch; }
 
-/* The source viewer. The stage waits at the top — nothing plays until an
-   option is chosen — and the picker below lists every source as a card with
-   its details (language, subtitles, quality, notes). */
+/* The source viewer. Nothing plays until an option is chosen: when idle there
+   is NO player container at all (no empty black box, no reserved height) —
+   just a single quiet line above the picker. */
 .source-viewer { display: grid; gap: var(--s-3); }
+.source-viewer__idle { margin: 0; font-size: 0.88rem; }
 .source-stage { border-radius: var(--r-md); overflow: hidden; }
 .source-stage__player, .source-stage__embed { width: 100%; border-radius: var(--r-md); overflow: hidden; background: #000; }
 .source-stage__embed { aspect-ratio: 16 / 9; }
@@ -127,21 +128,19 @@
   font-size: 0.82rem; color: var(--text-2);
 }
 .source-stage__bar .icon { color: var(--accent); }
+.source-stage__external {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 0.72rem; padding: 3px 10px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+  color: var(--text-2); cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.source-stage__external:hover { border-color: var(--accent); color: var(--accent); }
 .source-stage__stop {
   margin-left: auto; font-family: var(--mono); font-size: 0.72rem; padding: 3px 10px;
   border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
   color: var(--text-2); cursor: pointer; transition: border-color 0.15s, color 0.15s;
 }
 .source-stage__stop:hover { border-color: var(--bad); color: var(--bad); }
-.source-stage--idle {
-  display: grid; place-items: center; gap: var(--s-1); text-align: center;
-  min-height: 220px; padding: var(--s-5);
-  border: 1px dashed var(--border-strong); border-radius: var(--r-md); background: var(--surface-2);
-}
-.source-stage__placeholder { display: grid; justify-items: center; gap: var(--s-1); max-width: 42ch; }
-.source-stage__icon { color: var(--text-3); }
-.source-stage__title { margin: 0; font-weight: 500; }
-.source-stage__text { margin: 0; color: var(--text-2); font-size: 0.9rem; }
 .source-picker { display: grid; gap: var(--s-2); grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .source-option {
   display: grid; gap: var(--s-2); justify-items: start; text-align: left; width: 100%;
@@ -156,6 +155,13 @@
 .source-option__head .icon { color: var(--accent); flex: none; }
 .source-option__name { font-weight: 500; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .source-option__num { margin-left: auto; color: var(--text-3); font-size: 0.72rem; }
+.source-option__open {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 22px; height: 22px; margin-left: auto; border: 1px solid var(--border); border-radius: 999px;
+  color: var(--text-2); cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.source-option__open:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.source-option__num + .source-option__open { margin-left: 6px; }
 .source-option__playing {
   display: inline-flex; align-items: center; gap: 4px; flex: none;
   color: var(--accent); font-size: 0.72rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em;
@@ -409,39 +415,82 @@
 .credits-legal { margin-top: var(--s-5); font-size: 0.85rem; color: var(--text-3); }
 
 /* ---------------------------------------------------------------------------
-   Episode detail: segment tabs + per-segment heading
+   Episode detail: hero, segment navigation, collapsible sections
    ------------------------------------------------------------------------- */
 
-.segment-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-  margin-block: var(--s-4) var(--s-2);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: var(--s-3);
+/* Hero: large poster left, active story + metadata right. Takes visibly more
+   space than the old two-column strip and anchors the page hierarchy. */
+.episode-hero {
+  display: grid; grid-template-columns: minmax(300px, 480px) 1fr;
+  gap: var(--s-6); align-items: start; margin-bottom: var(--s-5);
 }
-.segment-tabs__tab {
-  appearance: none;
-  background: var(--surface);
-  color: var(--text-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md, 10px);
-  padding: 0.42rem 0.95rem;
-  font: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 160ms var(--ease, ease), color 160ms var(--ease, ease), border-color 160ms var(--ease, ease);
-}
-.segment-tabs__tab:hover { color: var(--text); border-color: var(--border-strong, var(--border)); }
-.segment-tabs__tab.is-active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
-  font-weight: 600;
-}
+.episode-hero__media { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-2); }
+.episode-hero__media .media { width: 100%; }
+.episode-hero__media .media__img, .episode-hero__media .media__placeholder { width: 100%; height: auto; display: block; }
+.episode-hero__body { display: grid; gap: var(--s-3); min-width: 0; }
+.episode-hero__body .eyebrow { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.episode-hero__count { font-size: 0.7rem; }
+.episode-hero__title { margin: 0; font-size: clamp(1.5rem, 3.2vw, 2.1rem); line-height: 1.2; overflow-wrap: anywhere; }
+.episode-hero__combined { margin: calc(var(--s-1) * -1) 0 0; font-size: 0.95rem; overflow-wrap: anywhere; }
+.episode-hero .facts { border-top: 1px solid var(--border); padding-top: var(--s-2); }
 
-.segment-heading { margin-block: var(--s-5) var(--s-2); }
-.segment-heading h2 { margin: 0 0 var(--s-1); font-size: 1.35rem; }
+/* Segmented control: one pill slides under the labels. Tabs carry the real
+   segment names; long names ellipsize instead of breaking the row. */
+.segment-nav {
+  position: relative; display: flex; align-items: stretch;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md);
+  padding: 4px; margin-block: var(--s-2) var(--s-5);
+}
+.segment-nav__thumb {
+  position: absolute; top: 4px; bottom: 4px; left: 0;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: calc(var(--r-md) - 4px);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.16s var(--ease);
+  will-change: transform;
+}
+.segment-nav__tab {
+  position: relative; z-index: 1; appearance: none; background: none; border: 0; cursor: pointer;
+  display: grid; gap: 2px; justify-items: center; align-content: center; padding: var(--s-2) var(--s-2);
+  font: inherit; color: var(--text-2); border-radius: calc(var(--r-md) - 4px); min-width: 0;
+  transition: color 0.12s var(--ease);
+}
+.segment-nav__tab:hover { color: var(--text); }
+.segment-nav__tab.is-active { color: var(--text); }
+.segment-nav__tab.is-active .segment-nav__num { color: var(--accent); }
+.segment-nav__num {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-3); white-space: nowrap;
+}
+.segment-nav__name {
+  max-width: 100%; font-size: 0.88rem; font-weight: 500; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.segment-nav__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Collapsible sections (summary / synopsis): the toggle is the whole heading
+   row; the panel animates via the 0fr ⇄ 1fr grid-rows trick and is hidden
+   from assistive technology while collapsed. */
+.collapsible { border-top: 1px solid var(--border); padding-block: var(--s-3); }
+.collapsible__heading { margin: 0; font-size: 1rem; }
+.collapsible__toggle {
+  appearance: none; background: none; border: 0; cursor: pointer; width: 100%;
+  display: flex; align-items: center; gap: var(--s-2); padding: 0; font: inherit; color: var(--text);
+  text-align: left;
+}
+.collapsible__title { font-size: 1.05rem; font-weight: 600; }
+.collapsible__meta { font-family: var(--mono); font-size: 0.72rem; color: var(--text-3); }
+.collapsible__chevron { margin-left: auto; display: inline-flex; color: var(--text-3); transition: transform 0.18s var(--ease); }
+.collapsible.is-open .collapsible__chevron { transform: rotate(180deg); }
+.collapsible__panel {
+  display: grid; grid-template-rows: 0fr; visibility: hidden;
+  transition: grid-template-rows 0.2s var(--ease), visibility 0.2s;
+}
+.collapsible.is-open .collapsible__panel { grid-template-rows: 1fr; visibility: visible; }
+.collapsible__content { overflow: hidden; min-height: 0; }
+.collapsible__content .prose { margin-top: var(--s-2); margin-bottom: 0; }
+.collapsible__content .muted { margin-top: var(--s-2); margin-bottom: 0; }
+
 .prose--secondary { color: var(--text-2); margin-top: var(--s-3); }
 
 /* ---------------------------------------------------------------------------

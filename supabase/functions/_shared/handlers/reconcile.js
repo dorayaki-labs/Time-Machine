@@ -18,7 +18,7 @@ import { isAdmin } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
 import { flushOutbox } from '../discord.js';
 
-export async function handleReconcile(req, { db, authApi, env, webhookUrl, github }) {
+export async function handleReconcile(req, { db, authApi, env, webhooks, github }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -73,6 +73,6 @@ export async function handleReconcile(req, { db, authApi, env, webhookUrl, githu
     }
   }
 
-  await flushOutbox(db, webhookUrl, { limit: 10 });
+  await flushOutbox(db, webhooks, { limit: 10 });
   return json({ ok: true, ...results });
 }

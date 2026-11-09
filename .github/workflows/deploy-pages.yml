@@ -52,6 +52,9 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           # The Pages site lives at /<repo>/ — match it so assets resolve.
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Stamped into the bundle and logged in the browser console, so a
+          # stale cached deploy is identifiable at a glance.
+          VITE_BUILD_ID: ${{ github.sha }}
         run: |
           npm ci
           npm run validate

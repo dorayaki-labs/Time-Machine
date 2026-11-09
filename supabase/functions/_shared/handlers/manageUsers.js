@@ -14,9 +14,9 @@
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { isOwner, checkSetRoleAction, canBanUser, canUnbanUser } from '../rbac.js';
-import { notify, flushOutbox } from '../discord.js';
+import { notify, flushOutbox, profileRef } from '../discord.js';
 
-export async function handleManageUsers(req, { db, authApi, env, webhookUrl }) {
+export async function handleManageUsers(req, { db, authApi, env, webhooks }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -92,10 +92,11 @@ export async function handleManageUsers(req, { db, authApi, env, webhookUrl }) {
       changes: [{ field: 'role', before: previousRole, after: body.role }],
       review_notes: typeof body?.reason === 'string' ? body.reason.slice(0, 2000) : null,
     });
-    await notify(db, webhookUrl, `role.${target.id}.set.${body.role}.${Date.now()}`, 'role', {
-      target: target.display_name, role: body.role, action: 'granted', actor: actor.display_name,
+    await notify(db, webhooks, `role.${target.id}.set.${body.role}.${Date.now()}`, 'role', {
+      actor: profileRef(actor), target: profileRef(target),
+      role: body.role, action: 'set to',
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true, userId: target.id, role: body.role, display_name: target.display_name });
   }
 
@@ -114,10 +115,10 @@ export async function handleManageUsers(req, { db, authApi, env, webhookUrl }) {
       entity_type: 'ban', entity_id: target.discord_id,
       review_notes: reason, changes: [{ field: 'banned', before: false, after: true }],
     });
-    await notify(db, webhookUrl, `user.${target.id}.banned.${Date.now()}`, 'banned', {
-      target: target.display_name, actor: actor.display_name, reason,
+    await notify(db, webhooks, `user.${target.id}.banned.${Date.now()}`, 'banned', {
+      target: profileRef(target), actor: profileRef(actor), reason,
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true, userId: target.id, banned: true, display_name: target.display_name });
   }
 
@@ -134,10 +135,10 @@ export async function handleManageUsers(req, { db, authApi, env, webhookUrl }) {
       entity_type: 'ban', entity_id: target.discord_id,
       changes: [{ field: 'banned', before: true, after: false }],
     });
-    await notify(db, webhookUrl, `user.${target.id}.unbanned.${Date.now()}`, 'unbanned', {
-      target: target.display_name, actor: actor.display_name,
+    await notify(db, webhooks, `user.${target.id}.unbanned.${Date.now()}`, 'unbanned', {
+      target: profileRef(target), actor: profileRef(actor),
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true, userId: target.id, banned: false, display_name: target.display_name });
   }
 

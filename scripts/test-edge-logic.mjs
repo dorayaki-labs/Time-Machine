@@ -11,7 +11,7 @@ import {
   validateEntryRecord, validateEntityRecord, validateContributionPayload, isUnsafeUrl,
 } from '../supabase/functions/_shared/validate.js';
 import { FORM_SPECS } from '../supabase/functions/_shared/formSpec.js';
-import { buildEmbed, sanitize } from '../supabase/functions/_shared/discord.js';
+import { buildEmbed, buildMessage, sanitize } from '../supabase/functions/_shared/discord.js';
 import { checkRoleAction, canReviewContribution, canBanUser, checkSetRoleAction } from '../supabase/functions/_shared/rbac.js';
 import { authenticate } from '../supabase/functions/_shared/auth.js';
 import { handleManageUsers } from '../supabase/functions/_shared/handlers/manageUsers.js';
@@ -183,38 +183,42 @@ test('every FORM_SPECS type is one the frontend submits', () => {
 
 // ---------------------------------------------------------------- discord.js
 test('embed sanitizes user text and never allows mentions', () => {
-  const embed = buildEmbed('submitted', {
+  const body = buildEmbed('submitted', {
     number: 12, title: '@everyone <@123> hi', contributor: 'bob', type: 'source', notes: 'ping @here',
   });
-  const body = embed.embeds[0];
-  // The summary line and the notes field both go through sanitize().
+  // The title/description and the notes field all go through sanitize().
   assert.ok(!JSON.stringify(body).includes('@everyone'));
   assert.ok(!JSON.stringify(body).includes('@here'));
   assert.ok(body.description.includes('[mention]'));
-  assert.ok(body.fields.find((f) => f.name === 'Notes').value.includes('@\u200bhere'));
-  assert.deepEqual(embed.allowed_mentions, { parse: [] });
+  assert.ok(body.fields.find((f) => f.name === '🗒️ Notes').value.includes('@\u200bhere'));
+  const message = buildMessage('submitted', {});
+  assert.deepEqual(message.allowed_mentions, { parse: [] });
 });
 
 test('accepted embed includes changes and commit', () => {
-  const embed = buildEmbed('accepted', {
+  const body = buildEmbed('accepted', {
     number: 12, title: 'Fix title', contributor: 'bob', reviewer: 'checker',
-    changes: '• title.en: Old → New', commit: 'abc1234',
+    changes: [{ field: 'title.en', before: 'Old', after: 'New' }],
+    commit: 'abc1234def5678abc1234def5678abc1234def56',
   });
-  const body = embed.embeds[0];
-  assert.ok(body.description.includes('abc1234'));
-  // The change list keeps its original bullets — no double "• •".
-  const changes = body.fields.find((f) => f.name === 'Changed Fields');
-  assert.ok(changes && changes.value.includes('title.en'));
-  assert.ok(!changes.value.includes('• •'));
+  const commit = body.fields.find((f) => f.name === '🔖 Commit');
+  assert.ok(commit && commit.value.includes('abc1234') && commit.value.includes('github.com'), 'commit link missing');
+  const change = body.fields.find((f) => f.name.startsWith('🟠') && f.name.includes('title.en'));
+  assert.ok(change, 'modified change field missing');
+  assert.ok(change.value.includes('**Before:** Old') && change.value.includes('**After:** New'));
 });
 
 test('embed summaries stay compact and human', () => {
   const submitted = buildEmbed('submitted', { number: 9, title: 'Add source', contributor: 'alice', type: 'source', entry: 'movie-0001' });
-  assert.ok(submitted.embeds[0].description.includes('**alice**'));
-  assert.ok(submitted.embeds[0].description.includes('a viewing source'));
-  assert.ok(submitted.embeds[0].description.includes('`movie-0001`'));
-  const role = buildEmbed('role', { target: 'bob', role: 'checker', action: 'grant', actor: 'owner' });
-  assert.ok(role.embeds[0].description.includes('granted the **checker** role'));
+  const contributor = submitted.fields.find((f) => f.name === '📝 Contributor');
+  assert.ok(contributor && contributor.value.includes('**alice**'), 'contributor identity missing');
+  const type = submitted.fields.find((f) => f.name === '🗂️ Submission type');
+  const record = submitted.fields.find((f) => f.name === '📦 Record');
+  assert.ok(type && type.value.includes('Viewing source'), 'type label missing');
+  assert.ok(record && record.value.includes('movie-0001'), 'record missing');
+  const role = buildEmbed('role', { target: 'bob', role: 'checker', action: 'granted', actor: 'owner' });
+  const roleField = role.fields.find((f) => f.name === '🔐 Role');
+  assert.ok(roleField && roleField.value.includes('granted') && roleField.value.includes('checker'), 'role action missing');
 });
 
 // ---------------------------------------------------------------- rbac.js
@@ -415,7 +419,7 @@ function mockBackend() {
     method: 'POST',
     headers: { origin: 'https://tm.example', authorization: `Bearer ${actor.discord_id}`, 'content-type': 'application/json' },
     body: JSON.stringify(body),
-  }), { db, authApi, env, webhookUrl: null });
+  }), { db, authApi, env, webhooks: { main: null, ban: null } });
   return { db, authApi, env, profiles, audits, calls, call };
 }
 

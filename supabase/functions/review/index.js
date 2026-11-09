@@ -15,7 +15,7 @@ Deno.serve((req) => {
     db: makeDb(admin),
     authApi: admin.auth,
     env,
-    webhookUrl: env.get('DISCORD_WEBHOOK_URL'),
+    webhooks: { main: env.get('DISCORD_WEBHOOK_URL'), ban: env.get('DISCORD_BAN_WEBHOOK_URL') },
     github: makeGithub(env),
   }).then((res) => withCors(res, req, env));
 });

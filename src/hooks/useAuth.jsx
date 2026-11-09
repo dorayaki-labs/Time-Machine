@@ -3,7 +3,7 @@
 // the backend is not configured everything degrades to guest mode without
 // breaking the archive pages.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, backendConfigured } from '@/lib/backend.js';
 
 const AuthContext = createContext({
@@ -18,15 +18,30 @@ export function AuthProvider({ children }) {
   const [ready, setReady] = useState(!backendConfigured);
   const [authError, setAuthError] = useState(null);
 
+  // Auth events fire more often than people think: initial session, sign in,
+  // and EVERY background token refresh (~hourly). Each one triggers a profile
+  // load here, and those loads overlap — so every response is tagged with a
+  // sequence number and a stale response is discarded instead of letting an
+  // older profile overwrite a newer one (the root of several "profile flipped
+  // back / panel broke later" reports).
+  const loadSeq = useRef(0);
+
   const loadProfile = useCallback(async (sessionUser) => {
+    const seq = ++loadSeq.current;
     if (!sessionUser || !supabase) { setProfile(null); return; }
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).maybeSingle();
-    if (error) { setAuthError('The account service is unavailable right now.'); setProfile(null); return; }
+    const fetchProfile = () => supabase.from('profiles').select('*').eq('id', sessionUser.id).maybeSingle();
+    const { data, error } = await fetchProfile();
+    if (seq !== loadSeq.current) return;
+    if (error) {
+      console.error('[Time Machine] profile load failed:', error.message);
+      setAuthError('The account service is unavailable right now.'); setProfile(null); return;
+    }
     // First-ever login: the profile row is created by the DB trigger moments
     // after auth confirms — retry once after a short pause before giving up.
     if (!data) {
       await new Promise((r) => setTimeout(r, 1200));
-      const retry = await supabase.from('profiles').select('*').eq('id', sessionUser.id).maybeSingle();
+      const retry = await fetchProfile();
+      if (seq !== loadSeq.current) return;
       setProfile(retry.data ?? null);
       return;
     }

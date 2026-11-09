@@ -5,7 +5,7 @@
 // the protected-field triggers make ban/role columns unwritable from any
 // browser session.
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageContainer from '@/components/PageContainer.jsx';
 import LoadingState from '@/components/LoadingState.jsx';
 import EmptyState from '@/components/EmptyState.jsx';
@@ -130,15 +130,28 @@ export default function OwnerPanel() {
   const [roleFilter, setRoleFilter] = useState('');
   const [banFilter, setBanFilter] = useState('');
 
+  // Searches are debounced and panels can be opened/closed repeatedly, so
+  // several list requests can be in flight at once. Every response carries a
+  // sequence number; only the NEWEST one may touch state. This makes an
+  // out-of-order response harmless instead of a stale-result overwrite, and
+  // it works identically after auth token refreshes mid-session.
+  const loadSeq = useRef(0);
+
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
     setError(null);
     try {
       const res = await listUsers({ q: q.trim() || undefined, role: roleFilter || undefined, banned: banFilter === '' ? undefined : banFilter === 'banned' });
+      if (seq !== loadSeq.current) return;
       if (res && res.error) throw new Error(res.error);
       // The list action answers { ok, users: [...] } — unwrap the envelope,
       // accepting a bare array too, so users state is always a real array.
       setUsers(Array.isArray(res) ? res : Array.isArray(res?.users) ? res.users : []);
-    } catch (err) { setError(err.message); }
+    } catch (err) {
+      if (seq !== loadSeq.current) return;
+      console.error('[Time Machine] user list failed:', err?.message, err?.status ?? '');
+      setError(err.message);
+    }
   }, [q, roleFilter, banFilter]);
 
   useEffect(() => {

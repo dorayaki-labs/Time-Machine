@@ -9,10 +9,9 @@ import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { isStaff, isOwner } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
-import { summarizeChanges } from '../diff.js';
-import { notify, flushOutbox } from '../discord.js';
+import { notify, flushOutbox, profileRef } from '../discord.js';
 
-export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, github }) {
+export async function handleDirectEdit(req, { db, authApi, env, webhooks, github }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -49,14 +48,17 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
   if (applied.error) return json({ error: applied.error }, 422);
 
   const isDelete = patch.mode === 'delete';
-  const message = isDelete
+  const event = isDelete ? 'entry_deleted' : patch.mode === 'create' ? 'entry_created' : 'direct_edit';
+  const commitMessage = isDelete
     ? `archive: delete entry (${applied.entity.type} ${applied.entity.id})\n\nDeleted by ${profile.display_name}.`
-    : `archive: direct edit (${applied.entity.type} ${applied.entity.id})\n\nEdited by ${profile.display_name}.`;
-  const commitSha = await github.commit(applied.files, message).catch(() => null);
+    : event === 'entry_created'
+      ? `archive: create entry (${applied.entity.type} ${applied.entity.id})\n\nCreated by ${profile.display_name}.`
+      : `archive: direct edit (${applied.entity.type} ${applied.entity.id})\n\nEdited by ${profile.display_name}.`;
+  const commitSha = await github.commit(applied.files, commitMessage).catch(() => null);
   if (!commitSha) return json({ error: 'The GitHub commit failed — nothing was changed.' }, 502);
 
   await db.insertAudit({
-    action: isDelete ? 'archive.entry_deleted' : 'archive.direct_edit',
+    action: isDelete ? 'archive.entry_deleted' : event === 'entry_created' ? 'archive.entry_created' : 'archive.direct_edit',
     actor_id: profile.id, actor_display_name: profile.display_name,
     entity_type: applied.entity.type, entity_id: applied.entity.id,
     changes: applied.changes, review_notes: reviewNotes, commit_sha: commitSha,
@@ -85,12 +87,16 @@ export async function handleDirectEdit(req, { db, authApi, env, webhookUrl, gith
     contribution_id: inserted.id, from_status: null, to_status: 'accepted', actor_id: profile.id,
     reason: reviewNotes,
   });
-  await notify(db, webhookUrl, `direct-edit.${commitSha}`, isDelete ? 'entry_deleted' : 'direct_edit', {
-    reviewer: profile.display_name,
-    entry: `${applied.entity.type} ${applied.entity.id}`,
-    changes: summarizeChanges(applied.changes).join('\n'),
-    commit: commitSha.slice(0, 7),
+  const recordTitle = patch.record
+    ? (typeof patch.record.title === 'string' ? patch.record.title : patch.record.title?.en ?? null)
+    : null;
+  await notify(db, webhooks, `direct-edit.${commitSha}`, event, {
+    actor: profileRef(profile),
+    entry: { type: applied.entity.type, id: applied.entity.id, name: recordTitle },
+    changes: applied.changes,
+    commit: commitSha,
+    notes: reviewNotes,
   });
-  await flushOutbox(db, webhookUrl);
+  await flushOutbox(db, webhooks);
   return json({ ok: true, commit_sha: commitSha, changes: applied.changes, contribution: inserted.number });
 }

@@ -10,9 +10,9 @@
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { checkRoleAction, isOwner } from '../rbac.js';
-import { notify, flushOutbox } from '../discord.js';
+import { notify, flushOutbox, profileRef } from '../discord.js';
 
-export async function handleManageRole(req, { db, authApi, env, webhookUrl }) {
+export async function handleManageRole(req, { db, authApi, env, webhooks }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -54,10 +54,10 @@ export async function handleManageRole(req, { db, authApi, env, webhookUrl }) {
     entity_type: 'role', entity_id: role,
     review_notes: typeof reason === 'string' ? reason.slice(0, 2000) : null,
   });
-  await notify(db, webhookUrl, `role.${target.id}.${action}.${role}.${Date.now()}`, 'role', {
-    target: target.display_name, role, action: action === 'grant' ? 'granted' : 'revoked',
-    actor: actor.display_name,
+  await notify(db, webhooks, `role.${target.id}.${action}.${role}.${Date.now()}`, 'role', {
+    actor: profileRef(actor), target: profileRef(target),
+    role, action: action === 'grant' ? 'granted' : 'revoked',
   });
-  await flushOutbox(db, webhookUrl);
+  await flushOutbox(db, webhooks);
   return json({ ok: true, userId: target.id, role: newRole, display_name: target.display_name });
 }

@@ -26,6 +26,19 @@ import { ThemeProvider, applySavedThemeToDocument } from '@/hooks/useTheme.jsx';
 // already handled the base palette and background, so nothing flashes.
 applySavedThemeToDocument();
 
+// Diagnostics: the build marker makes "is the deployed bundle actually the
+// newest one?" answerable at a glance — a cached stale bundle after a deploy
+// looks exactly like a bug that "came back". The global handlers give every
+// unhandled rejection a recognizable console prefix instead of letting it
+// vanish into the default browser noise.
+console.info(`Time Machine UI · build ${import.meta.env.VITE_BUILD_ID ?? 'development'}`);
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Time Machine] unhandled promise rejection:', event.reason);
+});
+window.addEventListener('error', (event) => {
+  if (event.error) console.error('[Time Machine] uncaught error:', event.error);
+});
+
 // The router must know the deploy prefix — import.meta.env.BASE_URL is
 // "/time-machine/" on GitHub Pages project sites. Without it, every URL
 // (including the site root) falls through to the 404 page.

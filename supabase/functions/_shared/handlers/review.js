@@ -14,8 +14,7 @@ import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { canReviewContribution, canEditContribution, isStaff } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
-import { summarizeChanges } from '../diff.js';
-import { notify, flushOutbox } from '../discord.js';
+import { notify, flushOutbox, profileRef } from '../discord.js';
 
 async function loadContribution(db, body) {
   if (body.contributionId) return db.contributionById(body.contributionId);
@@ -30,7 +29,7 @@ async function recordStatusChange(db, { contribution, from, to, actor, reason })
   });
 }
 
-export async function handleReview(req, { db, authApi, env, webhookUrl, github }) {
+export async function handleReview(req, { db, authApi, env, webhooks, github }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -150,15 +149,16 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       entity_type: entity?.type ?? null, entity_id: entity?.id ?? contribution.entry_id,
       changes, review_notes: reviewNotes, commit_sha: commitSha,
     });
-    await notify(db, webhookUrl, `contribution.${contribution.id}.accepted`, 'accepted', {
+    await notify(db, webhooks, `contribution.${contribution.id}.accepted`, 'accepted', {
       number: contribution.number, title: contribution.title,
-      contributor: await displayName(db, contribution.contributor_id),
-      reviewer: profile.display_name,
-      entry: entity?.id ?? contribution.entry_id,
-      changes: summarizeChanges(changes).join('\n') || 'no archive change',
-      commit: commitSha ? commitSha.slice(0, 7) : null,
+      contributor: await contributorRef(db, contribution.contributor_id),
+      reviewer: profileRef(profile),
+      entry: entity ? { type: entity.type, id: entity.id } : (contribution.entry_id ? { id: contribution.entry_id } : null),
+      changes,
+      commit: commitSha,
+      notes: reviewNotes,
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true, status: 'accepted', commit_sha: commitSha, changes });
   }
 
@@ -182,12 +182,13 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
       review_notes: reason,
     });
-    await notify(db, webhookUrl, `contribution.${contribution.id}.declined`, 'declined', {
+    await notify(db, webhooks, `contribution.${contribution.id}.declined`, 'declined', {
       number: contribution.number, title: contribution.title,
-      contributor: await displayName(db, contribution.contributor_id),
-      reviewer: profile.display_name, reason,
+      contributor: await contributorRef(db, contribution.contributor_id),
+      reviewer: profileRef(profile),
+      reason,
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true, status: 'declined' });
   }
 
@@ -207,12 +208,13 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
       review_notes: reason,
     });
-    await notify(db, webhookUrl, `contribution.${contribution.id}.deleted`, 'deleted', {
+    await notify(db, webhooks, `contribution.${contribution.id}.deleted`, 'deleted', {
       number: contribution.number, title: contribution.title,
-      contributor: await displayName(db, contribution.contributor_id),
-      reviewer: profile.display_name, reason,
+      contributor: await contributorRef(db, contribution.contributor_id),
+      reviewer: profileRef(profile),
+      reason,
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true, status: 'deleted' });
   }
 
@@ -233,19 +235,18 @@ export async function handleReview(req, { db, authApi, env, webhookUrl, github }
       action: 'contribution.edited', actor_id: profile.id, actor_display_name: profile.display_name,
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
     });
-    await notify(db, webhookUrl, `contribution.${contribution.id}.edited.${Date.now()}`, 'edited', {
+    await notify(db, webhooks, `contribution.${contribution.id}.edited.${Date.now()}`, 'edited', {
       number: contribution.number, title: contribution.title,
-      contributor: await displayName(db, contribution.contributor_id),
-      reviewer: profile.display_name,
+      contributor: await contributorRef(db, contribution.contributor_id),
+      reviewer: profileRef(profile),
     });
-    await flushOutbox(db, webhookUrl);
+    await flushOutbox(db, webhooks);
     return json({ ok: true });
   }
 
   return json({ error: 'action must be accept, decline, delete or save-draft.' }, 400);
 }
 
-async function displayName(db, profileId) {
-  const p = await db.profileById(profileId);
-  return p?.display_name ?? 'unknown';
+async function contributorRef(db, profileId) {
+  return profileRef(await db.profileById(profileId));
 }

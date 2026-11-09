@@ -13,7 +13,7 @@ import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { ENTITY_TYPES, applyArchivePatch } from '../patch.js';
 import { loadConfig } from '../formSpec.js';
-import { notify, flushOutbox } from '../discord.js';
+import { notify, flushOutbox, profileRef } from '../discord.js';
 
 const ID_PATTERNS = {
   episode: /^anime-(1979|2005|1973)-\d{4}$/,
@@ -24,7 +24,7 @@ const ID_PATTERNS = {
 
 const SERIES_FOR = { episode: (id) => id.split('-').slice(0, 2).join('-'), movie: () => 'movies' };
 
-export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, github }) {
+export async function handleArchiveEdit(req, { db, authApi, env, webhooks, github }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -122,12 +122,12 @@ export async function handleArchiveEdit(req, { db, authApi, env, webhookUrl, git
     action: 'contribution.submitted', actor_id: profile.id, actor_display_name: profile.display_name,
     entity_id: id, review_notes: note.trim(),
   });
-  await notify(db, webhookUrl, `contribution.${inserted.id}.submitted`, 'submitted', {
+  await notify(db, webhooks, `contribution.${inserted.id}.submitted`, 'submitted', {
     number: inserted.number, title, type: 'archive-edit',
-    contributor: profile.display_name,
-    entry: id,
+    contributor: profileRef(profile),
+    entry: { type: entityType, id },
     notes: note.trim(),
   });
-  await flushOutbox(db, webhookUrl);
+  await flushOutbox(db, webhooks);
   return json({ ok: true, number: inserted.number, changes: applied.changes.length });
 }

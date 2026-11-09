@@ -7,6 +7,8 @@ import MediaImage from '@/components/MediaImage.jsx';
 import SourceList from '@/components/SourceList.jsx';
 import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
+import Collapsible from '@/components/Collapsible.jsx';
+import SegmentNav from '@/components/SegmentNav.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
@@ -16,6 +18,8 @@ import useAsync from '@/hooks/useAsync.js';
 import { getEntry, loadRecord, getNeighbors, displayTitle, secondaryTitle, segmentTitle, SERIES, languageName, preservationLabel } from '@/lib/catalog.js';
 import { formatRelease } from '@/lib/dates.js';
 import { metadataChecklist } from '@/lib/statistics.js';
+
+const pad = (n) => String(n).padStart(3, '0');
 
 export default function EpisodeDetails({ seriesId }) {
   const { id } = useParams();
@@ -47,8 +51,9 @@ export default function EpisodeDetails({ seriesId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const multi = valid && segments.length > 1;
   useDocumentTitle(valid
-    ? `${displayTitle(entry)}${segments.length > 1 && segment ? ` · ${segmentTitle(entry, current)}` : ''} · ${series.label}`
+    ? `${multi && segment ? segmentTitle(entry, current) : displayTitle(entry)} · Episode ${record?.number ?? '?'} · ${series.label}`
     : 'Episode not found');
 
   if (!valid) return <NotFound title="Episode not found" message="That episode is not in the archive yet. It may not have been documented, or the link may be wrong." />;
@@ -57,12 +62,12 @@ export default function EpisodeDetails({ seriesId }) {
 
   const { previous, next } = getNeighbors(entry);
   const secondary = secondaryTitle(entry);
-  const multi = segments.length > 1;
   const display = segment ?? {
     title: record.title, summary: record.summary, description: record.description,
     image: record.image, screenshots: record.screenshots, characters: record.characters,
     gadgets: record.gadgets, voiceActors: record.voiceActors,
   };
+  const segmentNames = segments.map((seg, i) => segmentTitle(entry, i));
 
   return (
     <PageContainer className="detail">
@@ -72,39 +77,28 @@ export default function EpisodeDetails({ seriesId }) {
         <span aria-current="page">Episode {record.number}</span>
       </nav>
 
-      <header className="detail-head">
-        <p className="eyebrow">{series.label} · Episode {record.number}</p>
-        <h1>{displayTitle(entry)}</h1>
-        {secondary ? <p className="detail-head__ja" lang="ja">{secondary}</p> : null}
-        <div className="status-pair">
-          <StatusIndicator kind="metadata" value={record.status} />
-          <StatusIndicator kind="availability" value={entry.availability} />
-          {record.preservation ? <StatusIndicator kind="preservation" value={record.preservation} /> : null}
-        </div>
-      </header>
-
-      {multi ? (
-        <nav className="segment-tabs" aria-label="Segments of this episode" id="segment-content">
-          {segments.map((seg, i) => (
-            <button key={seg.id} type="button"
-              className={`segment-tabs__tab${i === current ? ' is-active' : ''}`}
-              aria-current={i === current ? 'true' : undefined}
-              onClick={() => selectSegment(i + 1)}>
-              Segment {seg.segmentNumber ?? i + 1}
-            </button>
-          ))}
-        </nav>
-      ) : null}
-
-      <EntryActions entry={entry} />
-      <PageContributions entryId={entry.id} />
-
-      <div className="detail-columns">
-        <div className="detail-columns__media">
+      {/* Hero: a large poster on the left, the active story on the right. The
+          active segment's name leads; the combined broadcast title stays
+          available as secondary information. */}
+      <header className="episode-hero">
+        <div className="episode-hero__media">
           <MediaImage kind="episode" seed={segment?.id ?? record.id} src={display.image?.url ?? null} alt={display.image?.alt ?? ''}
-            label={`EP ${String(record.number).padStart(3, '0')}`} priority />
+            label={`EP ${pad(record.number)}`} priority />
         </div>
-        <MetadataSection id="info" title="Episode information" className="detail-columns__info">
+        <div className="episode-hero__body">
+          <p className="eyebrow">
+            {series.label} · Episode {record.number}
+            {multi ? <span className="chip chip--mono episode-hero__count">{segments.length} segments</span> : null}
+          </p>
+          <h1 className="episode-hero__title">{multi && segment ? segmentTitle(entry, current) : displayTitle(entry)}</h1>
+          {multi ? (
+            <p className="episode-hero__combined muted">{displayTitle(entry)}</p>
+          ) : (secondary ? <p className="detail-head__ja" lang="ja">{secondary}</p> : null)}
+          <div className="status-pair">
+            <StatusIndicator kind="metadata" value={record.status} />
+            <StatusIndicator kind="availability" value={entry.availability} />
+            {record.preservation ? <StatusIndicator kind="preservation" value={record.preservation} /> : null}
+          </div>
           <FactList items={[
             { label: 'Series', value: <Link to={series.basePath}>{series.label}</Link> },
             { label: 'Episode number', value: <span className="mono">{record.number}</span> },
@@ -116,23 +110,29 @@ export default function EpisodeDetails({ seriesId }) {
             { label: 'Record ID', value: <span className="mono">{segment?.id ?? record.id}</span> },
           ]} />
           <Completeness checklist={metadataChecklist(record)} />
-        </MetadataSection>
-      </div>
+        </div>
+      </header>
 
-      {multi && segment ? (
-        <header className="segment-heading">
-          <p className="eyebrow">Segment {segment.segmentNumber ?? current + 1}</p>
-          <h2>{segmentTitle(entry, current)}</h2>
-          {segment.durationMinutes ? <p className="muted small mono">{segment.durationMinutes} min</p> : null}
-        </header>
+      {multi ? (
+        <SegmentNav segments={segments} names={segmentNames} current={current} onSelect={(i) => selectSegment(i + 1)} />
       ) : null}
 
-      <Gallery screenshots={display.screenshots ?? []} title={segmentTitle(entry, current)} />
+      <EntryActions entry={entry} />
+      <PageContributions entryId={entry.id} />
 
-      <MetadataSection id="synopsis" title="Synopsis">
-        {display.summary ? <p className="prose">{display.summary}</p> : <p className="muted">No synopsis has been documented for this {multi ? 'segment' : 'episode'} yet.</p>}
-        {display.description ? <p className="prose prose--secondary">{display.description}</p> : null}
-      </MetadataSection>
+      {/* Summary and Synopsis are separate, independently collapsible sections. */}
+      <Collapsible title="Summary" meta={multi && segment ? `Segment ${segment.segmentNumber ?? current + 1}` : undefined}>
+        {display.summary
+          ? <p className="prose">{display.summary}</p>
+          : <p className="muted">No summary has been documented for this {multi ? 'segment' : 'episode'} yet.</p>}
+      </Collapsible>
+      <Collapsible title="Synopsis" defaultOpen={Boolean(display.description)}>
+        {display.description
+          ? <p className="prose prose--secondary">{display.description}</p>
+          : <p className="muted">No longer description has been documented for this {multi ? 'segment' : 'episode'} yet.</p>}
+      </Collapsible>
+
+      <Gallery screenshots={display.screenshots ?? []} title={multi && segment ? segmentTitle(entry, current) : displayTitle(entry)} />
 
       <SourceList sources={record.sources ?? []} noun="episode" />
 

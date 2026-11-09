@@ -8,9 +8,9 @@ import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
 import { FORM_SPECS, loadConfig } from '../formSpec.js';
 import { validateContributionPayload } from '../validate.js';
-import { notify, flushOutbox } from '../discord.js';
+import { notify, flushOutbox, profileRef } from '../discord.js';
 
-export async function handleContribute(req, { db, authApi, env, webhookUrl }) {
+export async function handleContribute(req, { db, authApi, env, webhooks }) {
   const pre = preflight(req, env);
   if (pre) return pre;
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405);
@@ -85,14 +85,14 @@ export async function handleContribute(req, { db, authApi, env, webhookUrl }) {
     action: 'contribution.submitted', actor_id: profile.id, actor_display_name: profile.display_name,
     entity_id: entryId ?? null,
   });
-  await notify(db, webhookUrl, `contribution.${inserted.id}.submitted`, 'submitted', {
+  await notify(db, webhooks, `contribution.${inserted.id}.submitted`, 'submitted', {
     number: inserted.number, title: title.trim(), type,
-    contributor: profile.display_name,
-    entry: entryId ?? null,
+    contributor: profileRef(profile),
+    entry: entryId ? { id: entryId } : null,
     notes: firstText(payload),
   });
 
-  await flushOutbox(db, webhookUrl);
+  await flushOutbox(db, webhooks);
   return json({ ok: true, id: inserted.id, number: inserted.number });
 }
 
