@@ -206,23 +206,5 @@
       "note": null
     },
     "howItWorks": "Use the different tools included in the set to watch your surroundings, listen from a distance, and collect information while staying hidden."
-  },
-  {
-    "id": "gadget-slow-cologne",
-    "name": {
-      "en": "Slow Cologne",
-      "ja": null
-    },
-    "aliases": [],
-    "description": null,
-    "image": {
-      "url": null,
-      "alt": null
-    },
-    "firstAppearance": {
-      "entryId": null,
-      "note": null
-    },
-    "howItWorks": null
   }
 ]
