@@ -4,10 +4,6 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 2,
-  "title": {
-    "en": "Episode 2",
-    "ja": null
-  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-04-15",
@@ -52,6 +48,26 @@
           "url": "https://vlitzz.store/thumbnail/e02.png"
         }
       ],
+      "characters": [],
+      "gadgets": [],
+      "voiceActors": [],
+      "durationMinutes": null
+    },
+    {
+      "id": "anime-2005-0002-02",
+      "segmentNumber": 2,
+      "title": {
+        "en": "Nobita's Wife",
+        "ja": null
+      },
+      "alternateTitles": [],
+      "summary": null,
+      "description": null,
+      "image": {
+        "url": null,
+        "alt": null
+      },
+      "screenshots": [],
       "characters": [],
       "gadgets": [],
       "voiceActors": [],
