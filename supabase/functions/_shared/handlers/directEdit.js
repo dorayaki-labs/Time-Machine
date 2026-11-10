@@ -7,7 +7,7 @@
 
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
-import { isStaff, isOwner } from '../rbac.js';
+import { isStaff, isAdmin } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
 import { notify, flushOutbox, profileRef } from '../discord.js';
 
@@ -30,10 +30,10 @@ export async function handleDirectEdit(req, { db, authApi, env, webhooks, github
 
   const patch = body?.patch;
   // Creating or deleting an archive file rewrites the repository structure
-  // itself, so it is owner-only. Edits stay available to all staff.
+  // itself, so it is admin/owner-only. Edits stay available to all staff.
   // (Server-side enforced; the staff editor hides the buttons for others.)
-  if ((patch?.mode === 'delete' || patch?.mode === 'create') && !isOwner(profile.role)) {
-    return json({ error: 'Only the owner can create or delete archive entries.' }, 403);
+  if ((patch?.mode === 'delete' || patch?.mode === 'create') && !isAdmin(profile.role)) {
+    return json({ error: 'Only admins and the owner can create or delete archive entries.' }, 403);
   }
   const reviewNotes = typeof body?.reviewNotes === 'string' ? body.reviewNotes.trim().slice(0, 2000) : null;
   if (!reviewNotes) {

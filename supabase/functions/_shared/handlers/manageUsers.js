@@ -1,19 +1,22 @@
-// POST /functions/v1/manage-users — owner-only user management.
+// POST /functions/v1/manage-users — user management.
 //
 //   { action: 'list', q?, role?, banned?, limit? }
 //   { action: 'set-role', userId, role: 'member'|'checker'|'admin' }
-//   { action: 'ban', userId, reason? }
-//   { action: 'unban', userId }
+//   { action: 'ban', userId, reason? }   — admins and the owner
+//   { action: 'unban', userId }          — admins and the owner
 //
-// EVERY branch re-checks the caller's role server-side (owner only) and the
-// target's state (rbac.js). Ban enforcement itself lives in authenticate()
-// and applies to every protected function, not just these actions. All
-// actions land in the append-only audit_logs; bans and unbans also notify
-// Discord through the existing outbox.
+// The full account directory (list) and role changes stay owner-only. Ban and
+// unban are available to admins as well; canBanUser/canUnbanUser still refuse
+// owner targets to non-owners. EVERY branch re-checks the caller's role
+// server-side (never the browser's claim) and the target's state (rbac.js).
+// Ban enforcement itself lives in authenticate() and applies to every
+// protected function, not just these actions. All actions land in the
+// append-only audit_logs; bans and unbans also notify Discord through the
+// existing outbox.
 
 import { json, preflight, checkOrigin } from '../cors.js';
 import { authenticate, readJson } from '../auth.js';
-import { isOwner, checkSetRoleAction, canBanUser, canUnbanUser } from '../rbac.js';
+import { isOwner, isAdmin, checkSetRoleAction, canBanUser, canUnbanUser } from '../rbac.js';
 import { notify, flushOutbox, profileRef } from '../discord.js';
 
 export async function handleManageUsers(req, { db, authApi, env, webhooks }) {
@@ -26,11 +29,20 @@ export async function handleManageUsers(req, { db, authApi, env, webhooks }) {
   const auth = await authenticate({ authApi, db }, req);
   if (auth.error) return json({ error: auth.error.message }, auth.error.code);
   const { profile: actor } = auth;
-  if (!isOwner(actor.role)) return json({ error: 'This panel is only available to the project owner.' }, 403);
 
   const { body, error: bodyError } = await readJson(req);
   if (bodyError) return json({ error: bodyError }, 400);
   const { action } = body ?? {};
+
+  // The directory and role changes remain owner-only; bans/unbans are
+  // available to admins (target protection still applies per rbac.js).
+  if (action === 'list' || action === 'set-role') {
+    if (!isOwner(actor.role)) return json({ error: 'This panel is only available to the project owner.' }, 403);
+  } else if (action === 'ban' || action === 'unban') {
+    if (!isAdmin(actor.role)) return json({ error: 'Only admins and the owner can manage bans.' }, 403);
+  } else {
+    return json({ error: 'Unknown action.' }, 400);
+  }
 
   // -------------------------------------------------------------------- list
   if (action === 'list') {
@@ -142,5 +154,6 @@ export async function handleManageUsers(req, { db, authApi, env, webhooks }) {
     return json({ ok: true, userId: target.id, banned: false, display_name: target.display_name });
   }
 
+  // Unreachable — the gate above rejects unknown actions before any lookup.
   return json({ error: 'action must be list, set-role, ban or unban.' }, 400);
 }

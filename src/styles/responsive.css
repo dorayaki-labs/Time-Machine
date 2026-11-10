@@ -17,8 +17,6 @@
   .explore-grid { grid-template-columns: 1fr; }
   .detail-columns, .detail-columns--after-film { grid-template-columns: 1fr; }
   .detail-columns__media .media { max-width: 460px; }
-  .episode-hero { grid-template-columns: 1fr; gap: var(--s-4); }
-  .episode-hero__media { max-width: 520px; }
   .film-record { grid-template-columns: 150px 1fr; gap: var(--s-4); }
   .profile { grid-template-columns: 130px 1fr; gap: var(--s-4); }
   .contribute-form__grid { grid-template-columns: 1fr; }
@@ -45,10 +43,6 @@
   .film-record, .profile { grid-template-columns: 1fr; }
   .film-record__poster, .profile__portrait { max-width: 240px; }
   .prev-next { grid-template-columns: 1fr; }
-  .episode-hero__title { font-size: 1.35rem; }
-  .segment-nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .segment-nav::-webkit-scrollbar { display: none; }
-  .segment-nav__tab { min-width: 132px; }
   .contribute-strip { padding: var(--s-4); }
   .lightbox { padding: var(--s-4); }
   .lightbox__nav--prev { left: var(--s-2); }

@@ -72,10 +72,10 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
   // pages arrive through `preset` and load their record immediately.
   const { profile } = useAuth();
   // Creating or deleting archive files rewrites the repository structure —
-  // owner only. Everyone else can propose edits (review) or make direct
-  // edits to existing records.
-  const isOwnerUser = isOwner(profile);
-  const canDeleteEntry = isOwnerUser;
+  // admins and the owner. Everyone else can propose edits (review) or make
+  // direct edits to existing records.
+  const canCreate = isAdmin(profile);
+  const canDeleteEntry = canCreate;
   const [entityType, setEntityType] = useState(contribution?.entityType ?? preset?.entityType ?? 'episode');
   const [entityId, setEntityId] = useState(contribution?.entityId ?? preset?.entityId ?? '');
   const [deleting, setDeleting] = useState(false);
@@ -98,11 +98,11 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
       // JSON matches the file schema and the server's baseRecord check passes.
       const raw = JSON.parse(JSON.stringify(existing));
       setBase(JSON.parse(JSON.stringify(raw))); setDraft(raw); setRawJson(JSON.stringify(raw, null, 2));
-    } else if (isOwnerUser) {
+    } else if (canCreate) {
       const fresh = buildNewRecord(type, id);
       setBase(null); setDraft(fresh); setRawJson(JSON.stringify(fresh, null, 2));
     } else {
-      setError(`"${id}" was not found in the archive. Creating new entries is owner-only — if you meant to propose a new entry, use the contribution forms instead.`);
+      setError(`"${id}" was not found in the archive. Creating new entries requires an admin or the owner — if you meant to propose a new entry, use the contribution forms instead.`);
     }
   };
 
@@ -146,8 +146,8 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
       }
       const record = showRaw ? JSON.parse(rawJson) : draft;
       const mode = base ? 'update' : 'create';
-      if (mode === 'create' && !isOwnerUser) {
-        setError('Only the owner can create new archive entries. Use the contribution forms to propose one.');
+      if (mode === 'create' && !canCreate) {
+        setError('Only admins and the owner can create new archive entries. Use the contribution forms to propose one.');
         return;
       }
       const patch = { entityType, entityId: entityId.trim(), mode, record, ...(base ? { baseRecord: base } : {}) };
@@ -173,24 +173,45 @@ function ArchiveEditor({ contribution, preset, onApplied, onCancel }) {
       </div>
 
       {!draft ? (
-        <div className="filter-row">
-          <select value={entityType} onChange={(e) => setEntityType(e.target.value)} aria-label="Entity type">
-            {ENTITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <input type="text" list="entity-ids" placeholder="e.g. anime-1979-0001, movie-0001, char-doraemon" value={entityId}
-            onChange={(e) => setEntityId(e.target.value)} aria-label="Entity id" style={{ minWidth: '260px' }} />
-          <datalist id="entity-ids">
-            {entityType === 'character' || entityType === 'gadget'
-              ? (entityType === 'character' ? getCharacters() : getGadgets()).map((r) => <option key={r.id} value={r.id} />)
-              : getAllEntries().filter((e) => (entityType === 'movie') === (e.kind === 'movie')).map((e) => <option key={e.id} value={e.id} />)}
-          </datalist>
-          <button type="button" className="btn btn--primary" disabled={!entityId.trim()} onClick={() => loadEntity(entityType, entityId.trim())}>Load record</button>
+        <div>
+          <div className="filter-row">
+            <select value={entityType} onChange={(e) => setEntityType(e.target.value)} aria-label="Entity type">
+              {ENTITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <input type="text" list="entity-ids" placeholder="e.g. anime-1979-0001, movie-0001, char-doraemon" value={entityId}
+              onChange={(e) => setEntityId(e.target.value)} aria-label="Entity id" style={{ minWidth: '260px' }} />
+            <datalist id="entity-ids">
+              {entityType === 'character' || entityType === 'gadget'
+                ? (entityType === 'character' ? getCharacters() : getGadgets()).map((r) => <option key={r.id} value={r.id} />)
+                : getAllEntries().filter((e) => (entityType === 'movie') === (e.kind === 'movie')).map((e) => <option key={e.id} value={e.id} />)}
+            </datalist>
+            <button type="button" className="btn btn--primary" disabled={!entityId.trim()} onClick={() => loadEntity(entityType, entityId.trim())}>Load record</button>
+            {canCreate ? (
+              <button type="button" className="btn btn--ghost" disabled={!entityId.trim()}
+                title="Build a fresh record with this id (admins and the owner)"
+                onClick={() => {
+                  const id = entityId.trim();
+                  if (findEntity(entityType, id)) { setError(`"${id}" already exists — load it to edit it instead.`); return; }
+                  const fresh = buildNewRecord(entityType, id);
+                  setError(null); setDeleting(false); setConfirmText('');
+                  setBase(null); setDraft(fresh); setRawJson(JSON.stringify(fresh, null, 2));
+                }}>
+                <Icon name="plus" size={14} /> New record…
+              </button>
+            ) : null}
+          </div>
+          {canCreate ? (
+            <p className="muted small" style={{ margin: '0.4rem 0 0' }}>
+              Enter an id that does not exist yet and press <strong>New record…</strong> to create it —
+              admins and the owner can create and delete archive entries directly.
+            </p>
+          ) : null}
         </div>
       ) : (
         <>
           <p className="submission__meta">
             {deleting ? 'Deleting' : 'Editing'} <strong className="mono">{entityType} {entityId}</strong>
-            {base || deleting ? '' : ' (new record — owner only)'}
+            {base || deleting ? '' : ' (new record)'}
             <button type="button" className="btn btn--ghost" style={{ marginLeft: '0.8rem' }} onClick={() => { setDraft(null); setBase(null); setDeleting(false); }}>Choose another record</button>
           </p>
 

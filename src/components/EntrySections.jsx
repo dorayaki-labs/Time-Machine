@@ -31,10 +31,10 @@ export function GadgetsSection({ ids = [] }) {
   );
 }
 
-export function VoiceActorsSection({ voiceActors }) {
+export function VoiceActorsSection({ voiceActors, title = 'Voice actors', id = 'voice-actors' }) {
   const rows = Array.isArray(voiceActors) ? voiceActors : [];
   return (
-    <MetadataSection id="voice-actors" title="Voice actors">
+    <MetadataSection id={id} title={title}>
       {rows.length ? (
         <div className="table-wrap">
           {/* Episodes and movies do not carry a `version` on voice actors —

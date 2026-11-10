@@ -415,58 +415,9 @@
 .credits-legal { margin-top: var(--s-5); font-size: 0.85rem; color: var(--text-3); }
 
 /* ---------------------------------------------------------------------------
-   Episode detail: hero, segment navigation, collapsible sections
+   Episode detail page styles moved to src/styles/episode.css
+   (redesigned episode view V2 + the classic view's segment tabs).
    ------------------------------------------------------------------------- */
-
-/* Hero: large poster left, active story + metadata right. Takes visibly more
-   space than the old two-column strip and anchors the page hierarchy. */
-.episode-hero {
-  display: grid; grid-template-columns: minmax(300px, 480px) 1fr;
-  gap: var(--s-6); align-items: start; margin-bottom: var(--s-5);
-}
-.episode-hero__media { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-2); }
-.episode-hero__media .media { width: 100%; }
-.episode-hero__media .media__img, .episode-hero__media .media__placeholder { width: 100%; height: auto; display: block; }
-.episode-hero__body { display: grid; gap: var(--s-3); min-width: 0; }
-.episode-hero__body .eyebrow { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
-.episode-hero__count { font-size: 0.7rem; }
-.episode-hero__title { margin: 0; font-size: clamp(1.5rem, 3.2vw, 2.1rem); line-height: 1.2; overflow-wrap: anywhere; }
-.episode-hero__combined { margin: calc(var(--s-1) * -1) 0 0; font-size: 0.95rem; overflow-wrap: anywhere; }
-.episode-hero .facts { border-top: 1px solid var(--border); padding-top: var(--s-2); }
-
-/* Segmented control: one pill slides under the labels. Tabs carry the real
-   segment names; long names ellipsize instead of breaking the row. */
-.segment-nav {
-  position: relative; display: flex; align-items: stretch;
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md);
-  padding: 4px; margin-block: var(--s-2) var(--s-5);
-}
-.segment-nav__thumb {
-  position: absolute; top: 4px; bottom: 4px; left: 0;
-  background: var(--surface); border: 1px solid var(--border-strong); border-radius: calc(var(--r-md) - 4px);
-  box-shadow: var(--shadow-card);
-  transition: transform 0.16s var(--ease);
-  will-change: transform;
-}
-.segment-nav__tab {
-  position: relative; z-index: 1; appearance: none; background: none; border: 0; cursor: pointer;
-  display: grid; gap: 2px; justify-items: center; align-content: center; padding: var(--s-2) var(--s-2);
-  font: inherit; color: var(--text-2); border-radius: calc(var(--r-md) - 4px); min-width: 0;
-  transition: color 0.12s var(--ease);
-}
-.segment-nav__tab:hover { color: var(--text); }
-.segment-nav__tab.is-active { color: var(--text); }
-.segment-nav__tab.is-active .segment-nav__num { color: var(--accent); }
-.segment-nav__num {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--text-3); white-space: nowrap;
-}
-.segment-nav__name {
-  max-width: 100%; font-size: 0.88rem; font-weight: 500; line-height: 1.3;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.segment-nav__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Collapsible sections (summary / synopsis): the toggle is the whole heading
    row; the panel animates via the 0fr ⇄ 1fr grid-rows trick and is hidden

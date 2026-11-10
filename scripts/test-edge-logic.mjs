@@ -498,5 +498,25 @@ test('manage-users: banning by discord id works (staff admin tab path)', async (
   assert.equal(profiles.get('u-member').banned, true);
 });
 
+test('manage-users: admins can ban and unban, but the directory and roles stay owner-only', async () => {
+  const { call, profiles } = mockBackend();
+  const deniedList = await call(ADMIN, { action: 'list' });
+  assert.equal(deniedList.status, 403, 'the directory stays owner-only');
+  const deniedRole = await call(ADMIN, { action: 'set-role', userId: 'u-member', role: 'checker' });
+  assert.equal(deniedRole.status, 403, 'role changes stay owner-only');
+  const ban = await call(ADMIN, { action: 'ban', userId: 'u-member', reason: 'spam' });
+  assert.equal((await ban.json()).ok, true, 'admins can ban');
+  assert.equal(profiles.get('u-member').banned, true);
+  const unban = await call(ADMIN, { action: 'unban', userId: 'u-member' });
+  assert.equal((await unban.json()).ok, true, 'admins can lift bans');
+  assert.equal(profiles.get('u-member').banned, false);
+  const memberBan = await call(MEMBER, { action: 'ban', userId: 'u-owner' });
+  assert.equal(memberBan.status, 403, 'members cannot ban');
+  const adminOwnerTarget = await call(ADMIN, { action: 'ban', userId: 'u-owner' });
+  assert.equal(adminOwnerTarget.status, 403, 'admins still cannot ban the owner');
+  const unknown = await call(ADMIN, { action: 'nope' });
+  assert.equal(unknown.status, 400, 'unknown actions are refused before any lookup');
+});
+
 await run();
 console.log(`\n${passed} test groups passed${process.exitCode ? ' (with failures above)' : ''}.`);

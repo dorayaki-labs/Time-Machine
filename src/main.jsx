@@ -15,6 +15,7 @@ import './styles/global.css';
 import './styles/navigation.css';
 import './styles/cards.css';
 import './styles/pages.css';
+import './styles/episode.css';
 import './styles/studio.css';
 import './styles/responsive.css';
 import './styles/backend.css';
