@@ -121,8 +121,10 @@ function checkIdList(errors, list, pattern, label) {
   });
 }
 
-/** Story-level fields belong on a segment, never on the episode record. */
-const STORY_FIELDS = ['title', 'alternateTitles', 'summary', 'description', 'image',
+/** Story-level fields belong on a segment, never on the episode record.
+    `title` is the exception: it is the episode's broadcast name ("Episode 1")
+    and lives on the episode, while segment titles stay the story names. */
+const STORY_FIELDS = ['alternateTitles', 'summary', 'description', 'image',
   'screenshots', 'characters', 'gadgets', 'voiceActors', 'durationMinutes'];
 
 function checkVoiceActors(errors, rows, label) {
@@ -186,6 +188,10 @@ export function validateEntryRecord(record) {
 
   if (record.type === 'episode') {
     if (record.schemaVersion !== EPISODE_SCHEMA_VERSION) add(errors, `episode schemaVersion must be ${EPISODE_SCHEMA_VERSION}.`);
+    if (record.title !== undefined && record.title !== null) checkTitle(errors, record.title);
+    if (record.alternateTitles !== undefined && record.alternateTitles !== null && !Array.isArray(record.alternateTitles)) {
+      add(errors, 'alternateTitles must be an array.');
+    }
     if (!Array.isArray(record.segments) || record.segments.length === 0) {
       add(errors, 'segments must be an array with at least one segment.');
     } else {

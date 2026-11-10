@@ -116,11 +116,18 @@ test('bad or duplicate segment ids fail', () => {
   assert.ok(dup.errors.some((e) => e.includes('duplicate segment id')));
 });
 
-test('story fields on the episode record are rejected', () => {
-  const legacy = { ...baseEpisode, title: { en: 'Leftover' } };
+test('story fields on the episode record are rejected — title (broadcast name) is the exception', () => {
+  // `title` is now the episode's broadcast name and validates fine…
+  const named = { ...baseEpisode, title: { en: `Episode ${baseEpisode.number}` } };
+  assert.equal(validateEntryRecord(named).ok, true);
+  const badTitle = { ...baseEpisode, title: { en: 42 } };
+  assert.equal(validateEntryRecord(badTitle).ok, false);
+  assert.ok(validateEntryRecord(badTitle).errors.some((e) => e.includes('title')));
+  // …while the remaining story fields still belong on segments only.
+  const legacy = { ...baseEpisode, summary: 'Leftover story text' };
   const res = validateEntryRecord(legacy);
   assert.equal(res.ok, false);
-  assert.ok(res.errors.some((e) => e.includes('"title"')));
+  assert.ok(res.errors.some((e) => e.includes('"summary"')));
 });
 
 test('episode with wrong seriesId fails', () => {

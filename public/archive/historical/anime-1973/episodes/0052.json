@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-1973",
   "number": 52,
+  "title": {
+    "en": "Episode 52",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "1973-09-30",

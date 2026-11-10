@@ -1,6 +1,7 @@
 import MediaCard from './MediaCard.jsx';
 import SegmentCover from './SegmentCover.jsx';
 import StatusIndicator from './StatusIndicator.jsx';
+import Icon from './Icon.jsx';
 import { displayTitle, secondaryTitle, SERIES } from '@/lib/catalog.js';
 import { formatRelease } from '@/lib/dates.js';
 
@@ -24,14 +25,16 @@ export default function EpisodeCard({ entry, showSeries = false, showPreservatio
       title={displayTitle(entry)}
       subtitle={secondaryTitle(entry)}
       badge={<span className="chip chip--mono">#{entry.number}</span>}
+      artBadge={(
+        <span className="chip chip--mono" title={`${segmentCount} ${segmentCount === 1 ? 'segment' : 'segments'} in this episode`}>
+          <Icon name="film" size={12} /> {segmentCount}
+        </span>
+      )}
       media={coverMedia}
     >
       <p className="media-card__meta">
         {showSeries ? <>{SERIES[entry.seriesId].label}<span className="sep" aria-hidden="true"> / </span></> : null}
         {formatRelease(entry.release)}
-      </p>
-      <p className="media-card__meta media-card__meta--segments">
-        <span className="chip chip--mono chip--segments">{segmentCount} {segmentCount === 1 ? 'Segment' : 'Segments'}</span>
       </p>
       <div className="media-card__row">
         <StatusIndicator kind="availability" value={entry.availability} compact />

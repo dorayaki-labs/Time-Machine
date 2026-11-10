@@ -175,16 +175,12 @@
 .results-count { color: var(--text-2); font-size: 0.88rem; margin-block: var(--s-4) var(--s-3); font-family: var(--mono); }
 
 /* ---------------------------------------------------------------------------
-   Multi-segment episodes: card segment-count chip, hover-cycling cover
+   Multi-segment episodes: segment-count badge on the art (top-left, next to
+   the episode-number badge), hover-cycling cover
    ------------------------------------------------------------------------- */
 
-.media-card__meta--segments { margin-block: 0; }
-.chip--segments {
-  font-size: 0.72rem;
-  color: var(--text-2);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-}
+.media-card__badge--left { left: 10px; right: auto; }
+.media-card__badge .chip { display: inline-flex; align-items: center; gap: 5px; }
 
 .segment-cover {
   position: relative;

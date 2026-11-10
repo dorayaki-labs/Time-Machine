@@ -54,7 +54,7 @@ function ActivityLine({ event, onClick }) {
   );
 }
 
-export default function PageContributions({ entryId, variant = 'box' }) {
+export default function PageContributions({ entryId }) {
   const { backendConfigured } = useAuth();
   const [events, setEvents] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -70,89 +70,6 @@ export default function PageContributions({ entryId, variant = 'box' }) {
   }, [backendConfigured, entryId]);
 
   if (!backendConfigured || failed || (events !== null && events.length === 0)) return null;
-
-  // The redesigned episode page uses a vertical timeline of the latest three
-  // events; every other detail page keeps the compact box. Data, the modal
-  // and the public log are shared.
-  if (variant === 'timeline') {
-    return (
-      <section className="detail-section ev-section ev-timeline-section" id="activity" aria-labelledby="activity-title">
-        <header className="detail-section__head">
-          <h2 className="ev-section-title" id="activity-title">Recent contributions</h2>
-          <button type="button" className="ev-viewall" onClick={() => setOpen(true)}>
-            View all <Icon name="arrowRight" size={13} />
-          </button>
-        </header>
-        {events === null ? (
-          <p className="muted small"><Icon name="clock" size={13} /> Loading page activity…</p>
-        ) : (
-          <ol className="ev-timeline">
-            {events.slice(0, 3).map((event) => {
-              const view = event.row;
-              const meta = view.kind === 'edit'
-                ? (EDIT_EVENT[view.action?.replace(/\./g, '_')] ?? { label: 'edited the archive', icon: 'edit', tone: 'review' })
-                : (SUBMISSION_EVENT[view.status] ?? SUBMISSION_EVENT.pending);
-              return (
-                <li key={event.key} className={`ev-timeline__item ev-timeline__item--${meta.tone}`}>
-                  <span className="ev-timeline__dot" aria-hidden="true" />
-                  <Avatar
-                    name={view.contributor?.name ?? view.reviewer?.name}
-                    url={view.contributor?.avatar ?? view.reviewer?.avatar}
-                    size={30}
-                  />
-                  <div className="ev-timeline__body">
-                    <p className="ev-timeline__line">
-                      <strong>{view.contributor?.name ?? view.reviewer?.name ?? 'A community member'}</strong>
-                      {' '}{meta.label}
-                      {view.number ? <span className="mono"> #{view.number}</span> : null}
-                    </p>
-                    <p className="ev-timeline__meta muted small">
-                      {fmtTime(event.at)} · {view.kind === 'edit' ? 'Direct archive edit' : (view.status ? `Contribution ${view.status}` : 'Contribution')}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-
-        {open ? (
-          <ContributionModal
-            row={{ kind: 'page', title: `History of ${entryId}`, entryId }}
-            onClose={() => setOpen(false)}
-          >
-            <p className="muted small" style={{ marginTop: 0 }}>
-              Every contribution and staff edit recorded for <span className="mono">{entryId}</span>, newest first.
-              Open an item to see who did what and when.
-            </p>
-            <ol className="activity-list">
-              {events.map((event) => (
-                <li key={event.key} className="activity-item">
-                  <Avatar
-                    name={event.row.contributor?.name ?? event.row.reviewer?.name}
-                    url={event.row.contributor?.avatar ?? event.row.reviewer?.avatar}
-                    size={34}
-                  />
-                  <div className="activity-item__body">
-                    <p className="activity-item__line">
-                      <strong>{event.row.contributor?.name ?? event.row.reviewer?.name ?? 'A community member'}</strong>
-                      <PageEventChip view={event.row} />
-                      {event.row.number ? <span className="activity-item__title">#{event.row.number} · {event.row.title}</span> : null}
-                    </p>
-                    <p className="activity-item__meta">{fmtTime(event.at)}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <p className="muted small">
-              Want to add to this page? Use <strong>Edit this entry</strong> above, or the{' '}
-              <Link to="/contribute">contribution forms</Link>.
-            </p>
-          </ContributionModal>
-        ) : null}
-      </section>
-    );
-  }
 
   if (events === null) {
     return (

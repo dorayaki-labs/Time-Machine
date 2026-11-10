@@ -501,23 +501,29 @@ const titleText = (t) => (typeof t === 'string' ? t : t?.en || t?.ja || '');
 export const isMultiSegment = (entry) => Array.isArray(entry?.segments) && entry.segments.length > 1;
 
 /**
- * The title to display: English first, Japanese as the fallback. A
- * multi-segment broadcast episode is titled by combining the names of ALL of
- * its segments (comma-separated) — read straight from the segment data, so
- * renaming a segment updates every listing automatically. Episodes whose
- * segments have no usable names fall back to the broadcast number, and
- * single-segment episodes behave exactly as before.
+ * The title to display: English first, Japanese as the fallback.
+ *
+ * A multi-segment broadcast episode is named by its episode-level `title`
+ * ("Episode 1", the broadcast name stored on the record). When a record has
+ * no stored name, the segment names are combined (comma-separated) as a
+ * fallback — read straight from the segment data, so renaming a segment
+ * still updates every listing.
+ *
+ * Single-segment episodes keep showing the story's own title: with exactly
+ * one story, the segment title IS the episode's name in practice.
  */
 export function displayTitle(entry) {
   if (isMultiSegment(entry)) {
+    const own = titleText(entry?.title);
+    if (own) return own;
     const names = (entry.segments ?? [])
       .map((seg) => titleText(seg.title))
       .filter(Boolean);
     if (names.length) return names.join(', ');
     return `Episode #${entry.number}`;
   }
-  return titleText(entry?.title)
-    || titleText(entry?.segments?.[0]?.title)
+  return titleText(entry?.segments?.[0]?.title)
+    || titleText(entry?.title)
     || 'Untitled entry';
 }
 

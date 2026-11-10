@@ -328,6 +328,9 @@ export default function RecordEditor({ entityType, draft, setField }) {
     return (
       <div className="contribution-form__grid">
         <h3 className="section-heading span-2">Broadcast information <span className="muted small">(shared by every segment)</span></h3>
+        <RecordField label="Episode name" placeholder="e.g. Episode 4" value={draft.title?.en} onChange={(v) => setField('title.en', v ?? '')}
+          help="The broadcast's name. The stories themselves are named on their segments." />
+        <RecordField label="Episode name (Japanese)" value={draft.title?.ja} onChange={(v) => setField('title.ja', v)} />
         <RecordField label="Broadcast date" placeholder="YYYY, YYYY-MM or YYYY-MM-DD" value={draft.release?.date} onChange={(v) => setField('release.date', v)} />
         <RecordField label="Date precision" value={draft.release?.precision} onChange={(v) => setField('release.precision', v)}
           options={[{ value: 'day', label: 'Exact day' }, { value: 'month', label: 'Month only' }, { value: 'year', label: 'Year only' }]}
@@ -441,8 +444,10 @@ export function buildNewRecord(entityType, entityId) {
     };
   }
   // Schema 4: a new episode starts as a broadcast with exactly one segment.
+  // `title` is the broadcast name ("Episode N"); segment titles name stories.
   return {
     schemaVersion: 4, id: entityId, type: 'episode', seriesId, number,
+    title: { en: `Episode ${number}`, ja: null },
     originalLanguage: 'ja',
     release: { date: null, precision: null, region: null },
     sources: [],

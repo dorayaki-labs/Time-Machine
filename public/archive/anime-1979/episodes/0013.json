@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-1979",
   "number": 13,
+  "title": {
+    "en": "Episode 13",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "1979-04-16",

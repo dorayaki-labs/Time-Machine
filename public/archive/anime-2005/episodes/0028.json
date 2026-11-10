@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 28,
+  "title": {
+    "en": "Episode 28",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-07-15",

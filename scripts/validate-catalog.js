@@ -43,8 +43,9 @@ const SCHEMA = 3;
 const SCHEMA_EPISODE = 4;
 const SOURCE_TYPES = new Set(['direct', 'embed']);
 
-// Story-level fields describe ONE story and belong on a segment.
-const STORY_FIELDS = ['title', 'alternateTitles', 'summary', 'description', 'image',
+// Story-level fields describe ONE story and belong on a segment. `title` is
+// the exception: the episode's broadcast name lives on the episode record.
+const STORY_FIELDS = ['alternateTitles', 'summary', 'description', 'image',
   'screenshots', 'characters', 'gadgets', 'voiceActors', 'durationMinutes'];
 
 const DATE = /^\d{4}(-\d{2}(-\d{2})?)?$/;
@@ -141,8 +142,18 @@ function checkEpisodeRecord(file, record, cat) {
     }
   });
   // Story-level fields on the record itself are pre-migration leftovers.
+  // `title` is the exception: it is the episode's broadcast name ("Episode 1")
+  // and lives on the episode, while segment titles stay the story names.
   for (const f of STORY_FIELDS) {
     if (f in record) err(file, `"${f}" belongs on a segment now — remove it from the episode record`);
+  }
+  if ('title' in record) {
+    const t = record.title;
+    const bad = t === null || typeof t !== 'object' || Array.isArray(t)
+      || Object.keys(t).some((k) => !['en', 'ja'].includes(k))
+      || (t.en !== undefined && t.en !== null && typeof t.en !== 'string')
+      || (t.ja !== undefined && t.ja !== null && typeof t.ja !== 'string');
+    if (bad) err(file, `"title" must be an object { en, ja } (the episode's broadcast name)`);
   }
 }
 

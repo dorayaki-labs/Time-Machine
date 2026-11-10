@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 43,
+  "title": {
+    "en": "Episode 43",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-09-16",

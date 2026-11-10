@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 58,
+  "title": {
+    "en": "Episode 58",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-12-02",

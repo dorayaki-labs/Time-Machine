@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 41,
+  "title": {
+    "en": "Episode 41",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-09-09",

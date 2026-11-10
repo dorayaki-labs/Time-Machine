@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 7,
+  "title": {
+    "en": "Episode 7",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-05-06",

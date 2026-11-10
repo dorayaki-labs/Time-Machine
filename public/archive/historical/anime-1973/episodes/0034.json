@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-1973",
   "number": 34,
+  "title": {
+    "en": "Episode 34",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "1973-07-29",

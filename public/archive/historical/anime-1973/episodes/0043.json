@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-1973",
   "number": 43,
+  "title": {
+    "en": "Episode 43",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "1973-09-02",

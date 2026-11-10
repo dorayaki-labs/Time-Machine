@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-1979",
   "number": 25,
+  "title": {
+    "en": "Episode 25",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "1979-04-30",

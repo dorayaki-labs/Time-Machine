@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 46,
+  "title": {
+    "en": "Episode 46",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-10-21",

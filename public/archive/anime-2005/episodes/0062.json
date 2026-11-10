@@ -4,6 +4,10 @@
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 62,
+  "title": {
+    "en": "Episode 62",
+    "ja": null
+  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-12-31",

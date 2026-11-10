@@ -415,9 +415,95 @@
 .credits-legal { margin-top: var(--s-5); font-size: 0.85rem; color: var(--text-3); }
 
 /* ---------------------------------------------------------------------------
-   Episode detail page styles moved to src/styles/episode.css
-   (redesigned episode view V2 + the classic view's segment tabs).
+   Episode detail page: classic layout, segment tabs, segments timeline and
+   the stripped-down segment menu (?menu=segment).
    ------------------------------------------------------------------------- */
+
+/* Numbered segment tabs under the heading; the active tab is accented. */
+.segment-tabs {
+  display: flex; flex-wrap: wrap; gap: var(--s-2);
+  padding: var(--s-2) 0; border-block: 1px solid var(--border);
+}
+.segment-tabs__tab {
+  appearance: none; cursor: pointer; font: inherit; font-size: 0.85rem;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.segment-tabs__tab:hover { color: var(--text); border-color: var(--border-strong); }
+.segment-tabs__tab.is-active {
+  color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft);
+}
+.segment-tabs__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.segment-heading { display: grid; gap: var(--s-1); border-top: 1px solid var(--border); padding-top: var(--s-4); }
+.segment-heading h2 { margin: 0; font-size: 1.3rem; }
+
+/* Section heading with a leading icon (the segments timeline). */
+h2.ev-section-title {
+  margin: 0;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 0.8rem; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--text-2);
+}
+.ev-section-title .icon { color: var(--accent); flex: none; }
+
+/* Timeline vocabulary (the shape of the recent-contributions style):
+   a vertical line, a dot per entry, body text and a small meta line. */
+.ev-timeline {
+  list-style: none; margin: 0; padding: 0; position: relative;
+  display: grid; gap: 0; max-width: 640px;
+}
+.ev-timeline__item {
+  position: relative; display: flex; align-items: flex-start; gap: var(--s-3);
+  padding: var(--s-3) 0 var(--s-3) var(--s-2);
+}
+.ev-timeline__item:not(:last-child)::before {
+  content: ''; position: absolute; left: 5px; top: 26px; bottom: -6px;
+  width: 2px; background: var(--border);
+}
+.ev-timeline__dot {
+  position: absolute; left: 0; top: 14px;
+  width: 12px; height: 12px; border-radius: 999px;
+  background: var(--accent); border: 2px solid var(--surface); flex: none;
+}
+.ev-timeline__body { min-width: 0; display: grid; gap: 2px; }
+.ev-timeline__line { margin: 0; font-size: 0.92rem; overflow-wrap: anywhere; }
+.ev-timeline__meta { margin: 0; font-family: var(--mono); font-size: 0.75rem; }
+
+/* The segments timeline rows are fully clickable; content clears the dot. */
+.ev-timeline--segments .ev-timeline__item { padding-left: 26px; }
+.ev-timeline__link {
+  appearance: none; background: none; border: 0; cursor: pointer;
+  display: flex; align-items: center; gap: var(--s-3); flex: 1; min-width: 0;
+  padding: 0; margin: 0; font: inherit; color: var(--text); text-align: left;
+}
+.ev-timeline__link .ev-timeline__body { flex: 1; }
+.ev-timeline__link:hover strong { color: var(--accent); }
+.ev-timeline__go { color: var(--text-3); flex: none; transition: color 0.15s, transform 0.15s; }
+.ev-timeline__link:hover .ev-timeline__go { color: var(--accent); transform: var(--lift-sm, translateX(2px)); }
+.ev-timeline__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Subtle "not documented" state. */
+.ev-missing {
+  margin: 0; display: inline-flex; align-items: center; gap: 7px;
+  color: var(--text-3); font-size: 0.88rem;
+  padding: 6px 10px; border: 1px dashed var(--border); border-radius: var(--r-sm);
+  background: var(--surface-2); width: fit-content; max-width: 100%;
+}
+
+/* Segment menu (?menu=segment): back button row, thumbnail, story text. */
+.ev-actions {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2);
+}
+.segment-menu__media { max-width: 640px; }
+.segment-menu__media .media { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-2); }
+.segment-menu__top { margin-bottom: var(--s-2); }
+
+@media (max-width: 600px) {
+  .segment-menu__media { max-width: none; }
+  .segment-tabs__tab { flex: 1 1 auto; text-align: center; }
+}
 
 /* Collapsible sections (summary / synopsis): the toggle is the whole heading
    row; the panel animates via the 0fr ⇄ 1fr grid-rows trick and is hidden
