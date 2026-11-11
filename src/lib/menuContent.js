@@ -23,22 +23,13 @@ export const MENU_IMAGES = (manifest?.images ?? [])
 export const randomMenuImage = () => MENU_IMAGES[randomIndex(MENU_IMAGES.length)] ?? null;
 
 /**
- * The hero slogans. Written to read as one line each at the sizes the hero
- * uses; the first is the classic line, the rest riff on archiving, memory,
- * community and preservation — the site's identity, not marketing copy.
- * Add a line here and it joins the rotation — nothing else to touch.
+ * The hero slogans — just the two plain, true ones. Written to read as one
+ * line each at the sizes the hero uses. Add a line here and it joins the
+ * rotation — nothing else to touch.
  */
 export const SLOGANS = [
-  'Every episode. Every movie. Every gadget.',
-  'Every story kept safe, one record at a time.',
-  'A time capsule for every adventure.',
-  'The details survive because someone wrote them down.',
-  'Half a century of stories, looked after by the people who love them.',
-  'Preserved, translated and cross-checked by the community.',
-  'Nothing from yesterday gets lost on our watch.',
-  'An archive is a promise to the future.',
-  'From 1969 to forever, one page at a time.',
-  'Nostalgia, carefully filed.',
+  'By the Community, for the community.',
+  'Every movie, every gadget, every episode.',
 ];
 
 /** A random slogan. */

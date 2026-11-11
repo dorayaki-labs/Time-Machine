@@ -505,9 +505,10 @@ export const isMultiSegment = (entry) => Array.isArray(entry?.segments) && entry
  *
  * A multi-segment broadcast episode is named by its episode-level `title`
  * ("Episode 1", the broadcast name stored on the record). When a record has
- * no stored name, the segment names are combined (comma-separated) as a
- * fallback — read straight from the segment data, so renaming a segment
- * still updates every listing.
+ * no stored name, it leads with its FIRST story's name — the episode has no
+ * umbrella title of its own, and joining every segment ("A, B, C") read as
+ * one long invented title everywhere the name appears. The remaining stories
+ * stay visible on the episode page (segment switcher, segments list).
  *
  * Single-segment episodes keep showing the story's own title: with exactly
  * one story, the segment title IS the episode's name in practice.
@@ -519,7 +520,7 @@ export function displayTitle(entry) {
     const names = (entry.segments ?? [])
       .map((seg) => titleText(seg.title))
       .filter(Boolean);
-    if (names.length) return names.join(', ');
+    if (names.length) return names[0];
     return `Episode #${entry.number}`;
   }
   return titleText(entry?.segments?.[0]?.title)

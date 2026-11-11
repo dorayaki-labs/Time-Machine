@@ -10,40 +10,36 @@ html { overscroll-behavior-y: none; }
 
 .site-header { position: sticky; top: 0; z-index: 60; background: var(--bg); border-bottom: 1px solid var(--border); transition: background 0.25s var(--ease), border-color 0.25s var(--ease); }
 .site-header__panel {
-  position: relative; display: flex; align-items: center; gap: var(--s-4);
-  width: min(var(--max), 100% - 2 * var(--s-5)); margin-inline: auto;
+  position: relative; display: flex; align-items: center; gap: var(--s-3);
+  /* A wider cap than the page (--max): the bar carries the brand, ten nav
+     items and the account cluster, and on 1280–1440px screens the extra
+     room keeps every button on one row. */
+  width: min(1380px, 100% - 2 * var(--s-4)); margin-inline: auto;
   min-height: 68px; padding-block: var(--s-2);
 }
 
 /* ---------- brand ---------- */
-.brand { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; position: relative; }
+.brand { display: inline-flex; align-items: center; flex-shrink: 0; }
 .brand__img {
   height: 40px; width: auto; display: block;
-  /* The wordmark gently leans into the hover — a small mechanical tilt, not a
-     bounce. */
-  transition: transform 0.28s var(--ease);
+  /* Hover: a calm scale-up. Nothing else moves. */
+  transition: transform 0.25s var(--ease);
+  transform-origin: left center;
 }
-/* The small clockwork mark that appears next to the wordmark on hover,
-   rotating a quarter turn like a winding key. */
-.brand__mark {
-  color: var(--accent); opacity: 0; transform: translateX(-4px) rotate(-40deg);
-  transition: opacity 0.24s var(--ease), transform 0.28s var(--ease);
-}
-.brand:hover .brand__img { transform: translateX(2px); }
-.brand:hover .brand__mark { opacity: 1; transform: translateX(0) rotate(0deg); }
-.brand:active .brand__img { transform: none; }
+.brand:hover .brand__img { transform: scale(1.05); }
+.brand:active .brand__img { transform: scale(1); }
 @media (prefers-reduced-motion: reduce) {
-  .brand__img, .brand__mark { transition: none; }
+  .brand__img { transition: none; }
   .brand:hover .brand__img { transform: none; }
 }
 
 /* ---------- primary nav ---------- */
 .primary-nav { margin-inline: auto; min-width: 0; }
-.primary-nav ul { display: flex; align-items: center; gap: var(--s-1); flex-wrap: nowrap; }
+.primary-nav ul { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; }
 .primary-nav__link {
   position: relative; display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 9px; border-radius: var(--r-sm);
-  color: var(--text-2); font-size: 0.88rem; font-weight: 500; white-space: nowrap;
+  padding: 7px 8px; border-radius: var(--r-sm);
+  color: var(--text-2); font-size: 0.87rem; font-weight: 500; white-space: nowrap;
   transition: color 0.15s, background 0.15s;
 }
 .primary-nav__link:hover { color: var(--text); background: var(--surface-2); }

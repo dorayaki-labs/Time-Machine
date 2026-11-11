@@ -11,7 +11,6 @@ import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
 import SegmentNav from '@/components/SegmentNav.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
-import Icon from '@/components/Icon.jsx';
 import NotFound from './NotFound.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
 import useAsync from '@/hooks/useAsync.js';
@@ -24,9 +23,9 @@ const pad = (n) => String(n).padStart(3, '0');
 /**
  * The episode page. The record leads: artwork and episode information come
  * first, editing and contribution controls sit after the content. SegmentNav
- * under the heading is the single segment switcher (the old duplicate control
- * near the contributions box is gone); the Segments timeline below the
- * sources opens the stripped-down segment menu (?menu=segment).
+ * under the heading is the single segment switcher — each tab carries its
+ * segment's own name. Summary and full synopsis each sit in their own boxed
+ * panel.
  */
 export default function EpisodeDetails({ seriesId }) {
   const { id } = useParams();
@@ -52,22 +51,6 @@ export default function EpisodeDetails({ seriesId }) {
     setParams(next, { replace: true });
   };
 
-  // The segment menu is a separate screen opened from the Segments timeline
-  // (?segment=N&menu=segment). Pushed, so the browser's back button and the
-  // "Back to episode" button both return to the full episode page.
-  const menuOpen = params.get('menu') === 'segment' && Boolean(segment);
-  const openSegmentMenu = (n) => {
-    const next = new URLSearchParams(params);
-    next.set('segment', String(n));
-    next.set('menu', 'segment');
-    setParams(next);
-  };
-  const backToEpisode = () => {
-    const next = new URLSearchParams(params);
-    next.delete('menu');
-    setParams(next);
-  };
-
   // Arriving from a segment search result scrolls the segment area into view.
   useEffect(() => {
     if (requested > 1) document.getElementById('segment-content')?.scrollIntoView({ block: 'start' });
@@ -76,9 +59,7 @@ export default function EpisodeDetails({ seriesId }) {
 
   const multi = valid && segments.length > 1;
   useDocumentTitle(valid
-    ? (menuOpen
-      ? `Segment ${current + 1}: ${segmentTitle(entry, current)} · ${series.label}`
-      : `${displayTitle(entry)}${multi && segment ? ` · ${segmentTitle(entry, current)}` : ''} · ${series.label}`)
+    ? `${displayTitle(entry)}${multi && segment ? ` · ${segmentTitle(entry, current)}` : ''} · ${series.label}`
     : 'Episode not found');
 
   if (!valid) return <NotFound title="Episode not found" message="That episode is not in the archive yet. It may not have been documented, or the link may be wrong." />;
@@ -92,53 +73,6 @@ export default function EpisodeDetails({ seriesId }) {
     image: record.image, screenshots: record.screenshots, characters: record.characters,
     gadgets: record.gadgets, voiceActors: record.voiceActors,
   };
-
-  // ---------------------------------------------------------------- segment menu
-  if (menuOpen) {
-    return (
-      <PageContainer className="detail">
-        <div className="ev-actions segment-menu__top">
-          <button type="button" className="btn btn--ghost btn--sm" onClick={backToEpisode}>
-            <Icon name="arrowLeft" size={15} /> Back to episode
-          </button>
-        </div>
-
-        <div className="segment-menu__media">
-          <MediaImage
-            kind="segment"
-            seed={segment.id}
-            src={segment.image?.url ?? null}
-            alt={segment.image?.alt ?? ''}
-            label={`EP ${pad(record.number)}`}
-            priority
-          />
-        </div>
-
-        <header className="detail-head">
-          <p className="eyebrow segment-menu__eyebrow">
-            <span>Segment {segment.segmentNumber ?? current + 1} of {segments.length}</span>
-            {Number.isFinite(segment.durationMinutes) ? <span className="chip chip--mono">{segment.durationMinutes} min</span> : null}
-          </p>
-          <h1>{segmentTitle(entry, current)}</h1>
-          {segment.title?.ja && segment.title?.en && segment.title.ja !== segment.title.en
-            ? <p className="detail-head__ja" lang="ja">{segment.title.ja}</p>
-            : null}
-        </header>
-
-        <MetadataSection id="segment-summary" title="Summary">
-          {segment.summary
-            ? <p className="prose">{segment.summary}</p>
-            : <p className="ev-missing"><Icon name="alert" size={13} /> Summary not documented.</p>}
-        </MetadataSection>
-
-        <MetadataSection id="segment-synopsis" title="Full synopsis">
-          {segment.description
-            ? <p className="prose prose--secondary">{segment.description}</p>
-            : <p className="ev-missing"><Icon name="alert" size={13} /> Full synopsis not documented.</p>}
-        </MetadataSection>
-      </PageContainer>
-    );
-  }
 
   // --------------------------------------------------------------- episode page
   return (
@@ -161,14 +95,24 @@ export default function EpisodeDetails({ seriesId }) {
       </header>
 
       {multi ? (
-        <SegmentNav segments={segments} names={segments.map((_s, i) => segmentTitle(entry, i))} current={current} onSelect={selectSegment} />
+        // One tab per segment, labelled by the segment's own name (the
+        // "Segment N" eyebrow sits above it). The tabs are the single
+        // segment switcher on the page.
+        <SegmentNav
+          segments={segments}
+          names={segments.map((_s, i) => segmentTitle(entry, i))}
+          current={current}
+          onSelect={selectSegment}
+        />
       ) : null}
 
-      {/* The record first: artwork + information. */}
+      {/* The record first: artwork + information. The artwork frame
+          stretches to the info column's height (fill mode) — no dead space
+          under the image. */}
       <div className="detail-columns detail-columns--record">
         <div className="detail-columns__media">
           <MediaImage kind="episode" seed={segment?.id ?? record.id} src={display.image?.url ?? null} alt={display.image?.alt ?? ''}
-            label={`EP ${pad(record.number)}`} priority />
+            label={`EP ${pad(record.number)}`} priority fill />
         </div>
         <MetadataSection id="info" title="Episode information" className="detail-columns__info">
           <FactList items={[
@@ -196,40 +140,20 @@ export default function EpisodeDetails({ seriesId }) {
 
       <Gallery screenshots={display.screenshots ?? []} title={segmentTitle(entry, current)} />
 
-      <MetadataSection id="synopsis" title="Synopsis">
-        {display.summary ? <p className="prose">{display.summary}</p> : <p className="muted">No synopsis has been documented for this {multi ? 'segment' : 'episode'} yet.</p>}
-        {display.description ? <p className="prose prose--secondary">{display.description}</p> : null}
+      {/* Summary and full synopsis each in their own boxed panel. */}
+      <MetadataSection id="summary" title="Summary" className="detail-section--boxed">
+        {display.summary
+          ? <p className="prose">{display.summary}</p>
+          : <p className="muted">No summary has been documented for this {multi ? 'segment' : 'episode'} yet.</p>}
       </MetadataSection>
 
-      <SourceList sources={record.sources ?? []} noun="episode" />
+      <MetadataSection id="synopsis" title="Full synopsis" className="detail-section--boxed">
+        {display.description
+          ? <p className="prose prose--secondary">{display.description}</p>
+          : <p className="muted">No full synopsis has been documented for this {multi ? 'segment' : 'episode'} yet.</p>}
+      </MetadataSection>
 
-      {/* Every segment of the broadcast, in the style of the recent
-          contributions timeline. Opening one shows its stripped-down menu. */}
-      <section className="detail-section" id="segments" aria-labelledby="segments-title">
-        <header className="detail-section__head">
-          <h2 className="ev-section-title" id="segments-title">
-            <Icon name="clock" size={14} className="ev-section-title__icon" /> Segments
-          </h2>
-          <span className="detail-section__aside">{segments.length}</span>
-        </header>
-        <ol className="ev-timeline ev-timeline--segments">
-          {segments.map((seg, i) => (
-            <li key={seg.id} className="ev-timeline__item ev-timeline__item--segment">
-              <span className="ev-timeline__dot" aria-hidden="true" />
-              <button type="button" className="ev-timeline__link" onClick={() => openSegmentMenu(i + 1)}
-                aria-label={`Open the menu for segment ${i + 1}: ${segmentTitle(entry, i)}`}>
-                <span className="ev-timeline__body">
-                  <span className="ev-timeline__line"><strong>{segmentTitle(entry, i)}</strong></span>
-                  <span className="ev-timeline__meta muted small">
-                    Segment {seg.segmentNumber ?? i + 1}{Number.isFinite(seg.durationMinutes) ? ` · ${seg.durationMinutes} min` : ''}
-                  </span>
-                </span>
-                <Icon name="arrowRight" size={13} className="ev-timeline__go" />
-              </button>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <SourceList sources={record.sources ?? []} noun="episode" entryId={record.id} />
 
       <CharactersSection ids={display.characters ?? []} />
       <GadgetsSection ids={display.gadgets ?? []} />

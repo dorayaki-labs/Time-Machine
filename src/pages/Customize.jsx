@@ -20,18 +20,20 @@ import StudioPreview from '@/components/studio/Preview.jsx';
 
 // Sections carry a nav group so the studio navigation reads as a hierarchy:
 // getting started → look → behaviour. The labels render as small headings
-// inside the section nav.
+// inside the section nav, and every section opens with its one-line
+// description so it is always clear what the controls below will change.
 const SECTIONS = [
   { id: 'overview', label: 'Overview', group: 'Start' },
   { id: 'saved', label: 'Saved themes', group: 'Start' },
-  { id: 'colors', label: 'Colours', group: 'The look' },
-  { id: 'typography', label: 'Typography', group: 'The look' },
-  { id: 'layout', label: 'Layout', group: 'The look' },
-  { id: 'surfaces', label: 'Surfaces', group: 'The look' },
-  { id: 'catalogue', label: 'Catalogue', group: 'The look' },
-  { id: 'motion', label: 'Motion', group: 'Behaviour' },
-  { id: 'accessibility', label: 'Accessibility', group: 'Behaviour' },
+  { id: 'colors', label: 'Colours', group: 'The look', desc: 'Every colour of the site, one group at a time — page, text, accents and status colours. The readability check at the bottom tells you if any text becomes hard to read.' },
+  { id: 'typography', label: 'Typography', group: 'The look', desc: 'The typeface of the whole site and the base size every other size is derived from.' },
+  { id: 'layout', label: 'Layout', group: 'The look', desc: 'How airy the pages feel (spacing) and how wide the content column reaches.' },
+  { id: 'surfaces', label: 'Surfaces', group: 'The look', desc: 'The look of panels and cards: corner roundness, shadows and the glass blur behind overlays.' },
+  { id: 'catalogue', label: 'Catalogue', group: 'The look', desc: 'The episode and movie cards on catalogue pages: how wide they are, whether descriptions show, and the hover effects.' },
+  { id: 'motion', label: 'Motion', group: 'Behaviour', desc: 'How much the site animates. Your system’s reduced-motion setting always wins over this.' },
+  { id: 'accessibility', label: 'Accessibility', group: 'Behaviour', desc: 'Underlines on links and stronger focus outlines — small changes that make the site easier to follow.' },
 ];
+const SECTION_BY_ID = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
 const EDITOR_SECTIONS = new Set(['colors', 'typography', 'layout', 'surfaces', 'catalogue', 'motion', 'accessibility']);
 
 const newId = () => `custom:${crypto.randomUUID?.() ?? `f${Date.now()}${Math.random().toString(36).slice(2, 8)}`}`;
@@ -240,7 +242,7 @@ export default function Customize() {
       {draft ? (
         <div className="studio-bar" data-dirty={dirty ? 'on' : 'off'}>
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => closeDraft()}>
-            <Icon name="arrowLeft" size={14} /> Presets
+            <Icon name="arrowLeft" size={14} /> Back to overview
           </button>
           <div className="studio-bar__name">
             <input
@@ -275,6 +277,12 @@ export default function Customize() {
           </div>
         </div>
       ) : null}
+      {draft ? (
+        <p className="studio-bar__hint">
+          You are editing a draft — every change previews live across the whole site. Nothing is
+          kept until you press <strong>Save theme</strong>.
+        </p>
+      ) : null}
 
       <div className="studio">
         {/* -------- section navigation -------- */}
@@ -299,6 +307,7 @@ export default function Customize() {
                     setSection(s.id);
                   }}
                   disabled={EDITOR_SECTIONS.has(s.id) && !draft}
+                  title={EDITOR_SECTIONS.has(s.id) && !draft ? 'Start editing a theme first (New theme, or Customize on a preset)' : null}
                 >{s.label}</button>,
               );
             }
@@ -356,6 +365,7 @@ export default function Customize() {
 
           {section === 'colors' && draft ? (
             <section className="studio-section" aria-label="Colours">
+              <p className="studio-section__intro">{SECTION_BY_ID.colors.desc}</p>
               {COLOR_GROUPS.map((group) => (
                 <div key={group.id} className="studio-group">
                   <div className="studio-group__head">
@@ -396,6 +406,7 @@ export default function Customize() {
 
           {draft && ['typography', 'layout', 'surfaces', 'catalogue', 'motion', 'accessibility'].includes(section) ? (
             <section className="studio-section" aria-label={section}>
+              <p className="studio-section__intro">{SECTION_BY_ID[section]?.desc}</p>
               <div className="studio-group">
                 <div className="studio-group__head">
                   <h3>{SETTINGS_SCHEMA[section].label}</h3>
@@ -445,6 +456,35 @@ function OverviewSection({
 }) {
   return (
     <div className="studio-section">
+      {/* How this studio works, in three steps — the page used to open with
+          controls and no orientation, which is what made it confusing. */}
+      <div className="studio-steps">
+        <div className="studio-steps__item">
+          <span className="studio-steps__num mono">1</span>
+          <div><strong>Pick a starting point.</strong> Use a built-in theme as-is, or press Customize on one to start tweaking it.</div>
+        </div>
+        <div className="studio-steps__item">
+          <span className="studio-steps__num mono">2</span>
+          <div><strong>Tune it.</strong> Colours, fonts, spacing, cards — every change previews live across the whole site while you edit.</div>
+        </div>
+        <div className="studio-steps__item">
+          <span className="studio-steps__num mono">3</span>
+          <div><strong>Save it.</strong> Your themes live in this browser — no account. Export a JSON file to move them anywhere.</div>
+        </div>
+      </div>
+
+      <div className="studio-twins">
+        <div>
+          <p className="studio-twins__title"><Icon name="palette" size={15} /> This studio</p>
+          <p className="studio-twins__text">Everything visual — colours, typography, layout, cards, motion.</p>
+        </div>
+        <div>
+          <p className="studio-twins__title"><Icon name="settings" size={15} /> Settings</p>
+          <p className="studio-twins__text">Everything behavioural — the top bar layout, its buttons, popups.</p>
+          <Link to="/settings" className="text-link">Open Settings →</Link>
+        </div>
+      </div>
+
       <div className="studio-active">
         <div>
           <p className="studio-active__label">Current look</p>

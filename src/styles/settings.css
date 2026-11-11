@@ -1,0 +1,71 @@
+/* The unified Settings page (/settings). Reuses detail-section + studio
+   controls; the only new vocabulary is the top bar editor list. */
+
+.settings-section { margin-bottom: var(--s-6); }
+.settings-section__hint { margin: 0 0 var(--s-3); max-width: 72ch; }
+.settings-section h2 { display: inline-flex; align-items: center; gap: 8px; }
+.settings-section h2 .icon { color: var(--accent); }
+.settings-controls { display: grid; gap: 2px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); padding: var(--s-2) var(--s-4); }
+.settings-section--danger { border: 1px solid var(--border-strong); border-radius: var(--r-md); padding: var(--s-4) var(--s-5); background: var(--surface); }
+
+/* --- top bar layout editor --- */
+.nav-editor { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.nav-editor__row {
+  display: grid; grid-template-columns: 34px 1fr auto auto; align-items: center; gap: var(--s-3);
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface);
+  transition: opacity 0.15s, border-color 0.15s;
+}
+.nav-editor__row.is-hidden { opacity: 0.55; border-style: dashed; }
+.nav-editor__row.is-hidden .nav-editor__label { text-decoration: line-through; text-decoration-thickness: 1px; }
+.nav-editor__order { color: var(--text-3); font-size: 0.78rem; }
+.nav-editor__label { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; min-width: 0; }
+.nav-editor__soon { font-size: 0.62rem; }
+.nav-editor__scope { font-size: 0.72rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
+.nav-editor__path { color: var(--text-3); font-size: 0.76rem; overflow: hidden; text-overflow: ellipsis; }
+.nav-editor__actions { display: inline-flex; align-items: center; gap: 6px; }
+.nav-editor__actions .icon-btn { width: 32px; height: 32px; }
+
+@media (max-width: 640px) {
+  .nav-editor__row { grid-template-columns: 28px 1fr; grid-template-rows: auto auto; }
+  .nav-editor__path { grid-column: 2; justify-self: start; }
+  .nav-editor__actions { grid-column: 2; justify-self: start; }
+}
+
+/* --- discord invite popup --- */
+/* Shown at most once per session, on a coin flip, unless suppressed. The
+   backdrop blurs + dims the whole page behind the card. */
+.discord-popup {
+  position: fixed; inset: 0; z-index: 96;
+  display: grid; place-items: center; padding: var(--s-4);
+  background: color-mix(in srgb, var(--bg) 45%, rgba(0, 0, 0, 0.55));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: fade-in 0.22s var(--ease) both;
+}
+.discord-popup__card {
+  width: min(430px, 100%); display: grid; justify-items: center; text-align: center;
+  gap: var(--s-3); padding: var(--s-6) var(--s-5) var(--s-5);
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-soft);
+  animation: modal-in 0.25s var(--ease) both;
+  position: relative;
+}
+.discord-popup__close { position: absolute; top: var(--s-2); right: var(--s-2); }
+.discord-popup__logo { color: #5865f2; margin-bottom: var(--s-1); }
+.discord-popup__title { margin: 0; font-size: 1.45rem; }
+.discord-popup__text { margin: 0; color: var(--text-2); max-width: 34ch; }
+.discord-popup__join {
+  display: inline-flex; align-items: center; gap: 9px; justify-content: center;
+  background: #5865f2; color: #fff; border: 0; border-radius: var(--r-sm);
+  font: inherit; font-weight: 600; padding: 11px 22px; text-decoration: none;
+  box-shadow: 0 6px 18px rgba(88, 101, 242, 0.35);
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), background 0.15s;
+}
+.discord-popup__join:hover { background: #4752c4; transform: var(--lift); color: #fff; }
+.discord-popup__join:active { transform: none; }
+.discord-popup__never { background: none; border: 0; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 0.84rem; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px; }
+.discord-popup__never:hover { color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) {
+  .discord-popup, .discord-popup__card { animation: none; }
+}

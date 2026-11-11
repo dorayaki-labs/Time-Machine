@@ -7,6 +7,18 @@
   .search-btn { width: 38px; padding-inline: 0; justify-content: center; }
 }
 
+/* Phones: the header cluster (account + log/settings/search/burger) has to
+   share one row with the brand — everything tightens so nothing overflows
+   into a horizontal scroll. */
+@media (max-width: 480px) {
+  .site-header__panel { gap: var(--s-2); }
+  .header-actions { gap: 4px; }
+  .brand__img { height: 32px; }
+  .account-menu { margin-inline-end: 0; }
+  .account-menu__signin { padding: 0.42rem 0.7rem; font-size: 0.86rem; }
+  .icon-btn { width: 40px; height: 40px; }
+}
+
 /* Tablet and below */
 @media (max-width: 860px) {
   .hero { padding-top: var(--s-6); }
@@ -17,6 +29,11 @@
   .explore-grid { grid-template-columns: 1fr; }
   .detail-columns, .detail-columns--after-film, .detail-columns--record { grid-template-columns: 1fr; }
   .detail-columns__media .media { max-width: 460px; }
+  /* Stacked layouts have no sibling height to match: the record artwork
+     keeps its normal 16:9 frame (cover, no backdrop) on its own row. */
+  .detail-columns__media .media--fill { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .detail-columns__media .media--fill .media__img { object-fit: cover; }
+  .detail-columns__media .media--fill .media__backdrop { display: none; }
   .film-record { grid-template-columns: 150px 1fr; gap: var(--s-4); }
   .profile { grid-template-columns: 130px 1fr; gap: var(--s-4); }
   .contribute-form__grid { grid-template-columns: 1fr; }
@@ -54,9 +71,6 @@
      a 44px hit area without inflating the visual button. */
   .icon-btn { width: 44px; height: 44px; }
   .pagination__btn { min-width: 44px; height: 44px; }
-  /* The tilt's 3D transform is dropped on touch-size viewports (the hover
-     never applies anyway) so no phone pays for perspective rendering. */
-  .media-card--tilt { transform: none; }
   .facts > div { grid-template-columns: 1fr; gap: 2px; }
   .facts dt { margin-bottom: 1px; }
 }

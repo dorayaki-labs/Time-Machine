@@ -28,6 +28,11 @@ const PATHS = {
   stats: <><path d="M5 20V10M12 20V4M19 20v-7" /></>,
   shield: <><path d="M12 3 5 5.8v5.4c0 4.3 2.9 8.3 7 9.8 4.1-1.5 7-5.5 7-9.8V5.8L12 3Z" /></>,
   logout: <><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5M4 12h11m-4-4 4 4-4 4" /></>,
+  settings: <><path d="M4 7h8M16 7h4M4 17h4M12 17h8" /><circle cx="14" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /></>,
+  eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" /></>,
+  eyeOff: <><path d="M4 4l16 16" /><path d="M9.9 9.9a3 3 0 1 0 4.2 4.2" /><path d="M6.3 6.8C3.9 8.4 2.5 12 2.5 12S6 18.5 12 18.5c1.4 0 2.7-.35 3.8-.9M10.6 5.7A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17.7 17.7 0 0 1-2.7 3.5" /></>,
+  arrowUp: <><path d="M12 19V5m-5 5 5-5 5 5" /></>,
+  arrowDown: <><path d="M12 5v14m-5-5 5 5 5-5" /></>,
 };
 
 export default function Icon({ name, size = 20, className = '', title }) {

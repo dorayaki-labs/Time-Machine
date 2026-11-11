@@ -3,8 +3,14 @@
 // boxes. Public visitors see metadata only; the author and staff also see
 // the submitted answers and — for record edits — a field-level before/after
 // diff of exactly what changed.
+//
+// Hardening: one bad row (a payload in an unexpected shape, a diff that
+// throws on exotic data) used to leave nothing but a dimmed, empty overlay.
+// The body content now sits behind a small error boundary and the diff /
+// payload rendering is wrapped, so a failure degrades into a readable
+// message INSIDE a working modal instead of a dead screen.
 
-import { useEffect } from 'react';
+import { Component, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import Avatar from './Avatar.jsx';
@@ -12,6 +18,51 @@ import { deepDiff, fmtChangeValue } from '@/lib/diff.js';
 import { entryPath, fmtTime, contributionTypeLabel } from '@/lib/activity.js';
 import { commitUrl } from '@/lib/catalog.js';
 import { STATUS_LABELS } from '@/lib/stats.js';
+
+/** Failsafe box shown when the modal's content itself cannot be rendered. */
+class ModalContentBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error) { console.error('Time Machine: contribution modal failed', error); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="empty-state" role="alert">
+          <h3>This contribution could not be displayed</h3>
+          <p>Its record has a shape the viewer did not expect. The details were logged in the browser console — everything else on the page keeps working.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/** Size above which a before/after pair skips the field diff (it would only
+ *  churn, and the raw answers are still there in the JSON panel). */
+const MAX_DIFF_BYTES = 512 * 1024;
+
+/** deepDiff with every failure mode turned into "no diff". */
+function safeDiff(before, after) {
+  try {
+    const a = JSON.stringify(before);
+    const b = JSON.stringify(after);
+    if (a === b) return [];
+    if (a.length > MAX_DIFF_BYTES || b.length > MAX_DIFF_BYTES) return [];
+    return deepDiff(before, after);
+  } catch {
+    return [];
+  }
+}
+
+/** The submitted answers as text, or null when they cannot be stringified. */
+function safePayloadText(payload) {
+  try {
+    const text = JSON.stringify(payload, null, 2);
+    return text.length > 2 * MAX_DIFF_BYTES ? `${text.slice(0, MAX_DIFF_BYTES)}\n… (truncated — the full answers are too large to show here)` : text;
+  } catch {
+    return null;
+  }
+}
 
 export function ChangesTable({ changes, emptyText = 'No field-level changes recorded.' }) {
   if (!changes?.length) return <p className="muted small">{emptyText}</p>;
@@ -55,10 +106,11 @@ export default function ContributionModal({ row, onClose, fullscreen = true, chi
   const commit = commitUrl(row.commitSha);
   const payload = row.payloadEdited ?? row.payload ?? null;
   const diff = row.proposedPatch?.record && row.proposedPatch?.baseRecord
-    ? deepDiff(row.proposedPatch.baseRecord, row.proposedPatch.record)
+    ? safeDiff(row.proposedPatch.baseRecord, row.proposedPatch.record)
     : payload?.record && payload?.baseRecord
-      ? deepDiff(payload.baseRecord, payload.record)
+      ? safeDiff(payload.baseRecord, payload.record)
       : null;
+  const payloadText = payload && Object.keys(payload).length ? safePayloadText(payload) : null;
 
   return (
     <div className="modal-overlay modal-overlay--fullscreen" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -71,6 +123,7 @@ export default function ContributionModal({ row, onClose, fullscreen = true, chi
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><Icon name="close" size={19} /></button>
         </div>
         <div className="modal__body">
+          <ModalContentBoundary>
           <dl className="submission__fields contribution-modal__fields">
             {row.kind === 'submission' ? <div className="row"><dt>Type</dt><dd>{contributionTypeLabel(row.type)}</dd></div> : null}
             {row.kind === 'edit' ? <div className="row"><dt>Action</dt><dd>{String(row.action ?? '').replace(/[._]/g, ' ')}</dd></div> : null}
@@ -103,14 +156,15 @@ export default function ContributionModal({ row, onClose, fullscreen = true, chi
             <p className="muted small">The submitted answers are visible to the contributor and to staff only.</p>
           ) : null}
 
-          {payload && Object.keys(payload).length ? (
+          {payloadText ? (
             <details className="contribution-modal__payload">
               <summary>View submitted answers (JSON)</summary>
-              <pre className="submission-result__json" tabIndex={0}>{JSON.stringify(payload, null, 2)}</pre>
+              <pre className="submission-result__json" tabIndex={0}>{payloadText}</pre>
             </details>
           ) : null}
 
           {children}
+          </ModalContentBoundary>
         </div>
         <div className="modal__foot">
           <button type="button" className="btn btn--primary" onClick={onClose}>Close</button>

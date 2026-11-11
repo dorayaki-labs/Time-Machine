@@ -21,6 +21,19 @@
   position: absolute; left: 12px; bottom: 10px; font-family: var(--mono);
   font-size: 0.74rem; color: var(--text-3); letter-spacing: 0.02em;
 }
+/* Fill mode (episode record artwork): the frame is as tall as the info
+   column next to it — no dead space under the image. The artwork is shown
+   "contain" over a blurred, darkened cover of itself, so the frame is filled
+   edge to edge without cropping the picture. Stacked (mobile) layouts
+   restore the normal 16:9 ratio in responsive.css. */
+.media--fill { aspect-ratio: auto; height: 100%; }
+.media--fill .media__img { object-fit: contain; position: relative; z-index: 1; }
+.media__backdrop {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 0;
+  filter: blur(22px) brightness(0.55) saturate(1.15);
+  transform: scale(1.15); /* hide the blur's softened edges */
+}
 
 /* ---------- theme-aware SVG placeholders ----------
    One family: construction rings at low contrast, a crisper outline for the
@@ -63,29 +76,22 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* Pointer-follow tilt (episode cards). useTilt writes --tilt-x/--tilt-y and a
-   light-spot position as CSS custom properties — never React state — so the
-   effect costs one style write per frame and no re-renders. The transform
-   composes with the hover lift; without the variables the card behaves
-   exactly as before. */
-.media-card--tilt {
-  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) var(--lift, none);
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.media-card--tilt::after {
-  /* A soft light that follows the cursor — the "glass catching light" cue
-     that sells the depth. Purely decorative, zero pointer events. */
+/* Pointer-follow glow (episode cards). useCardGlow writes the light-spot
+   position as CSS custom properties — never React state — so the effect
+   costs one style write per frame and no re-renders. The hover motion itself
+   is the standard slide-up lift above; no 3D tilt. The studio's "Card
+   pointer glow" toggle removes the light entirely ([data-card-glow='off']). */
+.media-card--glow::after {
+  /* A soft light that follows the cursor — the "glass catching light" cue.
+     Purely decorative, zero pointer events. */
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   pointer-events: none; opacity: 0;
   background: radial-gradient(240px circle at var(--spot-x, 50%) var(--spot-y, 50%),
     color-mix(in srgb, var(--accent) 14%, transparent), transparent 65%);
   transition: opacity 0.2s var(--ease);
 }
-.media-card--tilt:hover::after { opacity: 1; }
-@media (prefers-reduced-motion: reduce) {
-  .media-card--tilt { transform: none; }
-}
+.media-card--glow:hover::after { opacity: 1; }
+:root[data-card-glow='off'] .media-card--glow::after { content: none; }
 .media-card__link { display: block; color: inherit; }
 .media-card__link:hover { color: inherit; }
 .media-card__art { position: relative; }

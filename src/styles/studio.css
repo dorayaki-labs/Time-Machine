@@ -241,3 +241,49 @@
 @media (max-width: 1100px) {
   .studio-nav__group { display: none; }
 }
+
+/* ---------- clarity additions (orientation + section intros) ---------- */
+/* The draft hint under the editor bar: the one line that explains the
+   preview/save model while it matters (while a draft is open). */
+.studio-bar__hint {
+  margin: 0 0 var(--s-4); font-size: 0.86rem; color: var(--text-2);
+  padding: 8px 12px; border: 1px dashed var(--border); border-radius: var(--r-sm);
+  background: var(--surface);
+}
+/* One-line description at the top of every editor section. */
+.studio-section__intro {
+  margin: 0 0 var(--s-4); color: var(--text-2); font-size: 0.92rem;
+  max-width: 68ch; border-left: 3px solid var(--accent);
+  padding-left: var(--s-3);
+}
+/* The three-step "how this works" row on the overview. */
+.studio-steps {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--s-3); margin-bottom: var(--s-4);
+}
+.studio-steps__item {
+  display: flex; gap: var(--s-3); align-items: flex-start;
+  padding: var(--s-3) var(--s-4); border: 1px solid var(--border);
+  border-radius: var(--r-md); background: var(--surface);
+  font-size: 0.88rem; color: var(--text-2);
+}
+.studio-steps__item strong { color: var(--text); display: block; margin-bottom: 2px; }
+.studio-steps__num {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 999px; background: var(--accent-soft); color: var(--accent);
+  font-size: 0.8rem; font-weight: 600; border: 1px solid var(--accent-line);
+}
+/* The "this studio vs Settings" pair, so behaviour settings are one tap away. */
+.studio-twins {
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-bottom: var(--s-5);
+}
+.studio-twins > div {
+  padding: var(--s-3) var(--s-4); border: 1px solid var(--border);
+  border-radius: var(--r-md); background: var(--surface-2);
+}
+.studio-twins__title { margin: 0 0 4px; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.studio-twins__title .icon { color: var(--accent); }
+.studio-twins__text { margin: 0 0 6px; font-size: 0.85rem; color: var(--text-2); }
+@media (max-width: 720px) {
+  .studio-twins { grid-template-columns: 1fr; }
+}

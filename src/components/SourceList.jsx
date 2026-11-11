@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import MetadataSection from './MetadataSection.jsx';
 import { handlerFor } from '@/handlers/index.js';
@@ -27,7 +27,7 @@ function SourceChips({ source }) {
   );
 }
 
-function SourceOption({ source, index, selected, onSelect }) {
+function SourceOption({ source, index, selected, onSelect, onOpenPlayer }) {
   const handler = handlerFor(source);
   const name = source.label ?? handler.label;
   const externalUrl = embedUrlOf(source);
@@ -47,12 +47,12 @@ function SourceOption({ source, index, selected, onSelect }) {
         {externalUrl && !selected ? (
           <span
             className="source-option__open"
-            title="Open this embed in a new window"
+            title="Open in the fullscreen player"
             role="button"
             tabIndex={0}
-            aria-label={`Open ${name} in a new window`}
-            onClick={(e) => { e.stopPropagation(); openEmbedWindow(externalUrl); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); openEmbedWindow(externalUrl); } }}
+            aria-label={`Open ${name} in the fullscreen player`}
+            onClick={(e) => { e.stopPropagation(); onOpenPlayer(index); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onOpenPlayer(index); } }}
           >
             <Icon name="external" size={13} />
           </span>
@@ -77,9 +77,9 @@ function LinkRow({ source }) {
 /**
  * The raw embed URL behind a source, when it is a real http(s) address —
  * either the URL itself, or the src of an iframe HTML snippet. Returns null
- * for anything unusable; the external-window option simply hides then.
- * We only ever OPEN the provider's own URL in a new tab — iframe and CSP
- * restrictions are the provider's, and this does not try to bypass them.
+ * for anything unusable; the fullscreen-player option simply hides then.
+ * The URL only feeds the /play page's iframe — iframe and CSP restrictions
+ * are the provider's, and this does not try to bypass them.
  */
 export function embedUrlOf(source) {
   if (!source || source.type !== 'embed' || typeof source.data !== 'string') return null;
@@ -97,26 +97,27 @@ export function embedUrlOf(source) {
   }
 }
 
-/** Opens the embed URL in its own browser window/tab, never inside this page. */
-function openEmbedWindow(url) {
-  if (!url) return;
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
 /**
  * Viewing sources never start playing on their own: the stage waits, the
  * picker below lists every source with its details (language, subtitles,
  * quality), and one click fills the stage. The Direct handler plays plain
  * media URLs through video.js; the Embed handler shows a provider iframe
- * as-is. Non-playable entries fall through to plain link rows.
+ * as-is. Non-playable entries fall through to plain link rows. Embed
+ * sources also offer the fullscreen player page (/play) instead of handing
+ * the raw embed URL to a new browser tab.
  */
-export default function SourceList({ sources = [], noun = 'entry' }) {
+export default function SourceList({ sources = [], noun = 'entry', entryId = null }) {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
   const playable = sources.filter((s) => handlerFor(s));
   const links = sources.filter((s) => !handlerFor(s));
   const current = selected !== null ? playable[selected] : null;
   const handler = current ? handlerFor(current) : null;
   const externalUrl = embedUrlOf(current);
+
+  // The fullscreen player page for one playable source, by picker index.
+  const playPath = (index) => `/play?e=${encodeURIComponent(entryId ?? '')}&s=${index}`;
+  const openPlayer = (index) => { if (entryId) navigate(playPath(index)); };
 
   // A different record's sources arrived: nothing should keep playing.
   useEffect(() => { setSelected(null); }, [sources]);
@@ -141,11 +142,11 @@ export default function SourceList({ sources = [], noun = 'entry' }) {
               <p className="source-stage__bar">
                 <SourceIcon type={current.type} />
                 <span>Playing <strong>{current.label ?? handler.label}</strong></span>
-                {externalUrl ? (
+                {externalUrl && entryId ? (
                   <button type="button" className="source-stage__external"
-                    title="Open this embed in a separate browser window"
-                    onClick={() => openEmbedWindow(externalUrl)}>
-                    <Icon name="external" size={13} /> Open in new window
+                    title="Open this source in the fullscreen player"
+                    onClick={() => openPlayer(selected)}>
+                    <Icon name="external" size={13} /> Fullscreen player
                   </button>
                 ) : null}
                 <button type="button" className="source-stage__stop" onClick={() => setSelected(null)}>Stop</button>
@@ -154,7 +155,8 @@ export default function SourceList({ sources = [], noun = 'entry' }) {
               {current.type === 'embed' ? (
                 <p className="source-stage__note muted small">
                   An external player, shown as submitted. Some providers block being embedded —
-                  if the frame stays blank or refuses to load, open it in a new window instead.
+                  if the frame stays blank or refuses to load, the fullscreen player can open it
+                  at the provider instead.
                 </p>
               ) : null}
             </div>
@@ -178,6 +180,7 @@ export default function SourceList({ sources = [], noun = 'entry' }) {
                   index={i}
                   selected={selected === i}
                   onSelect={() => setSelected(selected === i ? null : i)}
+                  onOpenPlayer={openPlayer}
                 />
               ))}
             </div>

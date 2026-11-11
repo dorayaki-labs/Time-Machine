@@ -31,7 +31,10 @@ import ContributionLog from '@/pages/ContributionLog.jsx';
 import Account from '@/pages/Account.jsx';
 import Staff from '@/pages/Staff.jsx';
 import OwnerPanel from '@/pages/OwnerPanel.jsx';
+import Play from '@/pages/Play.jsx';
+import Settings from '@/pages/Settings.jsx';
 import BanBanner from '@/components/BanBanner.jsx';
+import DiscordPopup from '@/components/DiscordPopup.jsx';
 import NotFound from '@/pages/NotFound.jsx';
 
 // Pages are imported eagerly, not code-split: the whole app is small, and a
@@ -65,6 +68,17 @@ function MoveToHistorical() {
 
 function Routed() {
   const { pathname } = useLocation();
+  // The fullscreen player must not live inside the animated <main>: the
+  // page-in animation carries a transform, and a transformed ancestor turns
+  // position:fixed into position:relative-to-main — the player would render
+  // 40px tall instead of filling the viewport. The player draws itself.
+  if (pathname.startsWith('/play')) {
+    return (
+      <Routes>
+        <Route path="/play" element={<Play />} />
+      </Routes>
+    );
+  }
   return (
     <main
       id="main"
@@ -96,6 +110,8 @@ function Routed() {
         <Route path="/contribute" element={<Contribute />} />
         <Route path="/stats" element={<Statistics />} />
         <Route path="/log" element={<ContributionLog />} />
+        <Route path="/play" element={<Play />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/account" element={<Account />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/owner" element={<OwnerPanel />} />
@@ -144,6 +160,7 @@ export default function App() {
         </ErrorBoundary>
         <Footer />
         <SearchOverlay />
+        <DiscordPopup />
       </SearchProvider>
     </CatalogProvider>
     </AuthProvider>

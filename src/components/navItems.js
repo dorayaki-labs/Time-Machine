@@ -12,7 +12,7 @@ export const NAV_ITEMS = [
   { to: '/gadgets', label: 'Gadgets', primary: true },
   { to: '/historical/1973', label: '1973 Archive', primary: true },
   { to: '/about', label: 'About', primary: true },
-  { to: '/credits', label: 'Credits', primary: true },
+  { to: '/credits', label: 'Credits' },
   { to: '/contribute', label: 'Contribute', primary: true },
   { to: '/stats', label: 'Statistics' },
   { to: '/log', label: 'Contribution log' },

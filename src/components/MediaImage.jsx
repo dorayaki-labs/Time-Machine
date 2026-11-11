@@ -11,8 +11,13 @@ function hueFor(seed = '') {
  * Every card image goes through here. A record's own artwork is shown when it
  * has one; the themed placeholder appears only when the artwork is missing or
  * fails to load, so a broken-image icon never appears.
+ *
+ * `fill` is for the episode record artwork: there the frame is stretched to
+ * match the info column's height (no dead space under the image), and the
+ * artwork is shown "contain" over a blurred cover of itself — the frame is
+ * filled edge to edge without cropping the picture.
  */
-export default function MediaImage({ src, alt = '', kind = 'episode', seed, label, className = '', priority = false }) {
+export default function MediaImage({ src, alt = '', kind = 'episode', seed, label, className = '', priority = false, fill = false }) {
   const [failed, setFailed] = useState(false);
   // The `image` field has been stored both as a plain URL string and as
   // { url, alt } (and Gallery shots can carry a data URI). Normalise here so
@@ -23,9 +28,12 @@ export default function MediaImage({ src, alt = '', kind = 'episode', seed, labe
   const altText = alt || (src && typeof src === 'object' ? src.alt : '') || '';
   const showReal = Boolean(url) && !failed;
   return (
-    <div className={`media media--${kind} ${className}`} style={{ '--hue': hueFor(seed ?? altText) }}>
+    <div className={`media media--${kind}${fill ? ' media--fill' : ''} ${className}`} style={{ '--hue': hueFor(seed ?? altText) }}>
       {showReal ? (
-        <img className="media__img" src={url} alt={altText} loading={priority ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(true)} />
+        <>
+          {fill ? <img className="media__backdrop" src={url} alt="" aria-hidden="true" loading="lazy" decoding="async" /> : null}
+          <img className="media__img" src={url} alt={altText} loading={priority ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(true)} />
+        </>
       ) : (
         <Placeholder kind={kind} label={label} />
       )}

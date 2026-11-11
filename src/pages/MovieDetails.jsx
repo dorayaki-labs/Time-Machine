@@ -77,7 +77,7 @@ export default function MovieDetails() {
         </div>
       </div>
 
-      <SourceList sources={record.sources ?? []} noun="movie" />
+      <SourceList sources={record.sources ?? []} noun="movie" entryId={record.id} />
 
       <CharactersSection ids={record.characters} />
       <GadgetsSection ids={record.gadgets} />

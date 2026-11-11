@@ -4,7 +4,7 @@
 // a field only has a fixed set of valid values so nobody has to type (and
 // mistype) vocabulary like language codes or category ids.
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
 import { getLanguages, getCategories, getCharacters, getGadgets, getRawEntry } from '@/lib/catalog.js';
 

@@ -1,20 +1,21 @@
 import { Link } from 'react-router-dom';
 import MediaImage from './MediaImage.jsx';
-import useTilt from '@/hooks/useTilt.js';
+import useCardGlow from '@/hooks/useCardGlow.js';
 
 /** The base card. Episode, movie, character and gadget cards are thin wrappers around it.
  *  `media` optionally replaces the standard artwork (used by multi-segment covers).
  *  `badge` sits on the top-right corner of the art; `artBadge` on the top-left.
- *  `tilt` opts the card into the pointer-follow tilt (episode cards). */
-export default function MediaCard({ to, image, imageAlt, kind, seed, label, title, subtitle, children, footer, badge, artBadge, className = '', media = null, tilt = false }) {
-  // The tilt ref is cheap either way (the hook's listeners only bind to the
+ *  `glow` opts the card into the pointer-follow light (episode cards); the
+ *  hover motion itself is the standard slide-up lift. */
+export default function MediaCard({ to, image, imageAlt, kind, seed, label, title, subtitle, children, footer, badge, artBadge, className = '', media = null, glow = false }) {
+  // The glow ref is cheap either way (the hook's listeners only bind to the
   // element it is attached to), so it is always created and only attached
   // when the card opts in.
-  const tiltRef = useTilt();
+  const glowRef = useCardGlow();
   return (
     <article
-      ref={tilt ? tiltRef : undefined}
-      className={`media-card media-card--${kind}${tilt ? ' media-card--tilt' : ''} ${className}`}
+      ref={glow ? glowRef : undefined}
+      className={`media-card media-card--${kind}${glow ? ' media-card--glow' : ''} ${className}`}
     >
       <Link to={to} className="media-card__link" aria-label={title}>
         <div className="media-card__art">

@@ -61,6 +61,7 @@ export default function AccountMenu() {
           <ul className="account-menu__links">
             <li><Link role="menuitem" to="/account" onClick={() => setOpen(false)}><Icon name="user" size={15} /> My contributions</Link></li>
             <li><Link role="menuitem" to="/stats" onClick={() => setOpen(false)}><Icon name="stats" size={15} /> Statistics</Link></li>
+            <li><Link role="menuitem" to="/settings" onClick={() => setOpen(false)}><Icon name="settings" size={15} /> Settings</Link></li>
             {['checker', 'admin', 'owner'].includes(role)
               ? <li><Link role="menuitem" to="/staff" onClick={() => setOpen(false)}><Icon name="shield" size={15} /> Moderation panel</Link></li>
               : null}

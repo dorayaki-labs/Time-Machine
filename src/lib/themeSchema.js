@@ -228,6 +228,11 @@ export const SETTINGS_SCHEMA = {
         label: 'Hover lift on cards', type: 'toggle', default: true,
         apply: (v, _vars, attrs) => { attrs['data-hover-lift'] = v ? 'on' : 'off'; },
       },
+      cardGlow: {
+        label: 'Card pointer glow', type: 'toggle', default: true,
+        help: 'A soft light follows the cursor across episode cards.',
+        apply: (v, _vars, attrs) => { attrs['data-card-glow'] = v ? 'on' : 'off'; },
+      },
     },
   },
   motion: {

@@ -50,7 +50,7 @@ function initialActiveId(customThemes) {
 // Feature attributes any theme may set — cleared before each application so
 // a value from the previous theme can never linger when the next one leaves
 // the setting at its default.
-const FEATURE_ATTRS = ['data-grain', 'data-cards-desc', 'data-hover-lift', 'data-motion', 'data-underline-links', 'data-strong-focus'];
+const FEATURE_ATTRS = ['data-grain', 'data-cards-desc', 'data-hover-lift', 'data-card-glow', 'data-motion', 'data-underline-links', 'data-strong-focus'];
 
 /**
  * Writes a resolved theme to the document: base palette attribute, inline
