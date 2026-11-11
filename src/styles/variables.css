@@ -82,6 +82,12 @@
   --grain-opacity: 0.5;       /* paper grain behind everything */
   --lift: translatey(-2px);   /* hover lift on cards and rows */
   --lift-sm: translatey(-1px);/* hover lift on buttons */
+  /* GlassMorphism support: the base themes are opaque; the glass theme opts
+     its surfaces into translucency and blur through these. */
+  --panel-alpha: 100%;
+  --header-tint: var(--bg);
+  --panel-tint: var(--surface);
+  --panel-tint-2: var(--surface-2);
 
   --scrollbar-thumb: #c2bba8;
   --scrollbar-thumb-hover: #a89f8a;
@@ -313,4 +319,59 @@
   --scrollbar-thumb: #3c3157;
   --scrollbar-thumb-hover: #514276;
   --scrollbar-track: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   GlassMorphism: a frosted, layered interface. Surfaces become translucent
+   panels of one shared hue (a deep teal-blue), each blurred over the page
+   behind it; hierarchy comes from three panel depths plus a light-catching
+   border on the raised ones. Everything reads through `--panel-*` tokens, so
+   the studio (custom themes on this base, import/export) keeps working —
+   a translucent surface is just a different value of the same variables.
+   --------------------------------------------------------------------------- */
+:root[data-theme='glass'] {
+  color-scheme: dark;
+
+  /* The layered depths: page → recessed panel → panel → raised panel. */
+  --bg: #0b1420;
+  --bg-2: #081019;
+  --surface: #16283c;
+  --surface-2: #1d3348;
+  --surface-3: #294660;
+  --border: #2c4763;
+  --border-strong: #3f6285;
+
+  --text: #eaf2fb;
+  --text-2: #b6c7d9;
+  --text-3: #7e94ab;
+
+  --accent: #6cc6e8;
+  --accent-hover: #93d8f2;
+  --accent-soft: rgba(108, 198, 232, 0.12);
+  --accent-line: rgba(108, 198, 232, 0.38);
+  --on-accent: #06131c;
+
+  --ok: #7fd0a0;
+  --info: #6cc6e8;
+  --warn: #e0c07e;
+  --bad: #e29a9a;
+  --review: #b3a6ef;
+  --neutral: #7e94ab;
+
+  --shadow-soft: 0 14px 44px rgba(2, 8, 16, 0.55);
+  --shadow-card: 0 8px 26px rgba(2, 8, 16, 0.4);
+
+  --scrollbar-thumb: #2a4258;
+  --scrollbar-thumb-hover: #3a5874;
+  --scrollbar-track: transparent;
+
+  /* The glass itself: translucent panels, frosted header, stronger blur. */
+  --panel-alpha: 62%;
+  --header-tint: color-mix(in srgb, var(--bg) 68%, transparent);
+  --panel-tint: color-mix(in srgb, var(--surface) var(--panel-alpha), transparent);
+  --panel-tint-2: color-mix(in srgb, var(--surface-2) var(--panel-alpha), transparent);
+  --glass-blur: 16px;
+  --overlay-tint: color-mix(in srgb, var(--bg) 48%, rgba(0, 0, 0, 0.5));
+  --search-tint: color-mix(in srgb, var(--bg) 55%, transparent);
+  --grain-opacity: 0.3;
 }

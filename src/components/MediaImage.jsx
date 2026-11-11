@@ -1,11 +1,5 @@
 import { useState } from 'react';
-
-const PLACEHOLDERS = {
-  episode: '/assets/placeholders/episode.svg',
-  movie: '/assets/placeholders/movie.svg',
-  character: '/assets/placeholders/character.svg',
-  gadget: '/assets/placeholders/gadget.svg',
-};
+import Placeholder from './Placeholder.jsx';
 
 function hueFor(seed = '') {
   let h = 2166136261;
@@ -33,10 +27,7 @@ export default function MediaImage({ src, alt = '', kind = 'episode', seed, labe
       {showReal ? (
         <img className="media__img" src={url} alt={altText} loading={priority ? 'eager' : 'lazy'} decoding="async" onError={() => setFailed(true)} />
       ) : (
-        <>
-          <img className="media__placeholder" src={PLACEHOLDERS[kind] ?? PLACEHOLDERS.episode} alt="" loading="lazy" decoding="async" />
-          {label ? <span className="media__label" aria-hidden="true">{label}</span> : null}
-        </>
+        <Placeholder kind={kind} label={label} />
       )}
     </div>
   );

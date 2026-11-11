@@ -9,6 +9,7 @@ import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
+import SegmentNav from '@/components/SegmentNav.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
 import Icon from '@/components/Icon.jsx';
 import NotFound from './NotFound.jsx';
@@ -21,11 +22,11 @@ import { metadataChecklist } from '@/lib/statistics.js';
 const pad = (n) => String(n).padStart(3, '0');
 
 /**
- * The episode page — the classic layout. Segments are switched with the
- * numbered tabs under the heading; below the sources a Recent-contributions
- * style timeline lists every segment of the broadcast, and clicking one opens
- * a stripped-down segment menu (?menu=segment): thumbnail, summary, synopsis
- * — no sources, characters, gadgets or voice actors.
+ * The episode page. The record leads: artwork and episode information come
+ * first, editing and contribution controls sit after the content. SegmentNav
+ * under the heading is the single segment switcher (the old duplicate control
+ * near the contributions box is gone); the Segments timeline below the
+ * sources opens the stripped-down segment menu (?menu=segment).
  */
 export default function EpisodeDetails({ seriesId }) {
   const { id } = useParams();
@@ -45,9 +46,9 @@ export default function EpisodeDetails({ seriesId }) {
   const segment = segments[current] ?? null;
 
   const selectSegment = (n) => {
-    setSelected(n);
+    setSelected(n + 1);
     const next = new URLSearchParams(params);
-    if (n > 1) next.set('segment', String(n)); else next.delete('segment');
+    if (n > 0) next.set('segment', String(n + 1)); else next.delete('segment');
     setParams(next, { replace: true });
   };
 
@@ -104,7 +105,7 @@ export default function EpisodeDetails({ seriesId }) {
 
         <div className="segment-menu__media">
           <MediaImage
-            kind="episode"
+            kind="segment"
             seed={segment.id}
             src={segment.image?.url ?? null}
             alt={segment.image?.alt ?? ''}
@@ -114,7 +115,7 @@ export default function EpisodeDetails({ seriesId }) {
         </div>
 
         <header className="detail-head">
-          <p className="eyebrow">
+          <p className="eyebrow segment-menu__eyebrow">
             <span>Segment {segment.segmentNumber ?? current + 1} of {segments.length}</span>
             {Number.isFinite(segment.durationMinutes) ? <span className="chip chip--mono">{segment.durationMinutes} min</span> : null}
           </p>
@@ -160,23 +161,11 @@ export default function EpisodeDetails({ seriesId }) {
       </header>
 
       {multi ? (
-        <nav className="segment-tabs" aria-label="Segments of this episode" id="segment-content">
-          {segments.map((seg, i) => (
-            <button key={seg.id} type="button"
-              className={`segment-tabs__tab${i === current ? ' is-active' : ''}`}
-              aria-current={i === current ? 'true' : undefined}
-              title={segmentTitle(entry, i)}
-              onClick={() => selectSegment(i + 1)}>
-              Segment {seg.segmentNumber ?? i + 1}
-            </button>
-          ))}
-        </nav>
+        <SegmentNav segments={segments} names={segments.map((_s, i) => segmentTitle(entry, i))} current={current} onSelect={selectSegment} />
       ) : null}
 
-      <EntryActions entry={entry} />
-      <PageContributions entryId={entry.id} />
-
-      <div className="detail-columns">
+      {/* The record first: artwork + information. */}
+      <div className="detail-columns detail-columns--record">
         <div className="detail-columns__media">
           <MediaImage kind="episode" seed={segment?.id ?? record.id} src={display.image?.url ?? null} alt={display.image?.alt ?? ''}
             label={`EP ${pad(record.number)}`} priority />
@@ -185,7 +174,7 @@ export default function EpisodeDetails({ seriesId }) {
           <FactList items={[
             { label: 'Series', value: <Link to={series.basePath}>{series.label}</Link> },
             { label: 'Episode name', value: record.title ? (record.title.en ?? record.title.ja ?? null) : null },
-            { label: 'Episode number', value: <span className="mono">{record.number}</span> },
+            { label: 'Episode number', value: <span className="mono">#{record.number}</span> },
             ...(multi ? [{ label: 'Segment', value: <span className="mono">{current + 1} of {segments.length}</span> }] : []),
             { label: 'Broadcast date', value: record.release?.date ? <>{formatRelease(record.release)}{record.release.precision && record.release.precision !== 'day' ? <span className="muted"> ({record.release.precision} only)</span> : null}</> : null },
             { label: 'Original language', value: languageName(record.originalLanguage ?? 'ja') },
@@ -246,6 +235,13 @@ export default function EpisodeDetails({ seriesId }) {
       <GadgetsSection ids={display.gadgets ?? []} />
       <VoiceActorsSection voiceActors={display.voiceActors ?? []} />
       <PrevNext previous={previous} next={next} label="episode" />
+
+      {/* Editing and contribution controls: after the record, where they
+          support it rather than lead it. */}
+      <div className="detail-controls">
+        <EntryActions entry={entry} />
+        <PageContributions entryId={entry.id} />
+      </div>
     </PageContainer>
   );
 }

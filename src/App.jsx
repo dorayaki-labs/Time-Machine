@@ -14,6 +14,7 @@ import Anime1979 from '@/pages/Anime1979.jsx';
 import Anime2005 from '@/pages/Anime2005.jsx';
 import Movies from '@/pages/Movies.jsx';
 import Historical1973 from '@/pages/Historical1973.jsx';
+import Manga from '@/pages/Manga.jsx';
 import EpisodeDetails from '@/pages/EpisodeDetails.jsx';
 import MovieDetails from '@/pages/MovieDetails.jsx';
 import Characters from '@/pages/Characters.jsx';
@@ -77,6 +78,7 @@ function Routed() {
         <Route path="/anime/2005" element={<Anime2005 />} />
         <Route path="/movies" element={<Movies />} />
         <Route path="/historical/1973" element={<Historical1973 />} />
+        <Route path="/manga" element={<Manga />} />
         <Route path="/anime/1973" element={<MoveToHistorical />} />
         <Route path="/anime/1979/:id" element={<EpisodeDetails seriesId="anime-1979" />} />
         <Route path="/anime/2005/:id" element={<EpisodeDetails seriesId="anime-2005" />} />

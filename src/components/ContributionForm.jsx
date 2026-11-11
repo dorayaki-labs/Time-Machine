@@ -160,14 +160,14 @@ export default function ContributionForm({ category, initialValues = null }) {
   return (
     <form className="contribution-form" onSubmit={onSubmit} noValidate>
       {backendConfigured && !user ? (
-        <p className="notice">Sign in with Discord to submit this contribution — it takes a moment and
+        <p className="notice">Sign in with Discord to submit this contribution; it takes a moment and
           helps us keep the archive accountable. Without an account you can still prepare a draft below.</p>
       ) : null}
       {submitError ? (
         <p className="form-summary" role="alert">
           {submitError.status === 429 || submitError.status === 409
             ? submitError.message
-            : `The submission failed: ${submitError.message} Your input is preserved — try again.`}
+            : `The submission failed: ${submitError.message} Your input is preserved, so you can try again.`}
         </p>
       ) : null}
       {Object.keys(errors).length ? <p className="form-summary" role="alert">Please fix {Object.keys(errors).length === 1 ? '1 field' : `${Object.keys(errors).length} fields`} below.</p> : null}

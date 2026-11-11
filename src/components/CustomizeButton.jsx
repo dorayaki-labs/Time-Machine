@@ -12,9 +12,16 @@ import useTheme from '@/hooks/useTheme.jsx';
 import { BASE_THEMES } from '@/lib/themeSchema.js';
 
 function Swatch({ theme }) {
-  const base = BASE_THEMES.find((t) => t.id === theme.baseTheme) ?? BASE_THEMES[0];
-  const bg = theme.settings?.colors?.bg || base.swatch[0];
-  const accent = theme.settings?.colors?.accent || base.swatch[1];
+  // Works for both shapes: a built-in base theme ({ id, swatch }) and a
+  // saved/previewed custom theme ({ baseTheme, settings }). Colours always
+  // come from the theme configuration itself — the user's overrides when
+  // present, the base palette otherwise — never a hardcoded pair (the old
+  // code looked up `theme.baseTheme` on built-ins, where it is undefined,
+  // so every swatch fell back to Classic Light's white-and-blue).
+  const base = BASE_THEMES.find((t) => t.id === (theme.baseTheme ?? theme.id)) ?? BASE_THEMES[0];
+  const colors = theme.settings?.colors ?? {};
+  const bg = colors.bg || base.swatch[0];
+  const accent = colors.accent || base.swatch[1];
   return (
     <span className="theme-menu__swatch" aria-hidden="true">
       <span style={{ background: bg }} />

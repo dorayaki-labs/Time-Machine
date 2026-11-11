@@ -1,5 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; overscroll-behavior-y: none; }
 body {
   margin: 0;
   font-family: var(--font);
@@ -9,6 +9,44 @@ body {
   background: var(--bg);
   transition: background 0.25s var(--ease), color 0.25s var(--ease);
 }
+
+/* ---------------------------------------------------------------------------
+   GlassMorphism support. Every theme defines --panel-tint/--header-tint; in
+   the opaque themes they ARE the plain surfaces, so nothing changes. The
+   glass theme sets them translucent, and this one rule block adds the
+   backdrop blur that finishes the effect — with a solid readable fallback
+   where backdrop-filter is unsupported (@supports gates the translucent
+   tint too, so legacy browsers never get unreadable see-through panels).
+   Only the chrome surfaces (header, cards, dropdowns, modals) route through
+   these tokens; body text areas stay on opaque --surface/--bg so contrast
+   never depends on what sits behind a panel.
+   ------------------------------------------------------------------------- */
+.site-header, .theme-menu__panel, .modal, .search-dialog, .media-card,
+.page-contributions, .collapsible, .film-record, .profile, .contribute-form-wrap,
+.contribution-modal__fields .modal__body, .studio-panel {
+  background: var(--panel-tint, var(--surface));
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header, .theme-menu__panel, .modal, .search-dialog, .media-card,
+  .page-contributions, .collapsible, .film-record, .profile, .contribute-form-wrap {
+    -webkit-backdrop-filter: blur(var(--panel-blur, 0px));
+    backdrop-filter: blur(var(--panel-blur, 0px));
+  }
+}
+:root[data-theme='glass'] { --panel-blur: 14px; }
+/* Raised panels get the light-catching hairline that sells the glass. */
+:root[data-theme='glass'] .media-card,
+:root[data-theme='glass'] .modal,
+:root[data-theme='glass'] .search-dialog {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--border));
+}
+:root[data-theme='glass'] .site-header {
+  background: var(--header-tint);
+  -webkit-backdrop-filter: blur(var(--panel-blur, 14px)) saturate(1.2);
+  backdrop-filter: blur(var(--panel-blur, 14px)) saturate(1.2);
+}
+/* Theme transitions keep the cross-fade smooth. */
+.site-header, .media-card, .modal, .search-dialog { transition: background 0.25s var(--ease), border-color 0.25s var(--ease); }
 
 /* A faint paper grain so large empty areas are not perfectly flat. The grain
    is a theme setting — [data-grain='off'] removes it entirely. */

@@ -117,7 +117,7 @@ export default function EntryEditDialog({ entry, onClose }) {
               <span className="submission-result__icon"><Icon name="check" size={24} /></span>
               <h4>Sent for review as #{done.number}</h4>
               <p>
-                A checker sees your exact changes and can accept them in one click — the moment they
+                A checker sees your exact changes and can accept them in one click. The moment they
                 do, the record updates in the repository and appears here without a redeploy.
                 Track it in <Link to="/account">My contributions</Link>.
               </p>
@@ -131,12 +131,12 @@ export default function EntryEditDialog({ entry, onClose }) {
             <div className="submission-result submission-result--gate" role="note">
               <span className="submission-result__icon"><Icon name="user" size={24} /></span>
               <h4>Sign in to edit the archive</h4>
-              <p>Edits are tied to a Discord account so we can credit you and follow up. Browsing stays open to everyone — editing needs an account.</p>
+              <p>Edits are tied to a Discord account so we can credit you and follow up. Browsing stays open to everyone; editing needs an account.</p>
               <div className="btn-row"><button type="button" className="btn btn--primary" onClick={signIn}><Icon name="user" size={16} /> Sign in with Discord</button></div>
             </div>
           </div>
         ) : !draft ? (
-          <div className="modal__body"><p className="notice notice--warn">This record could not be loaded for editing — refresh the page and try again.</p></div>
+          <div className="modal__body"><p className="notice notice--warn">This record could not be loaded for editing. Refresh the page and try again.</p></div>
         ) : (
           <>
             <div className="modal__body">
@@ -154,7 +154,7 @@ export default function EntryEditDialog({ entry, onClose }) {
 
               {showRaw ? (
                 <div className="field">
-                  <label>Raw JSON <span className="field__opt">(advanced — malformed JSON cannot be submitted)</span></label>
+                  <label>Raw JSON <span className="field__opt">(advanced: malformed JSON cannot be submitted)</span></label>
                   <textarea rows={16} className="mono" value={rawJson} spellCheck={false}
                     onChange={(e) => setRawJson(e.target.value)}
                     onBlur={() => { try { setDraft(JSON.parse(rawJson)); setError(null); } catch (err) { setError(`Invalid JSON: ${err.message}`); } }} />

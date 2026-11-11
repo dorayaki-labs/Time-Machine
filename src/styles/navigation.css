@@ -1,25 +1,65 @@
 /* Header, mobile navigation, search overlay, footer */
+
+/* Pull-to-refresh is disabled at the document level: the archive is a
+   document-style site with its own scroll containers (catalogues, modals,
+   overlays), and an accidental pull at the top of a long list reloading the
+   whole SPA loses the reader's place. Normal scrolling, keyboard and
+   touch panning are untouched — this only stops the browser's
+   rubber-band/reload gesture, which is exactly the accidental case. */
+html { overscroll-behavior-y: none; }
+
 .site-header { position: sticky; top: 0; z-index: 60; background: var(--bg); border-bottom: 1px solid var(--border); transition: background 0.25s var(--ease), border-color 0.25s var(--ease); }
 .site-header__panel {
-  position: relative; display: flex; align-items: center; gap: var(--s-5);
+  position: relative; display: flex; align-items: center; gap: var(--s-4);
   width: min(var(--max), 100% - 2 * var(--s-5)); margin-inline: auto;
   min-height: 68px; padding-block: var(--s-2);
 }
-.brand { display: inline-flex; align-items: center; flex-shrink: 0; }
-.brand img { height: 40px; width: auto; }
 
+/* ---------- brand ---------- */
+.brand { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; position: relative; }
+.brand__img {
+  height: 40px; width: auto; display: block;
+  /* The wordmark gently leans into the hover — a small mechanical tilt, not a
+     bounce. */
+  transition: transform 0.28s var(--ease);
+}
+/* The small clockwork mark that appears next to the wordmark on hover,
+   rotating a quarter turn like a winding key. */
+.brand__mark {
+  color: var(--accent); opacity: 0; transform: translateX(-4px) rotate(-40deg);
+  transition: opacity 0.24s var(--ease), transform 0.28s var(--ease);
+}
+.brand:hover .brand__img { transform: translateX(2px); }
+.brand:hover .brand__mark { opacity: 1; transform: translateX(0) rotate(0deg); }
+.brand:active .brand__img { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .brand__img, .brand__mark { transition: none; }
+  .brand:hover .brand__img { transform: none; }
+}
+
+/* ---------- primary nav ---------- */
 .primary-nav { margin-inline: auto; min-width: 0; }
 .primary-nav ul { display: flex; align-items: center; gap: var(--s-1); flex-wrap: nowrap; }
 .primary-nav__link {
-  position: relative; display: inline-block; padding: 7px 8px; border-radius: var(--r-sm);
-  color: var(--text-2); font-size: 0.9rem; font-weight: 500; white-space: nowrap;
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 9px; border-radius: var(--r-sm);
+  color: var(--text-2); font-size: 0.88rem; font-weight: 500; white-space: nowrap;
   transition: color 0.15s, background 0.15s;
 }
 .primary-nav__link:hover { color: var(--text); background: var(--surface-2); }
+/* The active underline grows in from the left — a settle, not a pop. */
 .primary-nav__link.is-active { color: var(--accent); }
 .primary-nav__link.is-active::after {
   content: ''; position: absolute; left: 11px; right: 11px; bottom: 2px; height: 2px;
   background: var(--accent); border-radius: 2px;
+  transform-origin: left center;
+  animation: nav-underline 0.22s var(--ease) both;
+}
+@keyframes nav-underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.primary-nav__soon {
+  font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-3);
+  border: 1px solid var(--border); border-radius: 999px; padding: 0 5px;
 }
 
 .header-actions { display: flex; align-items: center; gap: var(--s-2); margin-left: auto; flex-shrink: 0; }
@@ -30,16 +70,31 @@
   border-radius: 5px; padding: 0 5px; color: var(--text-3);
 }
 
+/* ---------- mobile navigation sheet ----------
+   A slide-down panel that sticks under the header and scrolls on its own —
+   the button is always inside the viewport because the sheet never pushes
+   layout (absolute, not in-flow). */
 .mobile-nav {
-  display: none; border-bottom: 1px solid var(--border); background: var(--surface);
+  position: absolute; left: 0; right: 0; top: 100%;
+  display: none; border-bottom: 1px solid var(--border); background: var(--bg);
+  box-shadow: var(--shadow-soft);
+  max-height: calc(100vh - 68px); overflow-y: auto;
+  overscroll-behavior: contain;
 }
-.mobile-nav.is-open { display: block; animation: rise-in 0.25s var(--ease); }
+.mobile-nav.is-open { display: block; animation: sheet-in 0.24s var(--ease); }
+@keyframes sheet-in {
+  from { opacity: 0; transform: translatey(-8px); }
+  to { opacity: 1; transform: none; }
+}
 .mobile-nav__link {
-  display: block; padding: var(--s-3) var(--s-5); color: var(--text-2);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+  min-height: 48px; /* a comfortable touch target, not a desktop row */
+  padding: var(--s-2) var(--s-5); color: var(--text-2);
   border-bottom: 1px solid var(--border); font-weight: 500;
   transition: background 0.15s, color 0.15s;
 }
 .mobile-nav__link:hover, .mobile-nav__link.is-active { color: var(--accent); background: var(--accent-soft); }
+.mobile-nav__soon { font-size: 0.62rem; }
 .mobile-nav__foot { display: flex; justify-content: flex-end; padding: var(--s-3) var(--s-5); }
 .menu-btn { display: none; }
 
@@ -61,7 +116,7 @@
   font: inherit; font-size: 1.02rem; outline: none;
 }
 .search-dialog__input input::placeholder { color: var(--text-3); }
-.search-dialog__results { max-height: min(52vh, 460px); overflow-y: auto; padding: var(--s-2); }
+.search-dialog__results { max-height: min(52vh, 460px); overflow-y: auto; padding: var(--s-2); overscroll-behavior: contain; }
 .search-hint { padding: var(--s-4); color: var(--text-2); }
 .search-hint__title { color: var(--text); font-weight: 500; }
 .search-hint__chips { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
@@ -137,6 +192,7 @@
   border-radius: var(--r-md, 10px);
   background: var(--surface);
   box-shadow: var(--shadow-card, var(--shadow-soft, 0 8px 30px rgba(0, 0, 0, 0.18)));
+  animation: sheet-in 0.18s var(--ease);
 }
 .theme-menu__head {
   margin: var(--s-2) var(--s-2) var(--s-1);
@@ -160,10 +216,14 @@
   font-size: 0.92rem;
   text-align: left;
   cursor: pointer;
+  transition: background 0.13s;
 }
 .theme-menu__item:hover { background: var(--surface-2); }
 .theme-menu__item.is-active { background: var(--accent-soft, var(--surface-2)); }
-.theme-menu__swatch { display: inline-flex; flex: none; border-radius: 50%; overflow: hidden; border: 1px solid var(--border); }
+/* The two-tone dot: left half is the theme's background, right half its
+   accent — always the REAL colours from the theme configuration, never a
+   hardcoded pair. */
+.theme-menu__swatch { display: inline-flex; flex: none; border-radius: 50%; overflow: hidden; border: 1px solid var(--border-strong); }
 .theme-menu__swatch span { width: 12px; height: 20px; display: block; }
 .theme-menu__swatch span:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; }
 .theme-menu__swatch span:last-child { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }

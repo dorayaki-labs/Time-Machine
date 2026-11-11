@@ -3,7 +3,11 @@
   --ratio: 16 / 9; position: relative; width: 100%; aspect-ratio: var(--ratio);
   overflow: hidden; background: hsl(var(--hue) 22% 88%);
 }
-:root[data-theme='dark'] .media { background: hsl(var(--hue) 18% 16%); }
+:root[data-theme='dark'] .media,
+:root[data-theme='midnight'] .media,
+:root[data-theme='ocean'] .media,
+:root[data-theme='forest'] .media,
+:root[data-theme='amethyst'] .media { background: hsl(var(--hue) 18% 16%); }
 /* Gadgets keep one fixed slate background instead of a random per-record
    hue; #212530 reads as neutral in both themes, and the corner label gets a
    lighter colour for contrast on it. */
@@ -12,12 +16,38 @@
 .media--episode { --ratio: 16 / 9; }
 .media--movie { --ratio: 2 / 3; }
 .media--character, .media--gadget { --ratio: 1 / 1; }
-.media__img, .media__placeholder { width: 100%; height: 100%; object-fit: cover; }
-.media__placeholder { opacity: 0.6; }
+.media__img { width: 100%; height: 100%; object-fit: cover; }
 .media__label {
   position: absolute; left: 12px; bottom: 10px; font-family: var(--mono);
   font-size: 0.74rem; color: var(--text-3); letter-spacing: 0.02em;
 }
+
+/* ---------- theme-aware SVG placeholders ----------
+   One family: construction rings at low contrast, a crisper outline for the
+   subject, an accent-filled focal mark. Every colour is a theme token, so
+   built-in, custom and imported themes all stay legible — nothing is
+   hardcoded (the old #fff strokes vanished in light themes). */
+.media__ph {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  /* A tinted stage behind the drawing, mixed toward the theme background so
+     light and dark themes both get a quiet, deliberate canvas. */
+  background:
+    radial-gradient(120% 90% at 50% 30%,
+      color-mix(in srgb, var(--accent) 7%, transparent) 0%,
+      transparent 70%),
+    color-mix(in srgb, var(--surface-2) 55%, var(--bg));
+}
+.media__ph-art { width: 100%; height: 100%; display: block; color: var(--text-3); }
+.media__ph-art .ph-ring { stroke: currentColor; opacity: 0.28; stroke-width: 1.5; }
+.media__ph-art .ph-ring--dashed { stroke-dasharray: 2 8; }
+.media__ph-art .ph-outline { stroke: currentColor; opacity: 0.6; stroke-width: 2; }
+.media__ph-art .ph-fill { fill: currentColor; opacity: 0.5; stroke: none; }
+/* Portrait proportions (movie posters, characters) re-centre the drawing by
+   scaling the art box inside the taller frame. */
+.media--movie .media__ph-art,
+.media--character .media__ph-art,
+.media--gadget .media__ph-art { padding: 8%; }
 
 /* ---------- media cards ---------- */
 .media-card {
@@ -31,6 +61,30 @@
 .media-card:hover {
   transform: var(--lift); border-color: var(--border-strong); background: var(--surface-2);
   box-shadow: var(--shadow-soft);
+}
+
+/* Pointer-follow tilt (episode cards). useTilt writes --tilt-x/--tilt-y and a
+   light-spot position as CSS custom properties — never React state — so the
+   effect costs one style write per frame and no re-renders. The transform
+   composes with the hover lift; without the variables the card behaves
+   exactly as before. */
+.media-card--tilt {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) var(--lift, none);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.media-card--tilt::after {
+  /* A soft light that follows the cursor — the "glass catching light" cue
+     that sells the depth. Purely decorative, zero pointer events. */
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; opacity: 0;
+  background: radial-gradient(240px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--accent) 14%, transparent), transparent 65%);
+  transition: opacity 0.2s var(--ease);
+}
+.media-card--tilt:hover::after { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .media-card--tilt { transform: none; }
 }
 .media-card__link { display: block; color: inherit; }
 .media-card__link:hover { color: inherit; }

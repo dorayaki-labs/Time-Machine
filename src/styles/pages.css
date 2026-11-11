@@ -332,6 +332,20 @@
 .not-found { display: grid; place-items: center; padding-block: var(--s-8); text-align: center; }
 .not-found__code { font-family: var(--mono); font-size: 4rem; font-weight: 700; color: var(--text-3); margin: 0; }
 
+/* ---------- manga coming soon ----------
+   The same placeholder family as the artwork placeholders, scaled up and
+   framed as the page's centrepiece: an honest "we are building this" rather
+   than an empty grid. */
+.manga-soon { padding-block: var(--s-7) var(--s-8); display: grid; gap: var(--s-6); justify-items: center; text-align: center; }
+.manga-soon .page-opening { justify-items: center; margin-bottom: 0; }
+.manga-soon__art {
+  width: min(360px, 78vw); border: 1px solid var(--border); border-radius: var(--r-lg);
+  overflow: hidden; background: var(--surface); box-shadow: var(--shadow-card);
+}
+.manga-soon__art .media__ph { position: relative; aspect-ratio: 16 / 9; }
+.manga-soon__art .media__ph-art { padding: 12%; }
+.manga-soon__actions { justify-content: center; }
+
 .source-stage__note { margin: 0.5rem 0 0; }
 
 /* ---------- screenshot carousel ---------- */
@@ -415,28 +429,71 @@
 .credits-legal { margin-top: var(--s-5); font-size: 0.85rem; color: var(--text-3); }
 
 /* ---------------------------------------------------------------------------
-   Episode detail page: classic layout, segment tabs, segments timeline and
-   the stripped-down segment menu (?menu=segment).
+   Episode detail page: classic layout, segment navigation, segments timeline
+   and the stripped-down segment menu (?menu=segment).
    ------------------------------------------------------------------------- */
 
-/* Numbered segment tabs under the heading; the active tab is accented. */
-.segment-tabs {
-  display: flex; flex-wrap: wrap; gap: var(--s-2);
+/* The unified segment switcher: one sliding pill ("thumb") under the labels.
+   The thumb moves with a single transform, so switching feels instantaneous
+   without animating layout. Each tab shows the segment's real name (the
+   number sits above it as the eyebrow); long names ellipsize. */
+.segment-nav {
+  position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   padding: var(--s-2) 0; border-block: 1px solid var(--border);
 }
-.segment-tabs__tab {
-  appearance: none; cursor: pointer; font: inherit; font-size: 0.85rem;
-  padding: 5px 12px; border-radius: 999px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+.segment-nav__thumb {
+  position: absolute; top: calc(var(--s-2) + 2px); bottom: 2px; left: 0;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft); border: 1px solid var(--accent-line);
+  transition: transform 0.26s var(--ease);
+  pointer-events: none;
 }
-.segment-tabs__tab:hover { color: var(--text); border-color: var(--border-strong); }
-.segment-tabs__tab.is-active {
-  color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft);
+.segment-nav__tab {
+  position: relative; z-index: 1; appearance: none; background: none; border: 0;
+  cursor: pointer; font: inherit; text-align: center;
+  display: grid; gap: 2px; justify-items: center;
+  padding: 7px 10px; color: var(--text-2);
+  transition: color 0.18s;
 }
-.segment-tabs__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.segment-nav__tab:hover { color: var(--text); }
+.segment-nav__tab.is-active { color: var(--accent); }
+.segment-nav__num {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-3);
+}
+.segment-nav__num .icon { color: currentColor; opacity: 0.7; }
+.segment-nav__tab.is-active .segment-nav__num { color: var(--accent); }
+.segment-nav__name {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 0.88rem; font-weight: 500;
+}
+.segment-nav__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+@media (prefers-reduced-motion: reduce) {
+  .segment-nav__thumb { transition: none; }
+}
+@media (max-width: 600px) {
+  /* Fewer than three tabs: keep one per row-width. Many tabs on a phone:
+     names drop away and only the numbered pills remain, in a scrollable row. */
+  .segment-nav { grid-auto-flow: row; }
+  .segment-nav__thumb { display: none; }
+  .segment-nav__tab { text-align: left; justify-items: start; padding: 8px 12px; }
+  .segment-nav__name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+}
 .segment-heading { display: grid; gap: var(--s-1); border-top: 1px solid var(--border); padding-top: var(--s-4); }
 .segment-heading h2 { margin: 0; font-size: 1.3rem; }
+
+/* The record block leads the page: artwork beside the information table.
+   The media column hugs its content (no stretched empty space under the
+   image) while the info column fills the rest; the media never outgrows the
+   row (its max-height tracks the sibling's natural height). */
+.detail-columns--record { align-items: start; }
+.detail-columns--record .detail-columns__media { width: fit-content; max-width: 100%; }
+.detail-columns--record .detail-columns__media .media { max-height: 100%; }
+
+/* Editing and contribution controls come after the record — quiet, gathered
+   in one place instead of leading the page. */
+.detail-controls { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-4); }
 
 /* Section heading with a leading icon (the segments timeline). */
 h2.ev-section-title {
@@ -496,13 +553,14 @@ h2.ev-section-title {
 .ev-actions {
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2);
 }
+.segment-menu__eyebrow { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
 .segment-menu__media { max-width: 640px; }
 .segment-menu__media .media { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-2); }
 .segment-menu__top { margin-bottom: var(--s-2); }
 
 @media (max-width: 600px) {
   .segment-menu__media { max-width: none; }
-  .segment-tabs__tab { flex: 1 1 auto; text-align: center; }
+  .segment-nav__tab { text-align: left; }
 }
 
 /* Collapsible sections (summary / synopsis): the toggle is the whole heading

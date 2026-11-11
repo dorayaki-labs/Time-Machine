@@ -5,7 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/generate-menu-manifest.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/generate-menu-manifest.mjs",
     "build": "VITE_BASE_PATH=/time-machine/ vite build && node scripts/fix-asset-paths.mjs && node scripts/make-spa-fallback.mjs",
     "build:cloudflare": "VITE_BASE_PATH=/ vite build && node scripts/fix-asset-paths.mjs && node scripts/make-spa-fallback.mjs",
     "preview": "vite preview",

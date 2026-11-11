@@ -24,6 +24,7 @@ export default function EpisodeCard({ entry, showSeries = false, showPreservatio
       label={`EP ${pad(entry.number)}`}
       title={displayTitle(entry)}
       subtitle={secondaryTitle(entry)}
+      tilt
       badge={<span className="chip chip--mono">#{entry.number}</span>}
       artBadge={(
         <span className="chip chip--mono" title={`${segmentCount} ${segmentCount === 1 ? 'segment' : 'segments'} in this episode`}>

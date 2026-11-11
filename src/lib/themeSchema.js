@@ -25,6 +25,7 @@ export const BASE_THEMES = [
   { id: 'ocean', label: 'Ocean', dark: true, swatch: ['#071824', '#4cc9d9'] },
   { id: 'forest', label: 'Forest', dark: true, swatch: ['#10160f', '#93c78e'] },
   { id: 'amethyst', label: 'Amethyst', dark: true, swatch: ['#14101d', '#b79aec'] },
+  { id: 'glass', label: 'GlassMorphism', dark: true, swatch: ['#0b1420', '#6cc6e8'] },
 ];
 
 export const isBaseThemeId = (id) => BASE_THEMES.some((t) => t.id === id);

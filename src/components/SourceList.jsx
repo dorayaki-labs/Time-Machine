@@ -164,8 +164,8 @@ export default function SourceList({ sources = [], noun = 'entry' }) {
             // guidance collapses into a single quiet line above the picker.
             <p className="source-viewer__idle muted">
               {playable.length
-                ? <>Nothing is playing yet — choose one of the {playable.length} source{playable.length > 1 ? 's' : ''} below to start watching.</>
-                : 'Only outbound links were submitted for this entry — find them below.'}
+                ? <>Nothing is playing yet. Choose one of the {playable.length} source{playable.length > 1 ? 's' : ''} below to start watching.</>
+                : 'Only outbound links were submitted for this entry; find them below.'}
             </p>
           )}
 

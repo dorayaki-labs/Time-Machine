@@ -4,6 +4,7 @@
 // a field only has a fixed set of valid values so nobody has to type (and
 // mistype) vocabulary like language codes or category ids.
 
+import { useMemo, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
 import { getLanguages, getCategories, getCharacters, getGadgets, getRawEntry } from '@/lib/catalog.js';
 
@@ -92,7 +93,69 @@ export function IdListField({ label, ids = [], onChange, kind }) {
  *    carries a character instead of a version (each entry is itself a
  *    version). Rows keep no `version` key: legacy values are stripped the
  *    moment the list is edited so committed JSON matches the schema.
+ *
+ * With `withCharacter`, picking a character loads that character's known
+ * voice actors (from the Characters catalogue) as one-click suggestions for
+ * the name fields — typing anything else by hand stays fully supported.
  */
+function characterVoiceActorOptions(characterId) {
+  const character = characterId ? getCharacters().find((c) => c.id === characterId) : null;
+  const seen = new Set();
+  return (character?.voiceActors ?? [])
+    .filter((va) => {
+      const name = va?.name?.en ?? va?.name?.ja ?? null;
+      if (!name) return false;
+      const key = name.toLowerCase();
+      if (seen.has(key)) return false; // deduplicate across versions
+      seen.add(key);
+      return true;
+    })
+    .map((va) => ({
+      label: va.name.en ?? va.name.ja,
+      ja: va.name.ja ?? null,
+      version: va.version ?? null,
+    }));
+}
+
+function VoiceActorSuggest({ rowIndex, characterId, onPick }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const options = useMemo(() => characterVoiceActorOptions(characterId), [characterId]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  if (options.length === 0) return null; // no known actors: plain manual row
+
+  return (
+    <div className="va-suggest" ref={ref}>
+      <button type="button" className="btn btn--ghost btn--sm va-suggest__toggle"
+        aria-expanded={open} aria-haspopup="listbox"
+        onClick={() => setOpen((o) => !o)}
+        title="Known voice actors for this character">
+        <Icon name="user" size={13} /> Known
+      </button>
+      {open ? (
+        <div className="va-suggest__panel" role="listbox" aria-label={`Known voice actors for ${characterId}`}>
+          {options.map((o) => (
+            <button key={o.label} type="button" role="option" className="va-suggest__option"
+              onClick={() => { onPick(o); setOpen(false); }}>
+              <span className="va-suggest__name">{o.label}</span>
+              {o.ja && o.ja !== o.label ? <span className="va-suggest__ja" lang="ja">{o.ja}</span> : null}
+              {o.version ? <span className="va-suggest__version mono">{o.version}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <span className="sr-only">Voice actor {rowIndex} suggestions</span>
+    </div>
+  );
+}
+
 export function VoiceActorRows({ value = [], onChange, withCharacter = false }) {
   const clean = (rows) => rows.map((r) => {
     if (!withCharacter) return r;
@@ -121,9 +184,16 @@ export function VoiceActorRows({ value = [], onChange, withCharacter = false }) 
             <Icon name="chevronDown" size={16} className="select-wrap__chev" />
           </div>
           {withCharacter ? (
-            <input type="text" list="va-character-ids" placeholder="Character (e.g. char-nobita)" value={v.characterId ?? ''}
-              onChange={(e) => update(i, { characterId: e.target.value || null })}
-              aria-label={`Voice actor ${i + 1} character`} />
+            <>
+              <input type="text" list="va-character-ids" placeholder="Character (e.g. char-nobita)" value={v.characterId ?? ''}
+                onChange={(e) => update(i, { characterId: e.target.value || null })}
+                aria-label={`Voice actor ${i + 1} character`} />
+              <VoiceActorSuggest
+                rowIndex={i + 1}
+                characterId={v.characterId || null}
+                onPick={(o) => update(i, { name: { en: o.label, ja: o.ja } })}
+              />
+            </>
           ) : (
             <input type="text" placeholder="Version (e.g. 1979 anime)" value={v.version ?? ''} onChange={(e) => update(i, { version: e.target.value || null })} aria-label={`Voice actor ${i + 1} version`} />
           )}
@@ -154,7 +224,7 @@ export function ScreenshotRows({ value = [], onChange }) {
       {value.map((s, i) => (
         <div key={i} className="repeat-row">
           <input type="url" placeholder="https://…/screenshot.png" value={s.url ?? ''} onChange={(e) => update(i, { url: e.target.value || null })} aria-label={`Screenshot ${i + 1} URL`} />
-          <input type="text" placeholder="Alt text — what it shows" value={s.alt ?? ''} onChange={(e) => update(i, { alt: e.target.value || null })} aria-label={`Screenshot ${i + 1} alt text`} />
+          <input type="text" placeholder="Alt text: what it shows" value={s.alt ?? ''} onChange={(e) => update(i, { alt: e.target.value || null })} aria-label={`Screenshot ${i + 1} alt text`} />
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move screenshot ${i + 1} up`}><Icon name="chevronDown" size={15} className="is-flipped" /></button>
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => move(i, 1)} disabled={i === value.length - 1} aria-label={`Move screenshot ${i + 1} down`}><Icon name="chevronDown" size={15} /></button>
           <button type="button" className="btn btn--ghost btn--danger" onClick={() => remove(i)} aria-label={`Remove screenshot ${i + 1}`}><Icon name="trash" size={15} /></button>
@@ -339,7 +409,7 @@ export default function RecordEditor({ entityType, draft, setField }) {
         <RecordField label="Region" placeholder="e.g. Japan" value={draft.release?.region} onChange={(v) => setField('release.region', v)} />
         <SourceRows sources={draft.sources ?? []} onChange={(list) => setField('sources', list)} />
 
-        <h3 className="section-heading span-2">Segments <span className="muted small">({segments.length} — each holds one story)</span></h3>
+        <h3 className="section-heading span-2">Segments <span className="muted small">({segments.length}; each holds one story)</span></h3>
         <div className="span-2 segment-list">
           {segments.map((seg, i) => (
             <SegmentEditor key={seg.id ?? i} draft={draft} index={i} total={segments.length} setField={setField} />

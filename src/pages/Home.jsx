@@ -11,6 +11,12 @@ import { fetchPublicLog, fetchPublicEdits } from '@/lib/stats.js';
 import { useAuth } from '@/hooks/useAuth.jsx';
 import { SUBMISSION_EVENT, EDIT_EVENT, entryPath } from '@/lib/activity.js';
 import { DOOR_ART } from '@/config.js';
+import { randomMenuImage, randomSlogan } from '@/lib/menuContent.js';
+
+// Both picks are made once per page load, at module scope — a re-render can
+// never re-roll them, and every render of this session shows the same pair.
+const HERO_ART = randomMenuImage();
+const HERO_SLOGAN = randomSlogan();
 
 /* The homepage feed: the latest community contributions and staff edits,
    newest first, each linking to the page it changed. Falls back to the
@@ -110,6 +116,25 @@ function ArchiveRecentList() {
   );
 }
 
+/* The hero illustration. A picked image from the menu-images rotation, with
+   the standing door art as the fallback when the rotation is empty or the
+   file fails to load — the hero is never a broken-image icon. */
+function HeroArt({ src }) {
+  const [failed, setFailed] = useState(false);
+  const url = failed || !src ? DOOR_ART : src;
+  return (
+    <img
+      src={url}
+      alt=""
+      width="380"
+      height="611"
+      loading="eager"
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function Home() {
   useDocumentTitle();
   const stats = getArchiveStats();
@@ -122,7 +147,7 @@ export default function Home() {
         <PageContainer className="hero__inner">
           <div className="hero__copy">
             <p className="eyebrow">The Doraemon community archive</p>
-            <h1 className="hero__slogan">Every episode. Every movie. Every gadget.</h1>
+            <h1 className="hero__slogan">{HERO_SLOGAN}</h1>
             <p className="hero__lead">
               A free, open record of the Doraemon franchise, kept by the people who use it.
               {' '}{stats.episodes + stats.movies} entries and counting.
@@ -133,7 +158,10 @@ export default function Home() {
             </div>
           </div>
           <div className="hero__art" aria-hidden="true">
-            <img src={DOOR_ART} alt="" width="380" height="611" loading="eager" decoding="async" />
+            {/* The rotation from public/menu images/ when it has images; the
+                standing door artwork when it does not (empty rotation, or the
+                picked file fails to load). */}
+            <HeroArt src={HERO_ART} />
           </div>
         </PageContainer>
       </section>
