@@ -4,6 +4,7 @@ import MediaImage from '@/components/MediaImage.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
+import EntryAttribution from '@/components/EntryAttribution.jsx';
 import AppearanceLists from '@/components/AppearanceLists.jsx';
 import GadgetCard from '@/components/GadgetCard.jsx';
 import NotFound from './NotFound.jsx';
@@ -43,6 +44,7 @@ export default function GadgetDetails() {
       </section>
 
       <EntryActions entry={gadget} />
+      <EntryAttribution entryId={gadget.id} />
       <PageContributions entryId={gadget.id} />
 
       <AppearanceLists appearances={appearances} filterKey="gadget" id={gadget.id} />

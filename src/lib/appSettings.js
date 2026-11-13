@@ -53,6 +53,12 @@ export const APP_SETTINGS = {
     type: 'toggle',
     default: true,
   },
+  showDiscordButton: {
+    label: 'Discord button',
+    description: 'The Discord button linking to the community server.',
+    type: 'toggle',
+    default: true,
+  },
   // --- behaviour ---
   showSoonBadges: {
     label: '"Coming soon" badges',

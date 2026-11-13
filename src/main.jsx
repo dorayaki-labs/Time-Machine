@@ -16,6 +16,7 @@ import './styles/navigation.css';
 import './styles/cards.css';
 import './styles/pages.css';
 import './styles/settings.css';
+import './styles/community.css';
 import './styles/studio.css';
 import './styles/responsive.css';
 import './styles/backend.css';

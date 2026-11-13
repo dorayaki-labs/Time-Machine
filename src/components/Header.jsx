@@ -4,6 +4,8 @@ import Icon from './Icon.jsx';
 import MobileNavigation from './MobileNavigation.jsx';
 import CustomizeButton from './CustomizeButton.jsx';
 import AccountMenu from './AccountMenu.jsx';
+import NotificationsMenu from './NotificationsMenu.jsx';
+import DiscordMark, { DISCORD_INVITE_URL } from './DiscordMark.jsx';
 import { useSearchOverlay } from '@/hooks/SearchContext.jsx';
 import { useAppSettings } from '@/hooks/useAppSettings.jsx';
 import { orderedNavItems } from '@/lib/appSettings.js';
@@ -54,7 +56,14 @@ export default function Header() {
 
         <div className="header-actions">
           <AccountMenu />
+          <NotificationsMenu />
           {settings.showCustomizeButton ? <CustomizeButton /> : null}
+          {settings.showDiscordButton ? (
+            <a className="icon-btn discord-btn" href={DISCORD_INVITE_URL} target="_blank" rel="noopener noreferrer"
+              aria-label="Join our Discord" title="Join our Discord">
+              <DiscordMark size={19} />
+            </a>
+          ) : null}
           {settings.showLogButton ? (
             <Link to="/log" className="icon-btn log-btn" aria-label="Contribution log" title="Contribution log"><Icon name="archive" size={19} /></Link>
           ) : null}

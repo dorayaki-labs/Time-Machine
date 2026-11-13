@@ -19,6 +19,11 @@ export const fmtTime = (iso) => (iso
   ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
   : '—');
 
+/** Date-only display (profiles, attribution rows); "—" when unknown. */
+export const fmtDate = (iso) => (iso
+  ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  : '—');
+
 /** Detail-page route for an entry / character / gadget id, or null. */
 export const entryPath = (entryId) => {
   if (!entryId) return null;

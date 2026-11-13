@@ -88,8 +88,14 @@ export function makeDb(admin) {
         .limit(1).maybeSingle().then((r) => r.data),
 
     // ---- history + audit ---------------------------------------------------
-    insertStatusHistory: (row) => admin.from('contribution_status_history').insert(row),
+    insertStatusHistory: (row) => admin.from('contributions').insert(row),
     insertAudit: (row) => admin.from('audit_logs').insert(row),
+
+    // ---- in-app notifications (migration 0004; see _shared/notifications.js) -
+    /** Idempotent insert: a duplicate dedup_key is ignored, never an error. */
+    insertUserNotification: (row) =>
+      admin.from('notifications').upsert(row, { onConflict: 'dedup_key', ignoreDuplicates: true }),
+
 
     // ---- notification outbox ------------------------------------------------
     insert: (table, row) => admin.from(table).insert(row),

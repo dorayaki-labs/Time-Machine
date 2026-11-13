@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "validate": "node scripts/validate-catalog.js",
     "build:surge": "VITE_BASE_PATH=/ vite build && node scripts/make-spa-fallback.mjs",
-    "test:edge-logic": "node scripts/test-edge-logic.mjs"
+    "test:edge-logic": "node scripts/test-edge-logic.mjs",
+    "test:profile-stats": "node scripts/test-profile-stats.mjs"
   },
   "license": "MIT",
   "dependencies": {

@@ -15,6 +15,7 @@ import { authenticate, readJson } from '../auth.js';
 import { canReviewContribution, canEditContribution, isStaff } from '../rbac.js';
 import { applyArchivePatch } from '../patch.js';
 import { notify, flushOutbox, profileRef } from '../discord.js';
+import { notifyContributionStatus } from '../notifications.js';
 
 async function loadContribution(db, body) {
   if (body.contributionId) return db.contributionById(body.contributionId);
@@ -149,6 +150,7 @@ export async function handleReview(req, { db, authApi, env, webhooks, github }) 
       entity_type: entity?.type ?? null, entity_id: entity?.id ?? contribution.entry_id,
       changes, review_notes: reviewNotes, commit_sha: commitSha,
     });
+    await notifyContributionStatus(db, contribution, 'accepted');
     await notify(db, webhooks, `contribution.${contribution.id}.accepted`, 'accepted', {
       number: contribution.number, title: contribution.title,
       contributor: await contributorRef(db, contribution.contributor_id),
@@ -182,6 +184,7 @@ export async function handleReview(req, { db, authApi, env, webhooks, github }) 
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
       review_notes: reason,
     });
+    await notifyContributionStatus(db, contribution, 'declined');
     await notify(db, webhooks, `contribution.${contribution.id}.declined`, 'declined', {
       number: contribution.number, title: contribution.title,
       contributor: await contributorRef(db, contribution.contributor_id),
@@ -208,6 +211,9 @@ export async function handleReview(req, { db, authApi, env, webhooks, github }) 
       target_user_id: contribution.contributor_id, entity_id: contribution.entry_id,
       review_notes: reason,
     });
+    if (contribution.contributor_id !== profile.id) {
+      await notifyContributionStatus(db, contribution, 'deleted');
+    }
     await notify(db, webhooks, `contribution.${contribution.id}.deleted`, 'deleted', {
       number: contribution.number, title: contribution.title,
       contributor: await contributorRef(db, contribution.contributor_id),

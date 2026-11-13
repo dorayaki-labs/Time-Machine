@@ -109,7 +109,7 @@ export default function Settings() {
           <h2 id="settings-buttons-title"><Icon name="settings" size={15} /> Top bar buttons</h2>
         </header>
         <div className="settings-controls">
-          {['showSearchButton', 'showCustomizeButton', 'showLogButton', 'showSettingsButton', 'showSoonBadges'].map((key) => (
+          {['showSearchButton', 'showCustomizeButton', 'showLogButton', 'showSettingsButton', 'showDiscordButton', 'showSoonBadges'].map((key) => (
             <ToggleControl
               key={key}
               label={APP_SETTINGS[key].label}

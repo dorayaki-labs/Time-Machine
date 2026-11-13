@@ -9,6 +9,7 @@ import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
+import EntryAttribution from '@/components/EntryAttribution.jsx';
 import SegmentNav from '@/components/SegmentNav.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
 import NotFound from './NotFound.jsx';
@@ -164,7 +165,8 @@ export default function EpisodeDetails({ seriesId }) {
           support it rather than lead it. */}
       <div className="detail-controls">
         <EntryActions entry={entry} />
-        <PageContributions entryId={entry.id} />
+        <EntryAttribution entryId={entry.id} />
+      <PageContributions entryId={entry.id} />
       </div>
     </PageContainer>
   );

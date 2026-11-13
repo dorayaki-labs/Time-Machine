@@ -32,6 +32,7 @@ import Account from '@/pages/Account.jsx';
 import Staff from '@/pages/Staff.jsx';
 import OwnerPanel from '@/pages/OwnerPanel.jsx';
 import Play from '@/pages/Play.jsx';
+import PublicProfile from '@/pages/PublicProfile.jsx';
 import Settings from '@/pages/Settings.jsx';
 import BanBanner from '@/components/BanBanner.jsx';
 import DiscordPopup from '@/components/DiscordPopup.jsx';
@@ -115,6 +116,9 @@ function Routed() {
         <Route path="/account" element={<Account />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/owner" element={<OwnerPanel />} />
+        {/* Public contributor profiles: /<username>. Static routes above
+            always win over this dynamic one, so it can never shadow them. */}
+        <Route path="/:username" element={<PublicProfile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>

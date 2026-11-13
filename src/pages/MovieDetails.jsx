@@ -9,6 +9,7 @@ import MovieCard from '@/components/MovieCard.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
+import EntryAttribution from '@/components/EntryAttribution.jsx';
 import { CharactersSection, GadgetsSection, VoiceActorsSection, Completeness, PrevNext } from '@/components/EntrySections.jsx';
 import NotFound from './NotFound.jsx';
 import useDocumentTitle from '@/hooks/useDocumentTitle.js';
@@ -65,6 +66,7 @@ export default function MovieDetails() {
       </section>
 
       <EntryActions entry={entry} />
+      <EntryAttribution entryId={entry.id} />
       <PageContributions entryId={entry.id} />
 
       <div className="detail-columns detail-columns--after-film">

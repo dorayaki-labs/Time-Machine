@@ -4,6 +4,7 @@ import MediaImage from '@/components/MediaImage.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
 import EntryActions from '@/components/EntryActions.jsx';
 import PageContributions from '@/components/PageContributions.jsx';
+import EntryAttribution from '@/components/EntryAttribution.jsx';
 import AppearanceLists from '@/components/AppearanceLists.jsx';
 import GadgetCard from '@/components/GadgetCard.jsx';
 import NotFound from './NotFound.jsx';
@@ -42,6 +43,7 @@ export default function CharacterDetails() {
       </section>
 
       <EntryActions entry={character} />
+      <EntryAttribution entryId={character.id} />
       <PageContributions entryId={character.id} />
 
       <MetadataSection id="voice-actors" title="Voice actors">
