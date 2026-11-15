@@ -15,6 +15,7 @@ export default function MovieCard({ entry, large = false, showType = false }) {
       title={displayTitle(entry)}
       subtitle={secondaryTitle(entry)}
       badge={<span className="chip chip--mono">No. {entry.number}</span>}
+      glow
       className={large ? 'media-card--large' : ''}
     >
       <p className="media-card__meta">

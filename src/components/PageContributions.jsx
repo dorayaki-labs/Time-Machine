@@ -18,12 +18,12 @@ const PAGE_LIMIT = 60;
 async function fetchPageActivity(entryId) {
   const [subs, edits] = await Promise.all([
     supabase.from('public_log')
-      .select('number, title, type, entry_id, status, submitted_at, reviewed_at, contributor_name, contributor_avatar, reviewer_name, reviewer_avatar')
+      .select('number, title, type, entry_id, status, submitted_at, reviewed_at, contributor_name, contributor_username, contributor_avatar, reviewer_name, reviewer_avatar')
       .eq('entry_id', entryId)
       .order('submitted_at', { ascending: false })
       .limit(PAGE_LIMIT),
     supabase.from('public_edits')
-      .select('id, action, entity_type, entity_id, commit_sha, created_at, editor_name, editor_avatar')
+      .select('id, action, entity_type, entity_id, commit_sha, created_at, editor_name, editor_username, editor_avatar')
       .eq('entity_id', entryId)
       .order('created_at', { ascending: false })
       .limit(PAGE_LIMIT),
@@ -117,7 +117,9 @@ export default function PageContributions({ entryId }) {
                 />
                 <div className="activity-item__body">
                   <p className="activity-item__line">
-                    <strong>{event.row.contributor?.name ?? event.row.reviewer?.name ?? 'A community member'}</strong>
+                    {event.row.contributor?.username
+                      ? <Link className="activity-who" to={`/account/${event.row.contributor.username}`}><strong>{event.row.contributor?.name ?? 'A community member'}</strong></Link>
+                      : <strong>{event.row.contributor?.name ?? event.row.reviewer?.name ?? 'A community member'}</strong>}
                     <PageEventChip view={event.row} />
                     {event.row.number ? <span className="activity-item__title">#{event.row.number} · {event.row.title}</span> : null}
                   </p>

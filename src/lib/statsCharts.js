@@ -45,37 +45,6 @@ export function entriesByYear(entries) {
     .map(([year, count]) => ({ label: String(year), value: count }));
 }
 
-/** Histogram of segments per episode: one entry, one bucket. */
-export function segmentsHistogram(entries) {
-  const counts = new Map();
-  for (const entry of entries ?? []) {
-    if (entry.kind === 'movie') continue; // movies have no segments by shape
-    const n = Array.isArray(entry.segments) ? entry.segments.length : null;
-    if (!n || n < 1) continue; // unknown segment count is absent, not zero
-    const bucket = Math.min(n, 4);
-    const label = bucket === 4 ? '4+' : String(bucket);
-    counts.set(label, (counts.get(label) ?? 0) + 1);
-  }
-  return ['1', '2', '3', '4+']
-    .filter((label) => counts.has(label))
-    .map((label) => ({ label: `${label} segment${label === '1' ? '' : 's'}`, value: counts.get(label) }));
-}
-
-/** Histogram of distinct characters referenced per entry. */
-export function characterLoadHistogram(entries) {
-  const counts = new Map();
-  for (const entry of entries ?? []) {
-    const n = new Set(entry.characters ?? []).size;
-    if (!n) continue; // no documented characters: absent, not zero
-    const bucket = Math.min(n, 5);
-    const label = bucket === 5 ? '5+' : String(bucket);
-    counts.set(label, (counts.get(label) ?? 0) + 1);
-  }
-  return ['1', '2', '3', '4', '5+']
-    .filter((label) => counts.has(label))
-    .map((label) => ({ label: `${label} character${label === '1' ? '' : 's'}`, value: counts.get(label) }));
-}
-
 /**
  * Appearance ranking over a set of entries. `records` is the catalog array
  * ([{ id, name }]), `refKey` the entry field that references them
@@ -103,32 +72,6 @@ export function usageRanking(entries, records = [], refKey = 'characters') {
     .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
 }
 
-/**
- * Most common character pairings: the top co-appearances across entries.
- * Each entry votes once per pair it references. `characters` is the catalog
- * array, passed in explicitly (see usageRanking).
- */
-export function characterCombos(entries, characters = [], { limit = 6 } = {}) {
-  const catalog = characters;
-  const names = new Map(catalog.map((c) => [c.id, c.name?.en ?? c.name?.ja ?? c.id]));
-  const counts = new Map();
-  for (const entry of entries ?? []) {
-    const refs = [...new Set(entry.characters ?? [])].sort();
-    for (let i = 0; i < refs.length; i += 1) {
-      for (let j = i + 1; j < refs.length; j += 1) {
-        const key = `${refs[i]}+${refs[j]}`;
-        counts.set(key, (counts.get(key) ?? 0) + 1);
-      }
-    }
-  }
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([key, value]) => {
-      const [a, b] = key.split('+');
-      return { id: key, label: `${names.get(a) ?? a} + ${names.get(b) ?? b}`, value };
-    });
-}
 
 /** Community tallies from public_log rows (public activity feed shape). */
 export function communityStats(rows) {
@@ -152,22 +95,23 @@ export function communityStats(rows) {
   };
 }
 
-/** Submissions per month for the last `months` months, oldest first. */
-export function monthlyActivity(rows, { months = 12, today = new Date() } = {}) {
-  const buckets = [];
-  for (let i = months - 1; i >= 0; i -= 1) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    buckets.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }), value: 0 });
-  }
-  const index = new Map(buckets.map((b, i) => [b.key, i]));
+/** Submissions per year, from the community's first contribution to the
+ *  latest — one bar per year, no trailing/leading empty years invented. */
+export function yearlyActivity(rows) {
+  const counts = new Map();
   for (const row of rows ?? []) {
     const at = row?.submitted_at;
     if (!at) continue;
-    const d = new Date(at);
-    if (Number.isNaN(d.getTime())) continue;
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const i = index.get(key);
-    if (i !== undefined) buckets[i].value += 1;
+    const year = Number(String(at).slice(0, 4));
+    if (!year || Number.isNaN(year)) continue; // unknown year: absent, not zero
+    counts.set(year, (counts.get(year) ?? 0) + 1);
+  }
+  if (!counts.size) return [];
+  const first = Math.min(...counts.keys());
+  const last = Math.max(...counts.keys());
+  const buckets = [];
+  for (let year = first; year <= last; year += 1) {
+    buckets.push({ label: String(year), value: counts.get(year) ?? 0 });
   }
   return buckets;
 }

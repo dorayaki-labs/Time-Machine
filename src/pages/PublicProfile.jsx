@@ -4,9 +4,10 @@
 // activity calendar and their contribution history with statuses. Private
 // things (review reasons, payloads, drafts) stay behind the sign-in.
 //
-// Route safety: React Router ranks static routes above this dynamic one, so
-// /movies & co. always win; a curated reserved list below renders NotFound
-// early so a username can never squat a known path (present or future).
+// Route safety: profiles live under the dedicated /account/ prefix, so an
+// archive path can never be mistaken for a username and vice versa. The
+// reserved list below stays as a second guard (it also blocks /account/…
+// slugs that should never resolve, like "signin").
 
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';

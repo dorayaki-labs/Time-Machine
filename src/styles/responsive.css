@@ -14,6 +14,9 @@
    (Settings and Customise at the foot, the log in the page list), so nothing
    is lost — and the row keeps room for the notifications bell and the
    Discord button that have no drawer equivalent. */
+@media (max-width: 720px) {
+  .form-picker { grid-template-columns: 1fr; }
+}
 @media (max-width: 600px) {
   .header-actions .log-btn,
   .header-actions .settings-btn,

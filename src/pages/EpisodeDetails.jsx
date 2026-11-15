@@ -4,6 +4,7 @@ import PageContainer from '@/components/PageContainer.jsx';
 import LoadingState from '@/components/LoadingState.jsx';
 import StatusIndicator from '@/components/StatusIndicator.jsx';
 import MediaImage from '@/components/MediaImage.jsx';
+import AmbientPoster from '@/components/AmbientPoster.jsx';
 import SourceList from '@/components/SourceList.jsx';
 import Gallery from '@/components/Gallery.jsx';
 import MetadataSection, { FactList } from '@/components/MetadataSection.jsx';
@@ -111,9 +112,13 @@ export default function EpisodeDetails({ seriesId }) {
           stretches to the info column's height (fill mode) — no dead space
           under the image. */}
       <div className="detail-columns detail-columns--record">
+        {/* AmbientPoster: the artwork's own edge colours bleed out from
+            behind the frame (see components/AmbientPoster.jsx). */}
         <div className="detail-columns__media">
-          <MediaImage kind="episode" seed={segment?.id ?? record.id} src={display.image?.url ?? null} alt={display.image?.alt ?? ''}
-            label={`EP ${pad(record.number)}`} priority fill />
+          <AmbientPoster src={display.image?.url ?? null}>
+            <MediaImage kind="episode" seed={segment?.id ?? record.id} src={display.image?.url ?? null} alt={display.image?.alt ?? ''}
+              label={`EP ${pad(record.number)}`} priority fill />
+          </AmbientPoster>
         </div>
         <MetadataSection id="info" title="Episode information" className="detail-columns__info">
           <FactList items={[

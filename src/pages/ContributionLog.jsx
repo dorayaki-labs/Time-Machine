@@ -112,7 +112,9 @@ export default function ContributionLog() {
                       <Avatar name={row.edit.editor_name} url={row.edit.editor_avatar} size={34} />
                       <div className="activity-item__body">
                         <p className="activity-item__line">
-                          <strong>{row.edit.editor_name ?? 'A staff member'}</strong>
+                          {row.edit.editor_username
+                            ? <Link className="activity-who" to={`/account/${row.edit.editor_username}`}><strong>{row.edit.editor_name ?? 'A staff member'}</strong></Link>
+                            : <strong>{row.edit.editor_name ?? 'A staff member'}</strong>}
                           <span className={`activity-chip activity-chip--${meta.tone}`}>
                             <Icon name={meta.icon} size={12} /> {meta.label}
                           </span>
@@ -136,7 +138,9 @@ export default function ContributionLog() {
                     <Avatar name={sub.contributor_name} url={sub.contributor_avatar} size={34} />
                     <div className="activity-item__body">
                       <p className="activity-item__line">
-                        <strong>{sub.contributor_name ?? 'A community member'}</strong>
+                        {sub.contributor_username
+                          ? <Link className="activity-who" to={`/account/${sub.contributor_username}`}><strong>{sub.contributor_name ?? 'A community member'}</strong></Link>
+                          : <strong>{sub.contributor_name ?? 'A community member'}</strong>}
                         <span className={`activity-chip activity-chip--${meta.tone}`}>
                           <Icon name={meta.icon} size={12} /> {meta.label}
                         </span>

@@ -91,6 +91,20 @@ export function ChangesTable({ changes, emptyText = 'No field-level changes reco
  *   reviewReason?, commitSha?, payload?, payloadEdited?, proposedPatch?,
  *   action? (edits) }
  */
+/** A person with their avatar, linking to their public profile when they
+ *  have one. Used for contributors and reviewers — the modal, the log and the
+ *  per-page activity boxes all name people this way now. */
+function WhoLink({ who }) {
+  const inner = (
+    <>
+      <Avatar name={who.name} url={who.avatar} size={24} /> {who.name}
+    </>
+  );
+  return who.username
+    ? <Link className="contribution-modal__who" to={`/account/${who.username}`}>{inner}</Link>
+    : <span className="contribution-modal__who">{inner}</span>;
+}
+
 export default function ContributionModal({ row, onClose, fullscreen = true, children }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -129,10 +143,10 @@ export default function ContributionModal({ row, onClose, fullscreen = true, chi
             {row.kind === 'edit' ? <div className="row"><dt>Action</dt><dd>{String(row.action ?? '').replace(/[._]/g, ' ')}</dd></div> : null}
             {row.status ? <div className="row"><dt>Status</dt><dd>{STATUS_LABELS[row.status] ?? row.status}</dd></div> : null}
             {row.contributor ? (
-              <div className="row"><dt>Contributor</dt><dd className="contribution-modal__who"><Avatar name={row.contributor.name} url={row.contributor.avatar} size={24} /> {row.contributor.name}</dd></div>
+              <div className="row"><dt>Contributor</dt><dd><WhoLink who={row.contributor} /></dd></div>
             ) : null}
             {row.reviewer ? (
-              <div className="row"><dt>{row.status === 'accepted' ? 'Accepted by' : 'Reviewed by'}</dt><dd className="contribution-modal__who"><Avatar name={row.reviewer.name} url={row.reviewer.avatar} size={24} /> {row.reviewer.name}</dd></div>
+              <div className="row"><dt>{row.status === 'accepted' ? 'Accepted by' : 'Reviewed by'}</dt><dd><WhoLink who={row.reviewer} /></dd></div>
             ) : null}
             {row.entryId ? (
               <div className="row"><dt>Entry</dt><dd>{path ? <Link className="mono" to={path}>{row.entryId} →</Link> : <span className="mono">{row.entryId}</span>}</dd></div>
@@ -183,10 +197,10 @@ export const submissionView = (sub) => ({
   status: sub.status,
   entryId: sub.entry_id,
   contributor: sub.contributor_name || sub.profiles?.display_name
-    ? { name: sub.contributor_name ?? sub.profiles?.display_name, avatar: sub.contributor_avatar ?? sub.profiles?.avatar_url }
+    ? { name: sub.contributor_name ?? sub.profiles?.display_name, avatar: sub.contributor_avatar ?? sub.profiles?.avatar_url, username: sub.contributor_username ?? sub.profiles?.username ?? null }
     : null,
   reviewer: sub.reviewer_name || sub.reviewer_profile?.display_name
-    ? { name: sub.reviewer_name ?? sub.reviewer_profile?.display_name, avatar: sub.reviewer_avatar ?? sub.reviewer_profile?.avatar_url }
+    ? { name: sub.reviewer_name ?? sub.reviewer_profile?.display_name, avatar: sub.reviewer_avatar ?? sub.reviewer_profile?.avatar_url, username: sub.reviewer_username ?? sub.reviewer_profile?.username ?? null }
     : null,
   submittedAt: sub.submitted_at ?? sub.created_at,
   reviewedAt: sub.reviewed_at,
@@ -202,7 +216,7 @@ export const editView = (edit) => ({
   title: `${edit.entity_type} ${edit.entity_id}`,
   action: edit.action,
   entryId: edit.entity_id,
-  contributor: edit.editor_name ? { name: edit.editor_name, avatar: edit.editor_avatar } : null,
+  contributor: edit.editor_name ? { name: edit.editor_name, avatar: edit.editor_avatar, username: edit.editor_username ?? null } : null,
   at: edit.created_at,
   commitSha: edit.commit_sha,
 });

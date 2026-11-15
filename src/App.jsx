@@ -116,9 +116,11 @@ function Routed() {
         <Route path="/account" element={<Account />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/owner" element={<OwnerPanel />} />
-        {/* Public contributor profiles: /<username>. Static routes above
-            always win over this dynamic one, so it can never shadow them. */}
-        <Route path="/:username" element={<PublicProfile />} />
+        {/* Public contributor profiles live under /account/<username> — a
+            dedicated prefix that can never shadow or be shadowed by any
+            archive route (past, present or future), and never hijacks the
+            404. /account itself stays the signed-in user's own profile. */}
+        <Route path="/account/:username" element={<PublicProfile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>

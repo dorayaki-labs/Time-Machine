@@ -31,6 +31,16 @@ export default function Gallery({ screenshots = [], title }) {
     return () => window.removeEventListener('keydown', onKey);
   }); // no dependency array on purpose: count/lightbox stay current
 
+  // While the lightbox is open the page behind it must not scroll: the
+  // overlay itself is fixed and centred, so a locked background is exactly
+  // the expected behaviour. (The modal component does the same thing.)
+  useEffect(() => {
+    if (lightbox === null) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [lightbox]);
+
   if (!count) return null;
   const current = usable[Math.min(active, count - 1)];
   const src = current.url || current.data;

@@ -20,8 +20,7 @@ import useDocumentTitle from '@/hooks/useDocumentTitle.js';
 import { getAllEntries, getEntries, getCharacters, getGadgets, SERIES, SERIES_IDS, HISTORICAL_IDS } from '@/lib/catalog.js';
 import { fetchPublicLog } from '@/lib/stats.js';
 import {
-  archiveCategoryStats, entriesByYear, segmentsHistogram, characterLoadHistogram,
-  usageRanking, characterCombos, communityStats, monthlyActivity,
+  archiveCategoryStats, entriesByYear, usageRanking, communityStats, yearlyActivity,
 } from '@/lib/statsCharts.js';
 
 // Chart colours are theme tokens (custom themes stay legible); the series
@@ -134,10 +133,7 @@ export default function Statistics() {
   const characterRanking = useMemo(() => usageRanking(entries, getCharacters(), 'characters'), [entries]);
   const gadgetRanking = useMemo(() => usageRanking(entries, getGadgets(), 'gadgets'), [entries]);
   const yearBars = useMemo(() => entriesByYear(entries), [entries]);
-  const segmentBars = useMemo(() => segmentsHistogram(entries), [entries]);
-  const charLoadBars = useMemo(() => characterLoadHistogram(entries), [entries]);
-  const combos = useMemo(() => characterCombos(entries, getCharacters()), [entries]);
-  const monthly = useMemo(() => monthlyActivity(logRows ?? []), [logRows]);
+  const yearly = useMemo(() => yearlyActivity(logRows ?? []), [logRows]);
 
   const distributionSlices = useMemo(() => SERIES_IDS.map((id) => ({
     label: SERIES[id].label,
@@ -217,16 +213,6 @@ export default function Statistics() {
             <BarChart bars={[...characterRanking].reverse().slice(0, 5).map((r) => ({ id: r.id, label: r.name, value: r.value, href: `/characters/${r.id}` }))} />
           </ChartCard>
         ) : null}
-        {combos.length ? (
-          <ChartCard title="Most common pairings" note="How often two characters are documented in the same entry.">
-            <BarChart bars={combos} />
-          </ChartCard>
-        ) : null}
-        {!isMovies ? (
-          <ChartCard title="Characters per entry" note="How many distinct characters each entry documents.">
-            <BarChart bars={charLoadBars} />
-          </ChartCard>
-        ) : null}
       </div>
 
       <h2 className="section-heading">Gadgets</h2>
@@ -237,11 +223,6 @@ export default function Statistics() {
         {gadgetRanking.length > 3 ? (
           <ChartCard title="Least used" note="Among gadgets that appear at least once.">
             <BarChart bars={[...gadgetRanking].reverse().slice(0, 5).map((r) => ({ id: r.id, label: r.name, value: r.value, href: `/gadgets/${r.id}` }))} />
-          </ChartCard>
-        ) : null}
-        {!isMovies ? (
-          <ChartCard title="Segments per episode" note="Episodes by how many segments they carry; movies have none by shape.">
-            <BarChart bars={segmentBars} />
           </ChartCard>
         ) : null}
       </div>
@@ -261,10 +242,10 @@ export default function Statistics() {
             <DonutChart slices={communitySlices} unit="" center={{ value: community.byStatus.accepted.toLocaleString(), label: 'accepted' }} />
           </ChartCard>
           <ChartCard title="Most active contributors" note="Contributors by accepted, published contributions.">
-            <BarChart bars={community.topContributors.map((r) => ({ id: r.username, label: r.name ?? r.username, value: r.value, href: `/${r.username}` }))} />
+            <BarChart bars={community.topContributors.map((r) => ({ id: r.username, label: r.name ?? r.username, value: r.value, href: `/account/${r.username}` }))} />
           </ChartCard>
-          <ChartCard title="Contributions over time" note="Submissions per month, the last 12 months.">
-            <BarChart bars={monthly} />
+          <ChartCard title="Contributions over time" note="Submissions per year, from the community's first contribution to the latest.">
+            <BarChart bars={yearly} />
           </ChartCard>
           {category === 'all' ? (
             <ChartCard title="Contributions by series" note="Where the community's work landed, by the entry's series.">

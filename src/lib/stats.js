@@ -57,7 +57,7 @@ export async function fetchMyContributions() {
   if (!ids.length) return rows;
   const { data: people, error: peopleError } = await supabase
     .from('profiles')
-    .select('id, display_name, avatar_url')
+    .select('id, display_name, avatar_url, username')
     .in('id', ids);
   if (peopleError) throw new Error(peopleError.message);
   const byId = new Map((people ?? []).map((p) => [p.id, p]));

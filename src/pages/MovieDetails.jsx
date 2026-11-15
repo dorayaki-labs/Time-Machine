@@ -3,6 +3,7 @@ import PageContainer from '@/components/PageContainer.jsx';
 import LoadingState from '@/components/LoadingState.jsx';
 import StatusIndicator from '@/components/StatusIndicator.jsx';
 import MediaImage from '@/components/MediaImage.jsx';
+import AmbientPoster from '@/components/AmbientPoster.jsx';
 import SourceList from '@/components/SourceList.jsx';
 import Gallery from '@/components/Gallery.jsx';
 import MovieCard from '@/components/MovieCard.jsx';
@@ -43,7 +44,9 @@ export default function MovieDetails() {
 
       <section className="film-record" aria-label="Movie record">
         <div className="film-record__poster">
-          <MediaImage kind="movie" seed={record.id} src={record.image?.url ?? null} alt={record.image?.alt ?? ''} label={`No. ${record.number}`} priority />
+          <AmbientPoster src={record.image?.url ?? null}>
+            <MediaImage kind="movie" seed={record.id} src={record.image?.url ?? null} alt={record.image?.alt ?? ''} label={`No. ${record.number}`} priority />
+          </AmbientPoster>
         </div>
         <div className="film-record__main">
           <p className="eyebrow">Movie No. {record.number} in release order</p>

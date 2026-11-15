@@ -12,6 +12,7 @@ export default function CharacterCard({ character, compact = false }) {
       label={character.name.en.charAt(0)}
       title={character.name.en}
       subtitle={character.name.ja && character.name.ja !== character.name.en ? character.name.ja : null}
+      glow
       className={compact ? 'media-card--compact' : ''}
     >
       {!compact && character.description ? <p className="media-card__desc">{character.description}</p> : null}

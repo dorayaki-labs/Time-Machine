@@ -115,7 +115,12 @@ button { font: inherit; color: inherit; }
   from { opacity: 0; transform: translatey(14px); }
   to { opacity: 1; transform: none; }
 }
-.site-main { animation: page-in 0.26s var(--ease) both; }
+.site-main { animation: page-in 0.26s var(--ease) backwards; }
+/* page-in must NOT keep its fill state: a retained transform on .site-main
+   would become the containing block for every position: fixed descendant
+   (modals, lightboxes, dropdown panels), pinning them to the page instead
+   of the viewport — the "dialog opens far down the page" bug. `backwards`
+   keeps the enter animation and clears the transform when it ends. */
 
 @keyframes rise-in {
   from { opacity: 0; transform: translatey(18px); }
@@ -374,13 +379,20 @@ button { font: inherit; color: inherit; }
 /* ---------- modal (edit dialog) ---------- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 90;
-  display: grid; place-items: center; padding: var(--s-4);
+  /* margin-top auto/centre: the dialog is ALWAYS centred in the viewport,
+     and when it is taller than the viewport the overlay scrolls to reach
+     its top and bottom — instead of the old place-items: center, which
+     pinned a tall dialog's top out of reach above the fold. */
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center;
+  padding: var(--s-4);
   background: var(--overlay-tint);
   animation: fade-in 0.15s var(--ease) both;
   overflow-y: auto;
 }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .modal {
+  flex: none;
   width: min(880px, 100%); max-height: min(86vh, 100%);
   display: flex; flex-direction: column;
   background: var(--surface); border: 1px solid var(--border-strong);

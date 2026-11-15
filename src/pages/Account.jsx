@@ -168,7 +168,8 @@ export default function Account() {
   const tally = tallyContributions(rows ?? []);
   const activity = activityByDay(rows ?? []);
   const name = profile?.display_name ?? 'Member';
-  const publicPath = profile?.username ? `/${profile.username}` : null;
+  // Public profiles live at /account/<username> (see PublicProfile).
+  const publicPath = profile?.username ? `/account/${profile.username}` : null;
   const publicUrl = publicPath ? `${window.location.origin}${publicPath}` : null;
 
   const copyPublicUrl = async () => {
@@ -199,9 +200,7 @@ export default function Account() {
             {name}
             <RoleBadge role={profile?.role} showMember />
           </h1>
-          <p className="profile-header__handle mono">
-            {profile?.username ? `@${profile.username}` : <span className="muted">@username will appear after your next Discord sign-in</span>}
-          </p>
+          <p className="profile-header__handle mono">@{profile?.username ?? 'member'}</p>
           <p className="profile-header__meta muted">
             <Icon name="clock" size={13} /> Member since {fmtDate(profile?.created_at)}
             {profile?.role === 'owner' ? ' · owner of the archive' : ''}

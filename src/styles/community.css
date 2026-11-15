@@ -39,7 +39,8 @@
   background: var(--surface); border: 1px solid var(--border-strong);
   border-radius: var(--r-md); box-shadow: var(--shadow-soft);
   padding: var(--s-2) 0 0;
-  animation: panel-in 0.16s var(--ease) both;
+  animation: notifications-in 0.18s var(--ease) both;
+  transform-origin: top right;
 }
 .notifications__head {
   display: flex; align-items: center; justify-content: space-between;
@@ -136,6 +137,31 @@
 .contrib-calendar__legend { display: inline-flex; align-items: center; gap: 4px; justify-self: end; }
 .contrib-calendar__legend .contrib-calendar__cell { width: 12px; aspect-ratio: 1; }
 
+/* ---------- ambient poster glow ---------- */
+/* Two soft washes of the artwork's own edge colours bleeding out from
+   behind the frame (sampled per image by AmbientPoster.jsx into
+   --glow-left / --glow-right). Purely decorative: aria-hidden wrapper,
+   zero pointer events, and it follows the studio's card-glow toggle. */
+.ambient-poster { position: relative; z-index: 0; }
+.ambient-poster::before,
+.ambient-poster::after {
+  content: ''; position: absolute; z-index: -1; top: 4%; bottom: 4%;
+  width: 90px; border-radius: 999px;
+  pointer-events: none;
+  filter: blur(34px);
+  background: var(--glow-left, transparent);
+}
+.ambient-poster::before { left: -26px; }
+.ambient-poster::after { right: -26px; background: var(--glow-right, transparent); }
+:root[data-card-glow='off'] .ambient-poster::before,
+:root[data-card-glow='off'] .ambient-poster::after { content: none; }
+
+/* Names in the activity feeds link to public profiles: they keep the bold
+   look and only hint at being links on hover. */
+.activity-who { color: inherit; text-decoration: none; }
+.activity-who:hover { color: var(--accent); }
+.activity-who:hover strong { color: inherit; }
+
 /* ---------- entry attribution ---------- */
 .attribution {
   display: flex; align-items: flex-start; gap: 10px;
@@ -229,17 +255,24 @@ a.barchart__link:hover .barchart__label { color: var(--accent); }
 .stats-footnote { display: flex; gap: 8px; align-items: flex-start; max-width: 78ch; }
 .stats-footnote .icon { color: var(--text-3); flex: none; margin-top: 2px; }
 
+@keyframes notifications-in {
+  from { opacity: 0; transform: translateY(-7px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* ---------- motion preferences ---------- */
 /* The studio's motion setting and the OS preference both turn chart and
    panel animations off; the calendar and progress bars are static shapes
    and need no rule. */
 @media (prefers-reduced-motion: reduce) {
-  .donut__slice, .barchart__fill, .stats-progress__bar span, .notifications__panel { transition: none; animation: none; }
+  .donut__slice, .barchart__fill, .stats-progress__bar span { transition: none; }
+  .notifications__panel { animation: none; }
 }
 :root[data-motion='none'] .donut__slice,
 :root[data-motion='none'] .barchart__fill,
-:root[data-motion='none'] .stats-progress__bar span,
-:root[data-motion='none'] .notifications__panel { transition: none; animation: none; }
+:root[data-motion='none'] .stats-progress__bar span { transition: none; }
+:root[data-motion='none'] .notifications__panel,
+:root[data-motion='subtle'] .notifications__panel { animation: none; }
 :root[data-motion='subtle'] .donut__slice,
 :root[data-motion='subtle'] .barchart__fill,
 :root[data-motion='subtle'] .stats-progress__bar span { transition-duration: 0.25s; }

@@ -4,7 +4,7 @@
 // (RLS, notification generation) are verified in DEPLOYMENT.md checklists.
 
 import { tallyContributions, activityByDay, activityLevel, monthGrid, monthAnchor, monthsAway, dayKey } from '../src/lib/profileStats.js';
-import { archiveCategoryStats, entriesByYear, segmentsHistogram, characterLoadHistogram, usageRanking, characterCombos, communityStats, monthlyActivity } from '../src/lib/statsCharts.js';
+import { archiveCategoryStats, entriesByYear, usageRanking, communityStats, yearlyActivity } from '../src/lib/statsCharts.js';
 import { attributionFor } from '../src/lib/attribution.js';
 
 let failed = 0;
@@ -74,19 +74,6 @@ const check = (label, ok, detail = '') => {
   check('entriesByYear: 2005 and 2007 only, missing date skipped',
     years.length === 2 && years[0].label === '2005' && years[0].value === 2 && years[1].value === 1);
 
-  const segs = segmentsHistogram(entries);
-  check('segmentsHistogram: movies excluded, 1-seg and 2-seg buckets',
-    segs.some((s) => s.label === '1 segment' && s.value === 1) && segs.some((s) => s.label === '2 segments' && s.value === 1)
-    && segs.length === 2, JSON.stringify(segs));
-
-  const load = characterLoadHistogram(entries);
-  check('characterLoadHistogram: dedupes repeated refs (["a","b","a"] = 2 characters)',
-    load.find((l) => l.label === '2 characters')?.value === 2, JSON.stringify(load));
-  check('characterLoadHistogram: exactly one entry with 1 distinct character',
-    load.find((l) => l.label === '1 character')?.value === 1, JSON.stringify(load));
-  check('characterLoadHistogram: zero-character entries absent, not zeroed',
-    !load.some((l) => l.label.startsWith('0')), JSON.stringify(load));
-
   const people = [
     { id: 'a', name: { en: 'A' } },
     { id: 'b', name: { en: 'B' } },
@@ -102,10 +89,6 @@ const check = (label, ok, detail = '') => {
   const gadgets = usageRanking(entries, [{ id: 'x', name: { en: 'X' } }, { id: 'y', name: { en: 'Y' } }], 'gadgets');
   check('usageRanking: gadgets field used for the gadgets refKey',
     gadgets.length === 2 && gadgets[0]?.id === 'x' && gadgets[0]?.value === 2, JSON.stringify(gadgets));
-
-  const combos = characterCombos(entries, people);
-  check('characterCombos: a+b pair counted once per entry (2)',
-    combos.length === 1 && combos[0].value === 2, JSON.stringify(combos));
 
   const logRows = [
     { status: 'accepted', entry_series: 'anime-2005', contributor_username: 'piesimp', contributor_name: 'Piesimp', submitted_at: '2026-02-01T10:00:00Z' },
@@ -123,12 +106,19 @@ const check = (label, ok, detail = '') => {
     community.topContributors[0]?.username === 'piesimp' && community.topContributors[0]?.value === 2
     && !community.topContributors.some((c) => c.username === 'newbie'));
 
-  const today = new Date(2026, 2, 15); // March 2026
-  const monthly = monthlyActivity(logRows, { months: 3, today });
-  check('monthlyActivity: 3 buckets oldest first',
-    monthly.length === 3 && monthly[0].label !== monthly[2].label);
-  check('monthlyActivity: Feb 2026 has 3, Jan 2026 has 1, Mar 2026 has 0',
-    monthly[1].value === 3 && monthly[0].value === 1 && monthly[2].value === 0, JSON.stringify(monthly));
+  const yearRows = [
+    ...logRows,
+    { status: 'accepted', submitted_at: '2024-05-05T00:00:00Z', contributor_username: 'old', contributor_name: 'Old' },
+    { status: 'accepted', submitted_at: '2024-08-08T00:00:00Z', contributor_username: 'old', contributor_name: 'Old' },
+  ];
+  const yearly = yearlyActivity(yearRows);
+  check('yearlyActivity: one bar per year, first to latest, no invented edges',
+    yearly.length === 3 && yearly[0].label === '2024' && yearly[1].label === '2025' && yearly[2].label === '2026',
+    JSON.stringify(yearly));
+  check('yearlyActivity: counts per year (2024=2, 2026=4)',
+    yearly[0].value === 2 && yearly[2].value === 4, JSON.stringify(yearly));
+  check('yearlyActivity: empty input, empty chart',
+    yearlyActivity([]).length === 0);
 }
 
 // ---------- attribution ----------

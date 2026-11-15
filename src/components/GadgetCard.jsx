@@ -11,6 +11,7 @@ export default function GadgetCard({ gadget, compact = false }) {
       label="G"
       title={gadget.name.en}
       subtitle={gadget.name.ja && gadget.name.ja !== gadget.name.en ? gadget.name.ja : null}
+      glow
       className={compact ? 'media-card--compact' : ''}
     >
       {!compact && gadget.description ? <p className="media-card__desc">{gadget.description}</p> : null}

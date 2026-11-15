@@ -28,7 +28,7 @@ function AttributionPerson({ who, when, children }) {
       {children}
       {' '}
       {who.username
-        ? <Link className="attribution__who" to={`/${who.username}`}><Avatar name={who.name} url={who.avatar} size={18} /> {who.name}</Link>
+        ? <Link className="attribution__who" to={`/account/${who.username}`}><Avatar name={who.name} url={who.avatar} size={18} /> {who.name}</Link>
         : <span className="attribution__who"><Avatar name={who.name} url={who.avatar} size={18} /> {who.name}</span>}
       {when ? <span className="attribution__when muted small"> · {fmtDate(when)}</span> : null}
     </span>

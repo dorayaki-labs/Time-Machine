@@ -346,7 +346,12 @@
 .step h3 { margin: 0 0 3px; font-size: 0.98rem; }
 .step p { margin: 0; color: var(--text-2); font-size: 0.9rem; }
 
-.form-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-2); margin-bottom: var(--s-4); }
+.form-picker {
+  /* Two forms per row — a scannable two-column list instead of a squeezed
+     auto-fit row of narrow cards. Phones fall back to one column. */
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
 .form-picker__item {
   display: flex; align-items: center; gap: var(--s-3); width: 100%; text-align: left;
   padding: var(--s-3) var(--s-4);
