@@ -201,7 +201,7 @@
     },
     {
       "type": "direct",
-      "data": "https://embed.settlar.io/embed/v1?t=2.stIhkDQDcbGb-KxucJkuA47xGmvlwqeKc-RYxzUJRwsQ-YFlO6GXPyLxqZjS9M44HIC_fylQ2quOnPzcnpAzYM3pAzJUsQyS4raMEioIzkAsow8ufiQCnfZKrfX_W9IX9-7pqjHJNj2OpuYfD7vlWk1BKz6Xd8Piw_JnZIEHlNX630MDgozjqu9Bx2SO43oM5IOVaXuulcf9UAdP_0nr7TauQV8tcxFjHpJpPkXowaE72pktRdMOln6DqG_qDqUNqCqw_BV0I3wqfbxhG4LWslrOsOXn_cNl-C0nnn6rMS6Pr1mgcvMGeDO87KRBIH4W4FJOzeHhEfJG1w#hl=en-US",
+      "data": "<iframe   src=\"https://embed.settlar.io/embed/v1?t=2.ygLrLYC07uEKHKUQhlqauskJEimG6n1xg_-U_al-PGP3PBjXQGsGezaQLvWQ5SPOoKHgbGBPqDbYf_wTE0D_r5Lkzv8ev0ctZUdThpWbHPp28hYUXmi21eLtNZ8EJIUw_sno6N6TjVtnnfDh9H59hlPNIlSNZFV35JfMRkUvmeB8m1mWbQ-kPiM3tKh_rLKRllaIxTB9p3zxhOI1jcMQFBwAXhTIpD0StHOo6Ntfmc0NZHAOTCNHFG8-frDt_jQHDQwMiGbHs1mdoIrywgHgeVfHppPg9WVzjFEGxXClJMpphLaMHht6nDivhi14EZa1qiUy2N92lQWJOQ#start=53&paused=1&hl=en-US\"   title=\"Video Player\"   class=\"w-full h-full\"   loading=\"lazy\"   referrerpolicy=\"origin\"   allow=\"autoplay; encrypted-media; fullscreen; picture-in-picture; airplay; screen-wake-lock\"   allowfullscreen   sandbox=\"allow-scripts allow-same-origin allow-presentation allow-orientation-lock\" ></iframe>",
       "label": "Ani.pm",
       "language": "ja",
       "subtitles": {
@@ -216,7 +216,7 @@
     },
     {
       "type": "direct",
-      "data": "https://vidnest.fun/anime/2662/1/SUB",
+      "data": "<iframe src=\"https://vidnest.fun/animepahe/2662/1/sub\" frameBorder=\"0\" scrolling=\"no\" allowFullScreen></iframe>",
       "label": "Vidnest",
       "language": "ja",
       "subtitles": {
