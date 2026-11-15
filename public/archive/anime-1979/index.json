@@ -6,6 +6,11 @@
   "description": "The 1979 television series catalogue. Episode records document titles, broadcast dates, and viewing sources as they are contributed.",
   "entries": [
     {
+      "id": "anime-1979-0000",
+      "number": 0,
+      "path": "episodes/0000.json"
+    },
+    {
       "id": "anime-1979-0001",
       "number": 1,
       "path": "episodes/0001.json"
