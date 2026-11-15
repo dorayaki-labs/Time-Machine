@@ -1,13 +1,10 @@
+
 {
   "schemaVersion": 4,
   "id": "anime-2005-0001",
   "type": "episode",
   "seriesId": "anime-2005",
   "number": 1,
-  "title": {
-    "en": "Episode 1",
-    "ja": null
-  },
   "originalLanguage": "ja",
   "release": {
     "date": "2005-04-15",
@@ -16,9 +13,11 @@
   },
   "sources": [
     {
-      "type": "embed",
       "data": "<iframe src=\"https://megaplay.buzz/stream/s-2/103656/sub\" width=\"100%\" height=\"100%\" frameborder=\"0\" scrolling=\"no\" allowfullscreen></iframe>",
+      "type": "embed",
       "label": "Anikoto",
+      "notes": "All 3 Segments",
+      "quality": "HQ",
       "language": "ja",
       "subtitles": {
         "has": true,
@@ -26,9 +25,7 @@
         "languages": [
           "English"
         ]
-      },
-      "quality": "HQ",
-      "notes": "All 3 Segments"
+      }
     }
   ],
   "segments": [
@@ -52,12 +49,12 @@
           "url": "https://vlitzz.store/thumbnail/e01.png"
         },
         {
-          "url": "https://i.postimg.cc/J0hC7w6K/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/J0hC7w6K/image.png"
         },
         {
-          "url": "https://i.postimg.cc/nzRwkX2s/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/nzRwkX2s/image.png"
         }
       ],
       "characters": [
@@ -132,25 +129,25 @@
       "summary": "After accidentally losing the Time Machine, Nobita and Doraemon travel into the past using a Time Belt to search for it. Their journey leads them to a village terrorised by a mysterious eight-headed serpent, and the two decide to help the villagers defeat the monster.",
       "description": "After getting scolded by his mother, Nobita decides to get back at her by using a Monster Ball to summon a monster and scare her away. His plan works at first, but Tamako soon realises that Nobita is behind the whole thing and heads to his room to give him another scolding. Nobita quickly hides inside the Time Machine, managing to avoid being caught. Once his mother leaves, he comes out and laughs about fooling her, much to Doraemon's disapproval. However, things take a turn when Doraemon opens the cabinet to check on the Time Machine and discovers that it is missing. Nobita had forgotten to apply the brakes, causing the machine to travel off on its own. With their only way back to the future gone, Nobita begins to panic, but Doraemon reminds him that crying won't solve anything and comes up with another way to search for it using a Time Belt.\n\nThe two travel into the past and begin looking for the missing machine. After searching for some time without any luck, night falls and they decide to spend the night beside a campfire. While resting, they notice a number of glowing red eyes watching them from a nearby mountain. Doraemon and Nobita try using several of his gadgets to scare whatever is out there, but nothing seems to work. The next morning, they continue their search and eventually come across a village that seems strangely empty. They soon find some of the villagers gathered together, who tell them about an eight-headed serpent that has been terrorising the area.\n\nWanting to help, Nobita and Doraemon decide to take on the serpent themselves. Taking inspiration from the old tale of the eight-headed serpent, they come up with a plan to get it drunk before cutting off its heads. Unfortunately, the plan does not go quite as expected. The serpent is completely unaffected by the drink and soon starts chasing the two around. Even Doraemon's gadgets are no match for it, and things get worse when Nobita ends up being swallowed. While inside the serpent's mouth, however, Nobita accidentally hits the Monster Ball with his head, causing the monster to disappear altogether.\n\nDoraemon rushes to check on Nobita and finds that the missing Time Machine and the Monster Ball have both been recovered, although Nobita has passed out. He then gives Nobita an earful for all the trouble he has caused, especially for frightening the villagers. After Nobita gets out of his costume, the two finally return to their own time using the recovered Time Machine.",
       "image": {
-        "url": "https://i.postimg.cc/tp8ngCRm/image.png",
-        "alt": "time machine missing cover"
+        "alt": "time machine missing cover",
+        "url": "https://i.postimg.cc/tp8ngCRm/image.png"
       },
       "screenshots": [
         {
-          "url": "https://i.postimg.cc/rpszKbDP/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/rpszKbDP/image.png"
         },
         {
-          "url": "https://i.postimg.cc/YSvqpWP1/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/YSvqpWP1/image.png"
         },
         {
-          "url": "https://i.postimg.cc/hPKDXwwQ/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/hPKDXwwQ/image.png"
         },
         {
-          "url": "https://i.postimg.cc/RhVYBcsC/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/RhVYBcsC/image.png"
         }
       ],
       "characters": [
@@ -198,17 +195,17 @@
       "summary": null,
       "description": null,
       "image": {
-        "url": "https://i.postimg.cc/1zvYsvTp/image.png",
-        "alt": null
+        "alt": null,
+        "url": "https://i.postimg.cc/1zvYsvTp/image.png"
       },
       "screenshots": [
         {
-          "url": "https://i.postimg.cc/8k997nCY/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/8k997nCY/image.png"
         },
         {
-          "url": "https://i.postimg.cc/1zvYsvTp/image.png",
-          "alt": null
+          "alt": null,
+          "url": "https://i.postimg.cc/1zvYsvTp/image.png"
         }
       ],
       "characters": [],
